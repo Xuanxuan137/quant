@@ -1,0 +1,35 @@
+cmake_minimum_required(VERSION 3.16)
+project(quant)
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "-O0 -W -Wall -fno-elide-constructors")
+# -fno-elide-constructors的作用：避免gcc对函数返回对象进行优化。
+# gcc优化后会导致使用函数返回对象创建新对象时，不会调用拷贝构造函数
+
+# Add the source in project root directory
+aux_source_directory(. DIR_SRCS)
+
+# Add header file include directories
+include_directories(
+        ${PROJECT_SOURCE_DIR}/nn
+        ${PROJECT_SOURCE_DIR}/vdarray
+        ${PROJECT_SOURCE_DIR}/util
+        /usr/local/include/opencv4
+)
+
+link_directories(
+        /usr/local/lib
+)
+
+# Add block directories
+add_subdirectory(nn)
+add_subdirectory(vdarray)
+add_subdirectory(util)
+
+# Target
+add_executable(
+        quant main.cpp
+)
+target_link_libraries(
+        quant vdarray nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs
+)
