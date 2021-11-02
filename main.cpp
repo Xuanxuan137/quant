@@ -4,58 +4,65 @@
 #include <iostream>
 #include <string>
 
-
 #include "graph.h"
 #include "arg_handle.h"
 #include "vdarray.h"
+#include "preprocess.h"
 
 
 int main(int argc, char *argv[]) {
     /////////////// test
+//    Vdarray<float32> A{std::vector<int>{2,3,4}};
+//    A.set_rand();
+//    A.print();
+//    printf("------\n");
+//    Vdarray<float32> B = A.transpose(std::vector<int>{2,1,0});
+//    B.print();
+//    return 0;
     ///////////////////////////
 
-    Graph * graph = nullptr;                                    // calculation graph
-    std::string calib_set_path;                                 // calibration set path
-    int calib_size[4];                                          // calibration shape
-    Vdarray<unsigned char>* calib_set;                          // calibration set
-    bool calc_running = false;                                  // whether calc running mean var when fusing op
-    int running_size;                                           // size of running mean var
-    Vdarray<unsigned char>* calc_running_img;                   // data set to calc running mean var
-    Vdarray<float>* running_mean;                               // running mean
-    Vdarray<float>* running_var;                                // running var
+    Graph * graph = nullptr;                                    // 计算图
+    std::string calib_set_path;                                 // calibration set 路径
+    int calib_size[4];                                          // calibration尺寸
+    Vdarray<uint8>* calib_set = nullptr;                        // calibration set
+    bool calc_running = false;                                  // 是否现场计算running
+    int running_size;                                           // running尺寸
+    Vdarray<uint8>* calc_running_img = nullptr;                 // 计算running数据集
+    Vdarray<float32>* running_mean = nullptr;                   // running mean
+    Vdarray<float32>* running_var = nullptr;                    // running var
 
     for(int i = 1; i<argc; i++) {
-        std::string option(argv[i]);    // read an option from argv
+        std::string option(argv[i]);    // 从argv读取选项
         i++;
         if(i >= argc) {
             std::cerr << "Got none value after option " << option << std::endl;
             return -1;
         }
-        std::string value(argv[i]);     // the value followed option
+        std::string value(argv[i]);     // 选项值
 
-        // process option
-        if(option == "--graph") {           // create calc graph
+        // 处理选项
+        if(option == "--graph") {           // 创建计算图
             graph = new Graph(value);
         }
-        else if(option == "--calib_set") {  // read the path of a txt which contain the path of the calibration set
+        else if(option == "--calib_set") {  // 读取包含calib set路径的txt文件路径
             calib_set_path = value;
         }
-        else if(option == "--calib_size") { // read the input size during calibration
+        else if(option == "--calib_size") { // 读取calib尺寸
             get_calib_size(calib_size, value);
         }
-        else if(option == "--calc_running") {   // read whether calc running when fusing op
+        else if(option == "--calc_running") {   // 读取是否现场计算running
             calc_running = string_to_bool(value);
         }
-        else if(option == "--running_size") {   // read size of running_mean and running_var
+        else if(option == "--running_size") {   // 读取running大小
             running_size = get_running_size(value);
         }
-        else if(option == "--calc_running_img_list") {  // read the data set used to calculate the running
+        else if(option == "--calc_running_img_list") {  // 读取计算running数据集
             calc_running_img = get_calc_running_img(value, calib_size);
         }
-        else if(option == "--running_mean_var_binary") {    // read the binary running data
+        else if(option == "--running_mean_var_binary") {    // 读取二进制running数据
             get_running_mean_var_binary(running_mean, running_var, value, running_size);
         }
-        else if(option == "--running_mean_var_txt") {       // read the txt running data
+        else if(option == "--running_mean_var_txt") {       // 读取txt running数据
             get_running_mean_var_txt(running_mean, running_var, value, running_size);
         }
         else {
@@ -63,16 +70,35 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    calib_set = get_calib_set(calib_set_path, calib_size);  // read calibration set
-    // So far，calc graph is generated
-    // and calibration set，calibration shape ，bn data set(or bn data) is got
+    calib_set = get_calib_set(calib_set_path, calib_size);  // 读取 calibration set
+    // 目前，计算图已经生成
+    // calibration set，calibration尺寸 ，bn数据集(或bn数据)已经获得
+
+    // TODO: 数据预处理
+    Vdarray<float32>* processed_calib_set = preprocess(calib_set);
+    Vdarray<float32>* processed_bn_set = preprocess(calc_running_img);
+
+    // test accuracy TODO: delete this
+//    int infer_shape[4] = {1, 1, 28, 28};
+//    test_accuracy("../val_set.txt", graph, infer_shape);
+    ///////////////// TODO: delete this
 
     // TODO: fuse operator
-
+//    graph->fuse_op(calc_running, running_size, calc_running_img, running_mean, running_var);
 
     // TODO: quantization
 
     // TODO: save quantized model
+
+
+
+    delete(graph);
+    delete(calib_set);
+    delete(calc_running_img);
+    delete(running_mean);
+    delete(running_var);
+    delete(processed_calib_set);
+    delete(processed_bn_set);
 
     return 0;
 }

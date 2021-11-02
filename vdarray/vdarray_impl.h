@@ -10,8 +10,8 @@
 template<typename T>
 Vdarray<T>::Vdarray() {
     /*
-     * Vdarray constructor：
-     * Only create object and do not allocate memory
+     * Vdarray 构造函数：
+     * 只创建对象，不分配空间
      */
     if(!std::is_same<T, int>::value &&
        !std::is_same<T, unsigned int>::value &&
@@ -35,8 +35,8 @@ Vdarray<T>::Vdarray() {
 template<typename T>
 Vdarray<T>::Vdarray(const std::vector<int>& size) {
     /*
-     * Vdarray constructor：
-     * Allocate memory according to input size, and set 'size' of Vdarray object
+     * Vdarray 构造函数：
+     * 根据输入size分配空间，设置size
      */
     if(!std::is_same<T, int>::value &&
        !std::is_same<T, unsigned int>::value &&
@@ -61,7 +61,7 @@ Vdarray<T>::Vdarray(const std::vector<int>& size) {
     is_num = false;
     cut = 0;
 
-    // Reference count the just allocated data(if there is no bug, 'data' cannot be found in reference counter now)
+    // 对刚分配的空间引用计数(如果没有bug，应该找不到)
     if(counter.find(mem_addr) != counter.end()) {   // if found
         std::cerr << "Found just malloced \'data\' in counter when constructing\n";
         exit(-1);
@@ -74,7 +74,7 @@ Vdarray<T>::Vdarray(const std::vector<int>& size) {
 template<typename T>
 Vdarray<T>::Vdarray(const Vdarray<T> &src) {
     /*
-     * copy constructor
+     * 拷贝构造函数
      */
     data = src.data;
     mem_addr = src.mem_addr;
@@ -99,12 +99,11 @@ template<typename T>
 Vdarray<T>::~Vdarray() {
     /*
      * Vdarray destructor：
-     * release memory
+     * 释放内存
      */
-    // search reference counter
+    // 查找引用计数
     if(data == nullptr || mem_addr == nullptr) {
-        // if a Vdarray object is created but never allocated memory for its 'data', the 'data' and 'mem_addr'
-        // should both be nullptr
+        // 如果对象只创建但没分配内存，那么data和mem_addr应该都是null
         if(data != nullptr || mem_addr != nullptr) {
             std::cerr << "Found data and mem_addr only 1 equal to nullptr\n";
         }
@@ -127,20 +126,17 @@ template<typename T>
 Vdarray<T> Vdarray<T>::operator[](int index)
 {
     /*
-     * Overload operator[]
-     * Create a new object, and 'data' point to the memory address after interception
-     * 'mem_addr' still point to old address, in order to keep reference count to the whole block of memory
-     * set size to new size
+     * 重载[]
+     * 注：[]不复制内存
+     * 创建对象，使data指向截取后地址。mem_addr仍指向旧地址，以保持对整块内存的引用计数
+     * 修改size
      */
     Vdarray<T> temp;
     /*
-     * Example:
-     * When declaring a 3-dimensional array A, A[0] should return a 2-dim array, A[0][0] should return a 1-dim array,
-     * and A[0][0][0] should return a num.
-     * But since the limitation of the explicit data type of C++(or maybe since I'm vegetable),
-     * we cannot let [] return both an array and a num, so when [] should return a num, it still returns an array,
-     * an array which has only one data in 'data', and set is_num to true at the same time, indicate that this
-     * array is already a num, and to_num() is can be used to get this num.
+     * 例:
+     * 当声明3维数组A时，A[0]应返回2维数组，A[0][0]应返回1维数组，A[0][0][0]应返回数值
+     * 但由于C++的限制(也可能是我太菜)，无法让一个函数返回两种类型，所以A[0][0][0]仍返回数组，但使用is_num属性标识它已经是
+     * 一个数值，并可使用to_num()将这个数值提取出来
      */
     if(is_num) {
         std::cerr << "You cannot use [] on a num\n";
@@ -150,15 +146,14 @@ Vdarray<T> Vdarray<T>::operator[](int index)
         std::cerr << "Index out of range\n";
         exit(-1);
     }
-    int other_dim_len = 1;      // Except for the first dimension, the product of other dimensions.
-                                // Used to calculate the address after interception
+    int other_dim_len = 1;      // 除第一维度外，其他维度长度的乘积，用于计算截取后长度
     for(int i = 1; i<(int)size.size(); i++) {
         other_dim_len *= size[i];
     }
     temp.data = data + index*other_dim_len;
     temp.mem_addr = mem_addr;
     temp.cut = 2;
-    if(size.size() == 1) {      // If there is only one dimension, it will become a number after interception
+    if(size.size() == 1) {      // 如果原数组只有1个维度，截取后变为数值
         temp.is_num = true;
         temp.size.push_back(1);
     }
@@ -167,7 +162,7 @@ Vdarray<T> Vdarray<T>::operator[](int index)
             temp.size.push_back(size[i]);
         }
     }
-    // Increase the reference count of temp
+    // 增加引用计数
     if(counter.find(mem_addr) != counter.end()) {
         counter[mem_addr]++;
     }
@@ -182,16 +177,12 @@ template<typename T>
 Vdarray<T>& Vdarray<T>::operator=(Vdarray<T> array)
 {
     /*
-     * overload operator=
-     * Two situations：
-     * 1. lvalue is an object interception
-     * When assigning A to B[i], we need to check that the size is consistent, and then copy the data
-     * in A to B[i](deep copy)
-     * 2. lvalue is not an interception
-     * When assigning A to B, we need to reduce the reference count of old B, then point B to the memory pointed
-     * by A and copy 'size', and then increase the reference count of new B.
+     * 重载=
+     * 两种情况：
+     * 1. 左值是截取：B[i] = A：需要检查左值和右值尺寸一致，并复制数据（deep copy）
+     * 2. 左值不是截取：只改变指针。对原地址减引用计数，复制属性，对新地址增引用计数
      */
-    if(this->cut > 0) {         // if lvalue is an interception
+    if(this->cut > 0) {         // 如果左值是截取
         if(this->size != array.size) {
             std::cerr << "could not broadcast input array from shape (";
             for(int i = 0; i<(int)array.size.size(); i++) {
@@ -210,35 +201,34 @@ Vdarray<T>& Vdarray<T>::operator=(Vdarray<T> array)
         }
         memcpy(this->data, array.data, sizeof(T)*space);
     }
-    else {                      // if lvalue is not an interception
-        // reduce the reference count of 'this'
+    else {                      // 如果左值不是截取
+        // 减引用计数
         if(this->mem_addr != nullptr) {
-            // Sometimes we create an object without allocate memory for it, and 'mem_addr' is null,
-            // we do not need to reduce reference count at this time
+            // 有时只声明对象但没有分配空间，此时不需要减引用计数
             if (counter.find(this->mem_addr) != counter.end()) {
                 counter[mem_addr]--;
                 if (counter[mem_addr] == 0) {
                     free(mem_addr);
                     counter.erase(mem_addr);
                 }
-            } else {      // should must found
+            } else {
                 std::cerr << "Not found old \'data\' in counter when operator=\n";
                 exit(-1);
             }
         }
 
-        // copy attribute of rvalue to lvalue
+        // 复制属性
         this->data = array.data;
         this->mem_addr = array.mem_addr;
         this->size = array.size;
         this->is_num = array.is_num;
         this->cut = 0;
 
-        // increase reference count of new 'this'
+        // 引用计数
         if(counter.find(this->mem_addr) != counter.end()) {
             counter[mem_addr]++;
         }
-        else {      // should must found
+        else {
             std::cerr << "Not found new \'data\' in counter when operator=\n";
             exit(-1);
         }
@@ -250,7 +240,7 @@ Vdarray<T>& Vdarray<T>::operator=(Vdarray<T> array)
 template<typename T>
 T Vdarray<T>::to_num() {
     /*
-     * if Vdarray is already a num, return its value
+     * 如果数组已经是数值，返回这个值
      */
     if(!is_num) {
         std::cerr << "You cannot call to_num on a non-num array\n";
@@ -262,8 +252,8 @@ T Vdarray<T>::to_num() {
 template<typename T>
 Vdarray<T> &Vdarray<T>::operator=(T value) {
     /*
-     * overload =，enables direct assignment to the is_num array
-     * For instance, array[0][2][3] = 5;
+     * 重载 =，使能对is_num数组直接复制
+     * 例如, array[0][2][3] = 5;
      */
     if(!is_num) {
         std::cerr << "You cannot assign value to a non-num array\n";
@@ -276,7 +266,7 @@ Vdarray<T> &Vdarray<T>::operator=(T value) {
 template<typename T>
 void Vdarray<T>::set_zero() {
     /*
-     * set all data in 'data' to 0
+     * data中所有值设为0
      */
     if(data == nullptr) {
         std::cerr << "You cannot set zero to an array not malloced\n";
@@ -292,7 +282,7 @@ void Vdarray<T>::set_zero() {
 template<typename T>
 void Vdarray<T>::set_rand() {
     /*
-     * set data in 'data' to random value
+     * data中所有值设为随机值
      */
     if(data == nullptr) {
         std::cerr << "You cannot set rand to an array not malloced\n";
@@ -311,19 +301,18 @@ template<typename T>
 Vdarray<T> Vdarray<T>::reshape(const std::vector<int> &new_size) {
     /*
      * reshape
-     * Check old size and new size。
-     * Create new object and let its 'data' point to existing 'data', and let its shape be new shape
+     * 检查旧size和新size
+     * 创建新对象使其data指向现有data，使其size为新size
      */
     if(is_num) {
         std::cerr << "You cannot reshape a num\n";
     }
-    // Check new size: negative value no more than 1. No 0. If there is no negative value in new size,
-    // the amount of data of new array should be the same as the old one.
+    // 检查new_size：负值不能超过1个。不能有0。如果没有负值，则新size对应的内存大小应与原来的相同
     int old_space = 1;
     for(const int &i: size) {
         old_space *= i;
     }
-    int negative_count = 0;    // amount of negative value in new_size
+    int negative_count = 0;    // new_size中负值数量
     int new_space = 1;
     for(const int &i: new_size) {
         if(i < 0) {
@@ -355,7 +344,7 @@ Vdarray<T> Vdarray<T>::reshape(const std::vector<int> &new_size) {
             exit(-1);
         }
     }
-    // if size check is passed, infer the negative value in new size
+    // 如果size检查通过，对负值进行推断
     Vdarray<T> temp;
     temp.data = this->data;
     temp.mem_addr = this->mem_addr;
@@ -367,7 +356,7 @@ Vdarray<T> Vdarray<T>::reshape(const std::vector<int> &new_size) {
     }
     temp.cut = 0;
     temp.is_num = this->is_num;
-    // reference count
+    // 引用计数
     if(counter.find(mem_addr) != counter.end()) {
         counter[mem_addr]++;
     }
@@ -381,7 +370,7 @@ Vdarray<T> Vdarray<T>::reshape(const std::vector<int> &new_size) {
 template<typename T>
 void Vdarray<T>::print() {
     /*
-     * print data
+     * 打印数据
      */
     if(size.size() > 1) {
         for (int i = 0; i < size[0]; i++) {
@@ -430,12 +419,12 @@ Vdarray<T> Vdarray<T>::transpose(const std::vector<int> &new_order) {
      * transpose:
      * transpose(2,0,1) => dst[k][i][j] = src[i][j][k]
      */
-    // length of new order should equal to length of old size
+    // new_order的长度应与旧size相同
     if(this->size.size() != new_order.size()) {
         std::cerr << "Axes don't match array\n";
         exit(-1);
     }
-    // check new_order: each element should appear only once, and its value should between 0 to n-1
+    // 检查new_order：每个元素只能出现一次，且其值应在0到n-1之间
     int new_order_len = (int)new_order.size();
     int appear[new_order_len];
     for(int i = 0; i<new_order_len; i++) {
@@ -454,35 +443,33 @@ Vdarray<T> Vdarray<T>::transpose(const std::vector<int> &new_order) {
             exit(-1);
         }
         else if(appear[i] == 0) {
-            // Do nothing here. Since we have checked the amount of new_order and the value of element in new_order,
-            // according to the Drawer Principle, if there is an element did not appear, there must be another
-            // element appeared more than once, and was processed in the 'if' block above.
+            // Do nothing。由于我们已经检查了new_order的长度和里面的数值，根据抽屉原理，如果有一个元素没出现，那么一定有重复的
+            // 而重复的在上面已经处理过了
         }
     }
-    // create new Vdarray, and let its size be the transposed size
+    // 创建新数组，使其size为transpose之后的size
     std::vector<int> new_size;
     for(const int& i: new_order) {
         new_size.push_back(this->size[i]);
     }
     Vdarray<T> temp(new_size);
-    // traverse elements in old array(by 'data'), calculate its index, and convert to new index
-    int dim = this->size.size();    // dimension
-    int old_index[dim];             // old index
-    int new_index[dim];             // new index
-    int array_len = 1;              // element amount in the array
+    // 遍历旧数组中的元素(根据data进行遍历)，计算其下标，并转换到新下标
+    int dim = this->size.size();    // 维度
+    int old_index[dim];             // 旧下标
+    int new_index[dim];             // 新下标
+    int array_len = 1;              // 数组中元素个数
     for(const int& i: this->size) {
         array_len *= i;
     }
     for(int i = 0; i<dim; i++) {
         old_index[i] = 0;
     }
-    for(int index = 0; index<array_len; index++) {  // traverse elements in old array
-        // the old index of the element being traversed is 'old_index'
-        // map the old index to the new index
+    for(int index = 0; index<array_len; index++) {  // 遍历旧数组
+        // 旧下标映射到新下标
         for(int i = 0; i<dim; i++) {
             new_index[i] = old_index[new_order[i]];
         }
-        // calculate the position of the element in new array(position: offset from 'data')
+        // 计算该元素在新数组的位置（位置：相对于data的偏移）
         int offset = 0;
         int weight = 1;
         for(int p = dim-1; p>=0; p--) {
@@ -490,22 +477,8 @@ Vdarray<T> Vdarray<T>::transpose(const std::vector<int> &new_order) {
             weight *= new_size[p];
         }
         temp.data[offset] = this->data[index];
-        // increate old_index by 1
-        int p = dim-1;
-        old_index[p]++;
-        while(true) {
-            if(old_index[p] >= this->size[p]) {
-                old_index[p] = 0;
-                p--;
-                if(p < 0) {
-                    break;
-                }
-                old_index[p]++;
-            }
-            else {
-                break;
-            }
-        }
+        // old_index加一
+        array_add_1(old_index, this->size);
     }
     return temp;
 }
@@ -513,9 +486,305 @@ Vdarray<T> Vdarray<T>::transpose(const std::vector<int> &new_order) {
 template<typename T>
 std::vector<int> Vdarray<T>::shape() {
     /*
-     * return size
+     * 返回size
      */
     return size;
+}
+
+template<typename T>
+int Vdarray<T>::argmax() {
+    /*
+     * argmax
+     */
+    int len = 1;
+    for(const int &i: size) {
+        len *= i;
+    }
+    T max = data[0];
+    int index = 0;
+    for(int i = 0; i<len; i++) {
+        if(data[i] > max) {
+            max = data[i];
+            index = i;
+        }
+    }
+    return index;
+}
+
+template<typename T>
+Vdarray<int> Vdarray<T>::argmax(int axis) {
+    /*
+     * 在给定axis上argmax
+     * 创建新数组，其维度应比旧数组少1
+     * 新数组各维度长度应与旧数组除axis指定维度外其他维度一一对应
+     * 遍历新数组的每个元素，并在旧数组中axis指定维度上计算argmax
+     * 例如：
+     * A.size = (2,3,4,5,6)
+     * O = A.argmax(2)
+     * 那么：
+     * O.size = (2,3,5,6)
+     * for i in range(2):
+     *      for j in range(3):
+     *          for k in range(5):
+     *              for l in range(6):
+     *                  O[i][j][k][l] = max(A[i][j][:][k][l])
+     */
+    // 检查axis: axis不应超过维度，不应小于0
+    if(axis >= size.size() || axis < 0) {
+        fprintf(stderr, "axis %d is out of bounds for array of dimension %d\n", axis, size.size());
+        exit(-1);
+    }
+    /*
+     * 如果原维度为1，那么返回值应为数值。但此函数无法返回数值，所以返回is_num数组
+     */
+    if(size.size() == 1) {
+        Vdarray<int> result(std::vector<int>{1});
+        result.data[0] = this->argmax();
+        return result;
+    }
+
+    // 如果原数组维度大于1
+    // 计算结果数组的size
+    std::vector<int> new_size;
+    for(int i = 0; i<size.size(); i++) {
+        if(i == axis) {
+            continue;
+        }
+        else {
+            new_size.push_back(size[i]);
+        }
+    }
+    // 使用new_size创建结果数组
+    Vdarray<int> result{new_size};
+    // 遍历结果数组的每个元素，计算其argmax
+    int new_dim = (int)new_size.size();
+    int old_dim = new_dim+1;
+    int new_index[new_dim];     // result中正在访问元素的下标
+    int old_index[old_dim];     // 原数组中要访问的元素的下标
+    for(int i = 0; i<new_dim; i++) {        // 初始化 new_index 和 old_index
+        new_index[i] = 0;
+        old_index[i] = 0;
+    }
+    old_index[old_dim-1] = 0;
+    int new_len = 1;                    // result数据空间长度
+    for(const int &i: new_size) {
+        new_len *= i;
+    }
+    for(int i = 0; i<new_len; i++) {    // 遍历result
+        // 映射new_index 到 old_index
+        for(int j = 0; j<old_dim; j++) {
+            if(j < axis) {
+                old_index[j] = new_index[j];
+            }
+            else if(j > axis) {
+                old_index[j] = new_index[j-1];
+            }
+        }
+        // 设置遍历旧数组axis维的起始下标
+        old_index[axis] = 0;
+        // 计算元素在旧数组的位置（位置：相对data的offset）
+        int offset = 0;
+        int weight = 1;
+        for(int p = old_dim-1; p>=0; p--) {
+            offset += old_index[p] * weight;
+            weight *= this->size[p];
+        }
+        // 初始化 max 和 index
+        T max = this->data[offset];
+        int index = 0;
+        for(int j = 0; j<this->size[axis]; j++) {   // 遍历旧数组axis维元素
+            old_index[axis] = j;
+            // 计算元素在旧数组的位置（位置：相对data的offset）
+            offset = 0;
+            weight = 1;
+            for(int p = old_dim-1; p>=0; p--) {
+                offset += old_index[p] * weight;
+                weight *= this->size[p];
+            }
+            // 比较max，修改index
+            if(this->data[offset] > max) {
+                max = this->data[offset];
+                index = j;
+            }
+        }
+        // 存储index到result
+        result.data[i] = index;
+        // new_index加一
+        array_add_1(new_index, new_size);
+    }
+    return result;
+}
+
+template<typename T>
+Vdarray<T> Vdarray<T>::divide(float64 divisor) {
+    /*
+     * 除法: 对true_divide的封装
+     * 创建新的数组并分配新的空间。将原数组每个值除以divisor并赋值给新数组
+     */
+    return this->true_divide(divisor);
+}
+
+template<typename T>
+Vdarray<T> Vdarray<T>::true_divide(float64 divisor) {
+    /*
+     * 除法
+     * 创建新的数组并分配新的空间。将原数组每个值除以divisor并赋值给新数组
+     */
+    Vdarray<T> result{this->size};
+    int len = this->len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = this->data[i] / divisor;
+    }
+    return result;
+}
+
+template<typename T>
+Vdarray<T> Vdarray<T>::floor_divide(float64 divisor) {
+    /*
+     * 向下取整除法
+     * 创建新的数组并分配新的空间。将原数组每个值除以divisor并赋值给新数组
+     */
+    Vdarray<T> result{this->size};
+    int len = this->len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = (int)(this->data[i] / divisor);
+    }
+    return result;
+}
+
+template<typename T>
+int Vdarray<T>::len() {
+    /*
+     * 获取当前Vdarray数据空间元素数量
+     */
+    int len = 1;
+    for(const int &i: size) {
+        len *= i;
+    }
+    return len;
+}
+
+template<typename T>
+Vdarray<T> Vdarray<T>::operator/(float64 divisor) {
+    /*
+     * 重载 /
+     */
+    return this->true_divide(divisor);
+}
+
+template<typename T>
+Vdarray<T> Vdarray<T>::broadcast_to(const std::vector<int> &target_size) {
+    /*
+     * broadcast_to: 将原数组广播为size
+     * 1. 让size向target_size看齐，不足的部分在前面加1补齐，得到new_this(即若target=(2,3,4), size=(4), 则new_size=(1,1,4))
+     * 2. 返回数组result的size应与target_size相同
+     * 3. 如果target_this的某个轴和result的对应轴的长度相同或者其长度为1时，这个数组能够用来计算，否则出错
+     * 4. 当new_this的某个轴的长度为1时，沿着此轴运算时都用此轴上的第一组值
+     */
+    /*
+     * 以上为理论算法，实际算法如下：
+     * 1. 只新建new_this的new_size，不新建new_this。
+     * 2. 按照上面第3条规则检查new_size和target_size
+     * 3. 使用new_size新建result
+     * 4. 遍历result，按照上面第4条规则从new_this取数据(虽然没有创建new_this，但事实上this扩展为new_this后，data中数据
+     *      偏移是不变的，所以可以用new_this的offset从this中取数据)
+     */
+    // 新建new_size
+    std::vector<int> new_size;
+    int target_dim = (int)target_size.size();
+    int this_dim = this->size.size();
+    for(int i = 0; i<target_dim-this_dim; i++) {
+        new_size.push_back(1);
+    }
+    for(int i = 0; i<this_dim; i++) {
+        new_size.push_back(this->size[i]);
+    }
+    // 检查new_size和target_size
+    for(int i = 0; i<target_dim; i++) {
+        if(new_size[i] == target_size[i]) {
+            continue;
+        }
+        else if(new_size[i] == 1) {
+            continue;
+        }
+        else {
+            fprintf(stderr, "cannot broadcast (");
+            for(const int &s: this->size) {
+                fprintf(stderr, "%d, ", s);
+            }
+            fprintf(stderr, ") to (");
+            for(const int &s: target_size) {
+                fprintf(stderr, "%d, ", s);
+            }
+            fprintf(stderr, ")\n");
+            exit(-1);
+        }
+    }
+    // 使用new_size新建result
+    Vdarray<T> result{target_size};
+    // 遍历result，按照上面第4条规则从new_this取数据
+    int res_index[target_dim];              // 遍历result时，当前访问元素的index
+    int this_index[target_dim];             // result中元素对应的new_this中元素的下标
+    memset(res_index, 0, sizeof(T)*target_dim);
+    memset(this_index, 0, sizeof(T)*target_dim);
+    int target_len = result.len();
+    for(int i = 0; i<target_len; i++) { // 遍历result
+        // 将res_index映射到this_index
+        for(int j = 0; j<target_dim; j++) {
+            if(new_size[j] == 1) {
+                this_index[j] = 0;
+            }
+            else {
+                this_index[j] = res_index[j];
+            }
+        }
+        // 计算this_index相对于data的偏移
+        int offset = 0;
+        int weight = 1;
+        for(int p = target_dim-1; p>=0; p--) {
+            offset += weight * this_index[p];
+            weight *= new_size[p];
+        }
+        // 赋值
+        result.data[i] = this->data[offset];
+        // res_index加一
+        array_add_1(res_index, target_size);
+    }
+    return result;
+}
+
+
+void array_add_1(int array[], const std::vector<int> &size)
+{
+    /*
+     * 给出一个数组array，和数组每一位的进制size。让数组自增一
+     * 常用于Vdarray按下标遍历。调用此函数可将下标加一
+     */
+    int dim = (int)size.size();
+    int p = dim-1;
+    array[p]++;
+    while(true) {
+        if(array[p] >= size[p]) {
+            array[p] = 0;
+            p--;
+            if(p < 0) {
+                break;
+            }
+            array[p]++;
+        }
+        else {
+            break;
+        }
+    }
+}
+
+
+void print_size(const std::vector<int> &size)
+{
+    for(const int &i: size) {
+        printf("%d ", i);
+    }
+    printf("\n");
 }
 
 

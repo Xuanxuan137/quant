@@ -15,32 +15,28 @@
 
 /*
  * Node:
- * Each node object manage a node in the calculation graph.
- * In order to facilitate Graph to use it, we need to store dtype and output_shape data in Node
+ * 每个node对象管理计算图中的一个节点
+ * 为了方便Graph使用，我们需要在node中保存output_shape
  *
  * forward:
- * As described by Graph, when graph calls Node's forward, it will pass in input data and output data pointers.
- * Node should convert the pointer type according to the data type of the node, and then call forward of the
- * operator for forward propagation calculation
- * Since the data type can be determined in Node, the type of the operator class should be determined.
- * That is, taking conv2d as an example, conv2d of float32 and conv2d of uint8 should be divided into two classes
- * When Node calls the forward of the operator, it needs to pass in the input and output pointers
- * Since Node's forward accepts 'output' parameters, there is no need to return a value
+ * 如Graph中所述，当graph调用Node的forward时，它会传入input和output的指针。Node需要根据自己的数据类型转换指针类型，然后调用
+ * 算子的forward
+ * 由于在Node中能够确定数据类型，算子类的数据类型应该是确定的
+ * 也就是说，以conv2d为例，float32的conv2d和uint8的conv2d应分为两个类。当Node调用算子的forward时，它需要传入input和output的
+ * 指针。由于Node的forward接受了output参数，它不需要返回值
  */
 
 class Node {
 public:
-    int number;                     // operator serial number
-    std::string name;               // operator name
-    void * op;                      // operator object pointer
-    std::string dtype;              // data type
+    int number;                     // 算子编号
+    std::string name;               // 算子名称
+    void * op;                      // 算子
+    std::string dtype;              // 数据类型
     std::vector<int> output_shape;  // output shape
     explicit Node(const std::string& read_graph_line,
                   const std::vector<std::vector<int> > &output_shape_list);  // constructor
     ~Node();                                                // destructor
-//    void forward(void * input, void* output);             // Forward propagation function. Since the data type
-//                                                             is not fixed, only void* is passed in and out,
-//                                                             Need to automatically determine the data type internally
+//    void forward(void * input, void* output); // 前向传播函数。由于数据类型不确定，所以使用void*。需要在内部决定类型
 };
 
 int get_number(const std::string &graph_line);

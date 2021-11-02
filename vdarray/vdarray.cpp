@@ -10,7 +10,7 @@
 Vdarray<float> VDarray::zeros(const std::vector<int>& size)
 {
     /*
-     * Create a Vdarray object. Let its shape be size, all value be 0
+     * 创建Vdarray对象，使其size为size，值为0
      */
     Vdarray<float> array(size);
     array.set_zero();
@@ -20,7 +20,7 @@ Vdarray<float> VDarray::zeros(const std::vector<int>& size)
 Vdarray<float> VDarray::rand(const std::vector<int>& size)
 {
     /*
-     * Create a Vdarray object. Let its shape be size, value be random value between -1 to 1.
+     * 创建Vdarray对象，使其size为size，值为-1～1的随机值
      */
     Vdarray<float> array(size);
     array.set_rand();

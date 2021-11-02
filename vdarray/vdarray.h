@@ -7,6 +7,10 @@
 
 /*
  * 设计思路：
+ * Vdarray(Variable dimension array)是一个用来存储变维数据的类
+ * 我们不在Vdarray对象中存储数据, 而是存储一个名为data的指针
+ * 此外，还在对象中以vector形式存储尺寸
+ *
  * 构造Vdarray:
  * 1. 不给定尺寸：仅创建对象，数据均设为0或null
  * 2. 给定尺寸：申请空间data，同时记录空间首地址mem_addr。size设为输入的size。对mem_addr引用计数
@@ -46,74 +50,6 @@
  * 所以截取后，让mem_addr仍指向申请的内存的起点。当没有mem_addr指向该地址时，才释放这块内存
  */
 
-/*
- * Design ideas：
- * Vdarray(Variable dimension array) is a class used to store variable dimension data.
- * We do not store data in Vdarray object, we just store a pointer in Vdarray object which is called 'data'
- * Besides, we store the shape of data as a vector in Vdarray object
- *
- * Construct Vdarray:
- * 1. No input shape：Only create object，set all attributes to 0 or nullptr
- * 2. Given shape：allocate memory for data，and record the memory start address as mem_addr.
- *                 Set size to the input size。Use reference count for mem_addr
- * 3. Copy constructor：Function will call copy constructor automatically when it returns an object.
- *                      Point the data of new object to the data of old object，reference count mem_addr.
- *                      if cut is greater than 0, then reduce it by 1.
- *
- *
- * Destruct Vdarray:
- * Reference count mem_addr and release memory
- *
- *
- * Overload =
- * 1. When lvalue is an object(cut==0): Point data of lvalue to data of rvalue.
- *          Reference count mem_addr. Set cut to 0 and copy other attribute.
- * 2. When lvalue is an interception of an object(cut==1): Check the size of lvalue and
- *          rvalue must be the same。Copy data of rvalue to data of lvalue(deep copy)。
- *          Since there is no pointer change, no need to change reference count.
- * 3. Since we hope we can assign to an is_num object directly, when the lvalue is is_num,
- *          rvalue can be numerical value
- *
- *
- * Overload []
- * -- Use [int] to take part of the array, which is called interception
- * -- When gcc uses the -fno-elide-constructors option, the copy construction will be automatically
- *          called once when the function returns an object
- *          The copy constructor will be called again when use this return to create an object(class A a = func())
- * Intercept with []：Create an object and make its data points to the memory address after interception,
- *          but mem_addr still points to the original memory address and is reference counted.
- *          Set its cut to 2. Return this object.
- *      When only one numerical value is left(such as array(2,3,4), use array[0][0][0] to intercept),
- *          we hope to return a numerical value directly. But due to the limitations of C++,
- *          it cannot be as flexible as python, so we have to return an object, but at this time we will mark
- *          this object as is_num, and use to_num() to extract this numerical value.
- *      -- The reason why mem_addr points to the original memory address：If A is an interception of B, the
- *          data address of A is different from B, and the mem_addr of A is different from B too, then when B is
- *          released, since the reference count of A is different from the reference of B, the reference counter
- *          will not find that A is still using the memory allocated by B, and the memory will be released.
- *          But at this time this block of memory is still used by A. Set the reference count address of A
- *          to the reference count address of B will solve this problem.
- *      -- The reason why cut is set to 2: When using =, we hope to use different operations for object lvalue
- *          and object interception lvalue, so we need to distinguish between object and object interception
- *         Designed as: The cut of an object is 0; The cut of an object interception is 1。
- *          That is, the cut of the object returned by [] is 1, and the rest are 0
- *         When creating a temporary object in [], set its cut to 2. The copy construction is automatically
- *          invoked when returning. When 2 is detected, it is found that it is the object returned by [],
- *          and cut is reduced by 1. In this way, the cut of an object interception returned to the outer
- *          function is 1.
- *          When using this object interception to create an object, the copy construction will be called again,
- *          and the cut will be reduced by 1 again, so that the new object is a normal object
- *          When using this object as an rvalue, operator= will be called
- *
- *
- * Reference count
- * Data is managed by 'data', and memory is managed by 'mem_addr'
- * 'data' point to the start of the memory address of the object
- * Since after [], data may change and no longer point to the allocated memory, but the memory used before and
- * after interception is allocated once, the memory should and can only release once. So after interception,
- * let mem_addr still point to the start address of the allocated memory. When there is no mem_addr point to
- * this address, release this memory.
- */
 
 #include <iostream>
 #include <cstdlib>
@@ -133,33 +69,57 @@ typedef double float64;
 template <typename T>
 class Vdarray {
 public:
-    T * data;                   // data space
-    std::vector<int> size;      // data shape
-    int cut;                    // whether is interception
+    // 属性
+    T * data;                   // 数据空间
+    std::vector<int> size;      // 数据尺寸
+    int cut;                    // 是否是截取
+
+    // 构造与析构
     Vdarray();                                              // constructor
     explicit Vdarray(const std::vector<int>& size);         // constructor with input shape
-    Vdarray(const Vdarray<T> &src);                         // copy constructor
-    ~Vdarray();                                             // destructor
-    Vdarray<T> operator[](int index);                       // overload []
-    Vdarray<T>& operator=(Vdarray<T> array);                // overload =
-    Vdarray<T>& operator=(T value);                         // overload =
-    T to_num();                                             // return numerical value
-    void set_zero();                                        // set data to 0
-    void set_rand();                                        // set data to random value
+    Vdarray(const Vdarray<T> &src);                         // 拷贝构造函数
+    ~Vdarray();                                             // 析构函数
+
+    // 数组处理
+    T to_num();                                             // 返回数值
+    void set_zero();                                        // data置0
+    void set_rand();                                        // data置随机值
     Vdarray<T> reshape(const std::vector<int>& new_size);   // reshape
     Vdarray<T> transpose(const std::vector<int>& new_order);// transpose
     void print();                                           // print
     std::vector<int> shape();                               // shape
+    int len();                                              // 返回数据空间元素数量
+    int argmax();                                           // argmax
+    Vdarray<int> argmax(int axis);                          // argmax
+    Vdarray<T> broadcast_to(const std::vector<int> &size);  // broadcast_to
+
+    // 数学运算
+    Vdarray<T> divide(float64 divisor);                     // 除法
+    Vdarray<T> true_divide(float64 divisor);                // 除法
+    Vdarray<T> floor_divide(float64 divisor);               // 向下取整除法
+    Vdarray<T> divide(Vdarray<T> divisor);                  // 除法
+    Vdarray<T> true_divide(Vdarray<T> divisor);             // 除法
+    Vdarray<T> floor_divide(Vdarray<T> divisor);            // 向下取整乘法
+
+    // 运算符重载
+    Vdarray<T> operator[](int index);                       // overload []
+    Vdarray<T>& operator=(Vdarray<T> array);                // overload =
+    Vdarray<T>& operator=(T value);                         // overload =
+    Vdarray<T> operator/(float64 divisor);                  // overload /
+    Vdarray<T> operator/(Vdarray<T> divisor);               // overload /
 
 private:
-    T * mem_addr;               // record data address
-    bool is_num;                // whether is numerical value
+    T * mem_addr;               // 记录内存地址
+    bool is_num;                // 是否是数值
 
     static std::map<T*, int> counter;   // reference counter
 };
 template <typename T>
 std::map<T*, int> Vdarray<T>::counter;   // reference counter
 
+
+void array_add_1(int array[], const std::vector<int> &size);    // 数组自增
+void print_size(const std::vector<int> &size);                  // 打印Vdarray的size
 
 
 namespace VDarray {

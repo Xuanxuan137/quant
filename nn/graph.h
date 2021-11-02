@@ -6,9 +6,15 @@
 #define QUANT_GRAPH_H
 
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/core/hal/interface.h>
 
 #include "vdarray.h"
 #include "node.h"
@@ -30,48 +36,52 @@
  * 调用forward的函数自行根据上下文处理返回值类型
  */
 
-/*
- * Calculation Graph:
- * Calculation graph use vector to store node lists, in which each element is a node
- * When call forward to inference, we transfer the pre-stored input data which is in Vdarray type into forward(),
- * and return Vdarray data after calculate.
- * Graph does not manage data type, so it does not know the data type of Vdarray, so we use void* to transfer
- * pointer. We need to change the type of the pointer when use the data.
- *
- * The calculation idea of forward:
- * Taking into account the need to process a large number of pictures, if each picture needs to be re-applied
- * for storage space for intermediate results during the calculation process, it will inevitably be a waste of time
- * Therefore, we need to apply for storage space in advance before calculation, and reuse this space during the
- * calculation of each picture. Then we must be able to know the data type in Graph (float32? uint8?) and the
- * output size of each node, then we'd better save these two data in Node. In this way, the following
- * steps can be followed during forward calculation:
- * 1. Apply for space (Vdarray type) for each Node's output according to Node's dtype and output size
- * 2. Traverse each Node and pass in the input (the output space pointer of the previous layer) and the output
- * space pointer (the Node will automatically calculate according to the operator type)
- * 3. After getting the final result, return the result pointer (void*)
- * The function that calls forward handles the return value type according to the context by itself
- */
 
 
 class Graph {
 public:
-    std::vector<Node> node_list;        // node list
+    std::vector<Node*> node_list;        // 节点列表
+
+    /*
+     * 后面的节点在推断output_shape时需要用到前面节点的output shape，所以需要传入前面节点的output_shape。本想直接传入
+     * node_list，但这会导致node和op相互include，所以新建一个vector用于存储各节点的output_shape，然后传入这个vector
+     */
     std::vector<std::vector<int> > output_shape_list;
+
     /*
-     * Later nodes need to use the output size of the previous node in the analysis, so the output size
-     * of the previous node needs to be passed to the constructor of Node. Originally I wanted to directly
-     * pass the node_list in, but because it needs to be passed to the op, it is necessary to include op
-     * and node each other, which is very troublesome to deal with, so create a new vector and save the
-     * output_shape of each node
+     * 这个vector用于存储forward过程中的中间结果，即各节点的输出
+     * vector里存储的实际类型是Vdarray<>*，但由于graph不处理类型，所以将它设为void*。forward函数需要自己处理类型
      */
+    std::vector<void*> intermediate_results;
+
     explicit Graph(const std::string& path);                // constructor
-    // void * forward(void * input);
+    ~Graph();
+
     /*
-     * Forward propagation function. Since graph does not limit the data type (float32 or uint8, etc.),
-     * only void* is returned here. The actual return is Vdarray<>*. Need to modify the pointer type
-     * according to the situation
+     * 由于forward()每次只能计算一个batch，如果在forward()里为中间结果分配空间，那么每次调用forward都要重新分配空间，会
+     * 浪费大量时间。所以提供此方法，可在调用forward的函数中分配空间
+     * 同时提供释放空间的方法
      */
+    void alloc_intermediate_results();
+    void free_intermediate_results();
+
+    /*
+     * 前向传播函数。由于graph不限制数据类型(float32 uint8等)，这里只返回std::vector<void*>。实际返回类型为
+     * std::vector<Vdarray<>*>。调用者需要根据上下文修改指针类型
+     * 考虑到某些神经网络可能有超过1个输出节点，这里使用vector存储返回值
+     */
+     std::vector<void*> forward(void * input);
+
+    /*
+     * 融合算子。将batch_norm2d融入conv2d
+     * 只能在dtype=="float32"时使用此函数
+     */
+     void fuse_op(bool calc_running, int running_size, Vdarray<uint8>* calc_running_img,
+                  Vdarray<float32>* running_mean, Vdarray<float32>* running_var);
 };
+
+
+void test_accuracy(const std::string &val_set_path, Graph * graph, int *infer_shape);   // 根据val set路径测试准确率
 
 
 #endif //QUANT_GRAPH_H

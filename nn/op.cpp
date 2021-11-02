@@ -7,15 +7,15 @@
 Input::Input(const std::vector <std::string>& parameters)
 {
     /*
-     * Analyze parameters to set attributes for the Input operator. Possible parameter pairs:
+     * 分析参数为算子设置属性。可能的参数对包括：
      * shape=(1,1,28,28)
      * dtype=float32
      */
-    // Traverse each parameter pair in parameters
+    // 遍历参数对
     for(const std::string &s: parameters) {
-        // Split parameter pair, divided into parameter and parameter value
+        // 切分参数对，分为参数和参数值
         std::vector<std::string> para_pair = split(s, "=");
-        // Different processing for each parameter
+        // 不同参数进行不同处理
         if(para_pair[0] == "shape") {   // shape=(1,1,28,28)
             std::string temp = replace(para_pair[1], "(", "");
             temp = replace(temp, ")", "");
@@ -26,23 +26,21 @@ Input::Input(const std::vector <std::string>& parameters)
         }
         else if(para_pair[0] == "dtype") {  // dtype=float32
             // do nothing.
-            // In the latest design, the data type and the operator name are bound, this parameter is no longer needed
+            // 在最新设计中，数据类型和算子名称绑定，此参数无效
         }
     }
 }
 
-//Input::~Input() {
-//
-//}
+Input::~Input() = default;
 
 Relu::Relu(const std::vector<std::string>& parameters,
            const std::vector<std::vector<int> > &output_shape_list)
 {
     /*
-     * Analyze parameters to set attributes for Relu operator
+     * 分析参数为算子设置属性。可能的参数对包括：
      * input=%1
      */
-    // Iterate over parameter pairs
+    // 遍历参数对
     for(const std::string &s: parameters) {
         std::vector<std::string> para_pair = split(s, "=");
         if(para_pair[0] == "input") {
@@ -50,16 +48,18 @@ Relu::Relu(const std::vector<std::string>& parameters,
             this->input_node = (int)strtol(temp.c_str(), nullptr, 10);
         }
     }
-    // set output_shape
+    // 设置output_shape
     output_shape = output_shape_list[input_node];
 }
+
+Relu::~Relu() = default;
 
 
 Conv2d::Conv2d(const std::vector<std::string> &parameters,
                const std::vector<std::vector<int>> &output_shape_list)
 {
     /*
-     * Analyze parameters to set attributes for Conv2d operator
+     * 分析参数为算子设置属性。可能的参数对包括：
      * input=%0
      * weight=../weight/conv1_weight.bin
      * bias=../weight/conv1_bias.bin
@@ -70,7 +70,7 @@ Conv2d::Conv2d(const std::vector<std::string> &parameters,
      * padding=(1,1)
      * dilation=(1,1)
      */
-    // Iterate over parameter pairs
+    // 遍历参数对
     for(const std::string &s: parameters) {
         std::vector<std::string> para_pair = split(s, "=");
         if(para_pair[0] == "input") {
@@ -78,7 +78,7 @@ Conv2d::Conv2d(const std::vector<std::string> &parameters,
             this->input_node = (int)strtol(temp.c_str(), nullptr, 10);
         }
         else if(para_pair[0] == "weight") {
-            this->weight_path = (std::string)para_pair[1];  // Why add force type conversion? I don't know, but clion will mark it to yellow if I do not add
+            this->weight_path = (std::string)para_pair[1];  // 为什么加强制类型转换？我不知道，但不加Clion会标黄
         }
         else if(para_pair[0] == "bias") {
             this->bias_path = (std::string)para_pair[1];
@@ -122,25 +122,25 @@ Conv2d::Conv2d(const std::vector<std::string> &parameters,
             }
         }
     }
-    // read weight
-    weight = Vdarray<float>(std::vector<int>{output_channel, input_channel, kernel_size[0], kernel_size[1]});
+    // 读取 weight
+    weight = Vdarray<float32>(std::vector<int>{output_channel, input_channel, kernel_size[0], kernel_size[1]});
     FILE * weight_file = fopen(weight_path.c_str(), "rb");
     fread(weight.data, sizeof(float), output_channel*input_channel*kernel_size[0]*kernel_size[1], weight_file);
     fclose(weight_file);
-    // read bias
-    bias = Vdarray<float>(std::vector<int>{output_channel});
+    // 读取 bias
+    bias = Vdarray<float32>(std::vector<int>{output_channel});
     FILE * bias_file = fopen(bias_path.c_str(), "rb");
     fread(bias.data, sizeof(float), output_channel, bias_file);
     fclose(bias_file);
-    // set output_shape
+    // 设置output_shape
     /*
-     * What should be calculated here? Currently calculated according to the following method, not sure if it is correct
-     * 0. In NCHW, N will not change, C=output_channel，HW is calculated as follows
-     * 1. According to padding，expand the input size up and down and left and right to get the padding size.
+     * 按如下方式计算output_shape，但不确定对不对
+     * 0. NCHW中, N不变, C=output_channel，HW如下计算
+     * 1. 根据padding，对上下左右进行扩展
      *      nh=h+ph*2, nw=w+ph*2
-     * 2. According to the kernel_size and dilation to calculate the kernel covers area in convolution.
+     * 2. 根据kernel_size和dilation计算卷积过程中，kernel覆盖的大小
      *      nkh=dh*(kh-1)+1, nkw=dw*(kw-1)+1
-     * 3. Calculate the intercept time in convolution according to the kerneal cover area and stride
+     * 3. 根据stride计算卷积过程中，卷积核截取图片的次数
      *      nh=(nh-nkh)/sh+1, nw=(nw-nkw)/sw+1
      */
     std::vector<int> input_shape = output_shape_list[input_node];
@@ -158,19 +158,21 @@ Conv2d::Conv2d(const std::vector<std::string> &parameters,
     output_shape.push_back(nw);                 // W
 }
 
+Conv2d::~Conv2d() = default;
+
 
 Maxpool2d::Maxpool2d(const std::vector<std::string> &parameters,
                      const std::vector<std::vector<int>> &output_shape_list)
 {
     /*
-     * Analyze parameters to set attributes for Maxpool2d operator
+     * 分析参数为算子设置属性。可能的参数对包括：
      * input=%2
      * kernel_size=(2,2)
      * stride=None or stride=(2,2)
      * padding=(0,0)
      * dilation=(1,1)
      */
-    // Iterate over parameter pairs
+    // 遍历参数对
     for(const std::string &s: parameters) {
         std::vector<std::string> para_pair = split(s, "=");
         if(para_pair[0] == "input") {
@@ -215,15 +217,14 @@ Maxpool2d::Maxpool2d(const std::vector<std::string> &parameters,
             }
         }
     }
-    // set output_shape
+    // 设置output_shape
     /*
-     * What should be calculated here? Currently calculated according to the following method, not sure if it is correct
-     * 0. In NCHW, N will not change, C=output_channel，HW is calculated as follows
-     * 1. According to padding，expand the input size up and down and left and right to get the padding size.
+     * 0. NCHW中, N不变, C=output_channel，HW如下
+     * 1. 根据padding，对上下左右进行扩展
      *      nh=h+ph*2, nw=w+ph*2
-     * 2. According to the kernel_size and dilation to calculate the kernel covers area in convolution.
+     * 2. 根据kernel_size和dilation计算池化过程中，kernel覆盖的大小
      *      nkh=dh*(kh-1)+1, nkw=dw*(kw-1)+1
-     * 3. Calculate the intercept time in convolution according to the kerneal cover area and stride
+     * 3. 根据stride计算池化过程中，kernel截取图片的次数
      *      nh=(nh-nkh)/sh+1, nw=(nw-nkw)/sw+1
      */
     std::vector<int> input_shape = output_shape_list[input_node];
@@ -241,14 +242,16 @@ Maxpool2d::Maxpool2d(const std::vector<std::string> &parameters,
     this->output_shape.push_back(nw);                   // W
 }
 
+Maxpool2d::~Maxpool2d() = default;
+
 Flatten::Flatten(const std::vector<std::string> &parameters,
                  const std::vector<std::vector<int>> &output_shape_list)
 {
     /*
-     * Analyze parameters to set attributes for Flatten operator
+     * 分析参数为算子设置属性。可能的参数对包括：
      * input=%1
      */
-    // Iterate over parameter pairs
+    // 遍历参数对
     for(const std::string &s: parameters) {
         std::vector<std::string> para_pair = split(s, "=");
         if(para_pair[0] == "input") {
@@ -256,9 +259,9 @@ Flatten::Flatten(const std::vector<std::string> &parameters,
             this->input_node = (int)strtol(temp.c_str(), nullptr, 10);
         }
     }
-    // set output_shape
+    // 设置output_shape
     /*
-     * In NCHW, N does not change. CHW multiplied to become L
+     * NCHW中, N不变. CHW相乘变为L
      */
     std::vector<int> input_shape = output_shape_list[input_node];
     this->output_shape.push_back(input_shape[0]);
@@ -269,19 +272,21 @@ Flatten::Flatten(const std::vector<std::string> &parameters,
     this->output_shape.push_back(len);
 }
 
+Flatten::~Flatten() = default;
+
 
 Dense::Dense(const std::vector<std::string> &parameters,
              const std::vector<std::vector<int>> &output_shape_list)
 {
     /*
-     * Analyze parameters to set attributes for the Dense operator
+     * 分析参数为算子设置属性。可能的参数对包括：
      * input=%9
      * weight=../weight/fc1_weight.bin
      * bias=../weight/fc1_bias.bin
      * output_channel=10
      * input_channel=3136
      */
-    // Iterate over parameter pairs
+    // 遍历参数对
     for(const std::string &s: parameters) {
         std::vector<std::string> para_pair = split(s, "=");
         if(para_pair[0] == "input") {
@@ -301,33 +306,35 @@ Dense::Dense(const std::vector<std::string> &parameters,
             this->input_channel = (int)strtol(para_pair[1].c_str(), nullptr, 10);
         }
     }
-    // read weight
-    weight = Vdarray<float>(std::vector<int>{output_channel, input_channel});
+    // 读取 weight
+    weight = Vdarray<float32>(std::vector<int>{output_channel, input_channel});
     FILE * weight_file = fopen(weight_path.c_str(), "rb");
     fread(weight.data, sizeof(float), output_channel*input_channel, weight_file);
     fclose(weight_file);
-    // read bias
-    bias = Vdarray<float>(std::vector<int>{output_channel});
+    // 读取 bias
+    bias = Vdarray<float32>(std::vector<int>{output_channel});
     FILE * bias_file = fopen(bias_path.c_str(), "rb");
     fread(bias.data, sizeof(float), output_channel, bias_file);
     fclose(bias_file);
-    // set output_shape
+    // 设置output_shape
     /*
-     * In NL, N does not change, L becomes output_channel
+     * 在NL中, N不变, L变为output_channel
      */
     std::vector<int> input_shape = output_shape_list[input_node];
     output_shape.push_back(input_shape[0]);
     output_shape.push_back(output_channel);
 }
 
+Dense::~Dense() = default;
+
 Output::Output(const std::vector<std::string> &parameters,
                const std::vector<std::vector<int> > &output_shape_list)
 {
     /*
-     * Analyze parameters to set attributes for the Output operator
+     * 分析参数为算子设置属性。可能的参数对包括：
      * input=%1
      */
-    // Iterate over parameter pairs
+    // 遍历参数对
     for(const std::string &s: parameters) {
         std::vector<std::string> para_pair = split(s, "=");
         if(para_pair[0] == "input") {
@@ -335,20 +342,22 @@ Output::Output(const std::vector<std::string> &parameters,
             this->input_node = (int)strtol(temp.c_str(), nullptr, 10);
         }
     }
-    // set output_shape
+    // 设置output_shape
     this->output_shape = output_shape_list[input_node];
 }
+
+Output::~Output() = default;
 
 
 Add::Add(const std::vector<std::string> &parameters,
          const std::vector<std::vector<int>> &output_shape_list)
 {
     /*
-     * Analyse parameters to set attributes for the Add operator
+     * 分析参数为算子设置属性。可能的参数对包括：
      * input1=%1
      * input2=%2
      */
-    // Iterate over parameter pairs
+    // 遍历参数对
     for(const std::string &s: parameters) {
         std::vector<std::string> para_pair = split(s, "=");
         if(para_pair[0] == "input1") {
@@ -360,21 +369,23 @@ Add::Add(const std::vector<std::string> &parameters,
             this->input_node2 = (int)strtol(temp.c_str(), nullptr, 10);
         }
     }
-    // set output_shape
+    // 设置output_shape
     assert(output_shape_list[input_node1] == output_shape_list[input_node2]);
     this->output_shape = output_shape_list[input_node1];
 }
+
+Add::~Add() = default;
 
 Concat::Concat(const std::vector<std::string> &parameters,
                const std::vector<std::vector<int>> &output_shape_list)
 {
     /*
-     * Analyse parameters to set attributes for the Concat operator
+     * 分析参数为算子设置属性。可能的参数对包括：
      * input1=%1
      * input2=%2
      * dim=0
      */
-    // Iterate over parameter pairs
+    // 遍历参数对
     for(const std::string &s: parameters) {
         std::vector<std::string> para_pair = split(s, "=");
         if(para_pair[0] == "input1") {
@@ -389,10 +400,9 @@ Concat::Concat(const std::vector<std::string> &parameters,
             this->dim = (int)strtol(para_pair[1].c_str(), nullptr, 10);
         }
     }
-    // Set output_shape
+    // 设置output_shape
     /*
-     * How to calculate output shape?
-     * Add the axis specified by dim, others keep unchanged
+     * dim指定的axis相加，其他不变
      */
     std::vector<int> input_shape1 = output_shape_list[input_node1];
     std::vector<int> input_shape2 = output_shape_list[input_node2];
@@ -406,3 +416,5 @@ Concat::Concat(const std::vector<std::string> &parameters,
         }
     }
 }
+
+Concat::~Concat() = default;
