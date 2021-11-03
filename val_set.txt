@@ -1448,7 +1448,6 @@
 ../mnist_jpg/9_611.jpg 9
 ../mnist_jpg/8_402.jpg 8
 ../mnist_jpg/0_36.jpg 0
-../mnist_jpg/.DS_Store .DS
 ../mnist_jpg/0_564.jpg 0
 ../mnist_jpg/1_777.jpg 1
 ../mnist_jpg/6_290.jpg 6

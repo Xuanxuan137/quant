@@ -19,6 +19,7 @@
 #include "vdarray.h"
 #include "node.h"
 #include "util.h"
+#include "preprocess.h"
 
 /*
  * 计算图：
@@ -81,7 +82,6 @@ public:
 };
 
 
-void test_accuracy(const std::string &val_set_path, Graph * graph, int *infer_shape);   // 根据val set路径测试准确率
 
 
 #endif //QUANT_GRAPH_H

@@ -689,6 +689,18 @@ Vdarray<T> Vdarray<T>::broadcast_to(const std::vector<int> &target_size) {
      * 4. 遍历result，按照上面第4条规则从new_this取数据(虽然没有创建new_this，但事实上this扩展为new_this后，data中数据
      *      偏移是不变的，所以可以用new_this的offset从this中取数据)
      */
+    // 检查target_size中不能有负值
+    for(const int &i: target_size) {
+        if(i <= 0) {
+            fprintf(stderr, "all elements of broadcast shape must be non-negative\n");
+            exit(-1);
+        }
+    }
+    // 检查target_size维度不能比this少
+    if(target_size.size() < this->size.size()) {
+        fprintf(stderr, "broadcast shape has less dimensions than now\n");
+        exit(-1);
+    }
     // 新建new_size
     std::vector<int> new_size;
     int target_dim = (int)target_size.size();
@@ -753,38 +765,105 @@ Vdarray<T> Vdarray<T>::broadcast_to(const std::vector<int> &target_size) {
     return result;
 }
 
-
-void array_add_1(int array[], const std::vector<int> &size)
-{
+template<typename T>
+Vdarray<T> Vdarray<T>::divide(Vdarray<T> divisor) {
     /*
-     * 给出一个数组array，和数组每一位的进制size。让数组自增一
-     * 常用于Vdarray按下标遍历。调用此函数可将下标加一
+     * 除法，对true_divide的封装
      */
-    int dim = (int)size.size();
-    int p = dim-1;
-    array[p]++;
-    while(true) {
-        if(array[p] >= size[p]) {
-            array[p] = 0;
-            p--;
-            if(p < 0) {
-                break;
-            }
-            array[p]++;
-        }
-        else {
-            break;
-        }
-    }
+    return this->true_divide(divisor);
 }
 
-
-void print_size(const std::vector<int> &size)
-{
-    for(const int &i: size) {
-        printf("%d ", i);
+template<typename T>
+Vdarray<T> Vdarray<T>::true_divide(Vdarray<T> divisor) {
+    /*
+     * 除法。将this广播到divisor，或将divisor广播到this，然后进行elementwise除法
+     */
+    Vdarray<T> broadcasted_this;
+    Vdarray<T> broadcasted_divisor;
+    if(this->size.size() < divisor.size.size()) {
+        broadcasted_this = this->broadcast_to(divisor.size);
+        broadcasted_divisor = divisor;
     }
-    printf("\n");
+    else {
+        broadcasted_this = *this;
+        broadcasted_divisor = divisor.broadcast_to(this->size);
+    }
+    Vdarray<T> result{broadcasted_this.size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = broadcasted_this.data[i] / broadcasted_divisor.data[i];
+    }
+    return result;
+}
+
+template<typename T>
+Vdarray<T> Vdarray<T>::floor_divide(Vdarray<T> divisor) {
+    /*
+     * 向下取整除法。将this广播到divisor，或将divisor广播到this，然后进行elementwise除法
+     */
+    Vdarray<T> broadcasted_this;
+    Vdarray<T> broadcasted_divisor;
+    if(this->size.size() < divisor.size.size()) {
+        broadcasted_this = this->broadcast_to(divisor.size);
+        broadcasted_divisor = divisor;
+    }
+    else {
+        broadcasted_this = *this;
+        broadcasted_divisor = divisor.broadcast_to(this->size);
+    }
+    Vdarray<T> result{broadcasted_this.size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = (int)(broadcasted_this.data[i] / broadcasted_divisor.data[i]);
+    }
+    return result;
+}
+
+template<typename T>
+Vdarray<T> Vdarray<T>::operator/(Vdarray<T> divisor) {
+    /*
+     * overload /
+     */
+    return this->true_divide(divisor);
+}
+
+template<typename T>
+Vdarray<float32> Vdarray<T>::astype_float32() {
+    /*
+     * 创建一个新数组，使其值与this相同，但类型为float32
+     */
+    Vdarray<float32> result{this->size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = (float32)(this->data[i]);
+    }
+    return result;
+}
+
+template<typename T>
+Vdarray<int32> Vdarray<T>::astype_int32() {
+    /*
+     * 创建一个新数组，使其值与this相同，但类型为int32
+     */
+    Vdarray<int32> result{this->size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = (int32)(this->data[i]);
+    }
+    return result;
+}
+
+template<typename T>
+Vdarray<uint8> Vdarray<T>::astype_uint8() {
+    /*
+     * 创建一个新数组，使其值与this相同，但类型为uint8
+     */
+    Vdarray<uint8> result{this->size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = (uint8) (this->data[i]);
+    }
+    return result;
 }
 
 

@@ -77,11 +77,6 @@ int main(int argc, char *argv[]) {
     Vdarray<float32>* processed_calib_set = preprocess(calib_set);
     Vdarray<float32>* processed_bn_set = preprocess(calc_running_img);
 
-    // test accuracy TODO: delete this
-    int infer_shape[4] = {1, 1, 28, 28};
-    test_accuracy("../val_set.txt", graph, infer_shape);
-    ///////////////// TODO: delete this
-
     // TODO: fuse operator
 //    graph->fuse_op(calc_running, running_size, calc_running_img, running_mean, running_var);
 

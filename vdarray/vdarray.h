@@ -81,17 +81,22 @@ public:
     ~Vdarray();                                             // 析构函数
 
     // 数组处理
+    void print();                                           // print
+    int len();                                              // 返回数据空间元素数量
+    std::vector<int> shape();                               // shape
+    Vdarray<T> reshape(const std::vector<int>& new_size);   // reshape
+    Vdarray<T> transpose(const std::vector<int>& new_order);// transpose
+    Vdarray<T> broadcast_to(const std::vector<int> &size);  // broadcast_to
+
+    // 数据处理
     T to_num();                                             // 返回数值
     void set_zero();                                        // data置0
     void set_rand();                                        // data置随机值
-    Vdarray<T> reshape(const std::vector<int>& new_size);   // reshape
-    Vdarray<T> transpose(const std::vector<int>& new_order);// transpose
-    void print();                                           // print
-    std::vector<int> shape();                               // shape
-    int len();                                              // 返回数据空间元素数量
     int argmax();                                           // argmax
     Vdarray<int> argmax(int axis);                          // argmax
-    Vdarray<T> broadcast_to(const std::vector<int> &size);  // broadcast_to
+    Vdarray<uint8> astype_uint8();                          // astype("uint8");
+    Vdarray<int32> astype_int32();                          // astype("int32")
+    Vdarray<float32> astype_float32();                      // astype("float32")
 
     // 数学运算
     Vdarray<T> divide(float64 divisor);                     // 除法

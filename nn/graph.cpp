@@ -59,6 +59,37 @@ std::vector<void*> Graph::forward(void *input) {
      * 2. 遍历graph中所有节点，传入input和output指针
      * 3. 如果某个节点是output节点，那么将它对应的中间结果Vdarray数组指针加入一个vector，并最终返回这个vector
      */
+    for(const Node* node: node_list) {
+        if(node->name == "input") {
+
+        }
+        else if(node->name == "nn.conv2d") {
+
+        }
+        else if(node->name == "nn.relu") {
+
+        }
+        else if(node->name == "nn.maxpool2d") {
+
+        }
+        else if(node->name == "nn.flatten") {
+
+        }
+        else if(node->name == "nn.dense") {
+
+        }
+        else if(node->name == "add") {
+
+        }
+        else if(node->name == "concat") {
+
+        }
+        else {
+            fprintf(stderr, "Found not supported node in graph.forward()\n");
+            exit(-1);
+        }
+    }
+
     Vdarray<float32> * temp = new Vdarray<float32>{std::vector<int>{1, 10}};
     temp->set_rand();
     std::vector<void*> ret;
@@ -99,66 +130,4 @@ void Graph::free_intermediate_results() {
     }
 }
 
-void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_shape) {
-    /*
-     * 测试计算图准确率
-     * 只用于分类任务
-     */
-    printf("Test accuracy:\n");
-    // 打开val set数据集文件
-    std::ifstream file;
-    file.open(val_set_path, std::ios::in);
-    if(!file.is_open()) {
-        std::cerr << "calib set txt file not found\n";
-        exit(-1);
-    }
-    // 遍历文件里的每一行
-    int correct = 0;
-    int total = 0;
-    std::string line;
-    graph->alloc_intermediate_results();    // 为中间结果分配内存
-    while(std::getline(file, line)) {
-        // 将行分为图片路径和分类标签
-        std::vector<std::string> line_split = split(line, " ");
-        std::string img_path = line_split[0];
-        int answer = (int)strtol(line_split[1].c_str(), nullptr, 10);
-        // 将img读入Vdarray
-        cv::Mat img;
-        cv::Mat dst;
-        if(infer_shape[1] == 1) {
-            img = cv::imread(img_path, cv::IMREAD_GRAYSCALE);;
-        }
-        else if(infer_shape[1] == 3) {
-            img = cv::imread(img_path, cv::IMREAD_COLOR);;
-        }
-        // Resize
-        cv::resize(img, dst, cv::Size(infer_shape[3], infer_shape[2]), 0, 0, cv::INTER_LINEAR);
-        // 存储resized图片到Vdarray
-        Vdarray<uint8> bgr_hwc_img(std::vector<int>{infer_shape[2], infer_shape[3], infer_shape[1]});
-        memcpy(bgr_hwc_img.data, dst.data, sizeof(unsigned char)*infer_shape[2]*infer_shape[3]*infer_shape[1]);
-        // hwc to chw
-        Vdarray<uint8> bgr_chw_img = bgr_hwc_img.transpose(std::vector<int>{2, 0, 1});
-        // bgr to rgb
-        Vdarray<uint8> rgb_chw_img(bgr_chw_img.shape());
-        if(infer_shape[1] == 3) {
-            rgb_chw_img[0] = bgr_chw_img[2];
-            rgb_chw_img[1] = bgr_chw_img[1];
-            rgb_chw_img[2] = bgr_chw_img[0];
-        }
-        else {
-            rgb_chw_img[0] = bgr_chw_img[0];
-        }
-        // 调用graph->forward
-        // 不需要释放result_vector中的结果, 应为它们是指向graph中intermediate_results里空间的指针，在forward返回时不会分配新空间
-        std::vector<void*> result_vector = graph->forward(&rgb_chw_img);
-        int result = ((Vdarray<float32>*)(result_vector[0]))->argmax();
-        if(result == answer) {
-            correct ++;
-        }
-        total ++;
-        printf("\rProcessing: %d", total);
-        fflush(stdout);
-    }
-    printf("Correct: %d, Total: %d, accuracy: %f\n", correct, total, (float)correct/(float)total);
-    graph->free_intermediate_results();
-}
+
