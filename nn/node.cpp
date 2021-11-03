@@ -76,8 +76,7 @@ Node::~Node() {
     /*
      * destructor: 释放op
      */
-    if(0) {}
-    else if(this->name == "nn.conv2d") {
+    if(this->name == "nn.conv2d") {
         delete((Conv2d*)op);
     }
     else if(this->name == "nn.relu") {
@@ -103,6 +102,62 @@ Node::~Node() {
     }
     else if(this->name == "concat") {
         delete((Concat*)op);
+    }
+}
+
+void Node::forward(const std::vector<void *> &intermediate_results, void *input)
+{
+    /*
+     * 前向传播函数
+     * 传入存储所有中间结果指针的vector，和graph的input的指针
+     * 根据算子名称分类处理：调用算子的forward，传入input和output指针
+     */
+    if(this->name == "nn.conv2d") {
+        ((Conv2d*)op)->forward(
+                (Vdarray<float32>*)intermediate_results[((Conv2d*)op)->input_node],
+                (Vdarray<float32>*)intermediate_results[this->number]);
+    }
+    else if(this->name == "nn.relu") {
+        ((Relu*)op)->forward(
+                (Vdarray<float32>*)intermediate_results[((Relu*)op)->input_node],
+                (Vdarray<float32>*)intermediate_results[this->number]);
+    }
+    else if(this->name == "input") {
+        ((Input*)op)->forward(
+                (Vdarray<float32>*)input,
+                (Vdarray<float32>*)intermediate_results[this->number]);
+    }
+    else if(this->name == "nn.maxpool2d") {
+        ((Maxpool2d*)op)->forward(
+                (Vdarray<float32>*)intermediate_results[((Maxpool2d*)op)->input_node],
+                (Vdarray<float32>*)intermediate_results[this->number]);
+    }
+    else if(this->name == "nn.flatten") {
+        ((Flatten*)op)->forward(
+                (Vdarray<float32>*)intermediate_results[((Flatten*)op)->input_node],
+                (Vdarray<float32>*)intermediate_results[this->number]);
+    }
+    else if(this->name == "nn.dense") {
+        ((Dense*)op)->forward(
+                (Vdarray<float32>*)intermediate_results[((Dense*)op)->input_node],
+                (Vdarray<float32>*)intermediate_results[this->number]);
+    }
+    else if(this->name == "output") {
+        ((Output*)op)->forward(
+                (Vdarray<float32>*)intermediate_results[((Output*)op)->input_node],
+                (Vdarray<float32>*)intermediate_results[this->number]);
+    }
+    else if(this->name == "add") {
+        ((Add*)op)->forward(
+                (Vdarray<float32>*)intermediate_results[((Add*)op)->input_node1],
+                (Vdarray<float32>*)intermediate_results[((Add*)op)->input_node2],
+                (Vdarray<float32>*)intermediate_results[this->number]);
+    }
+    else if(this->name == "concat") {
+        ((Concat*)op)->forward(
+                (Vdarray<float32>*)intermediate_results[((Concat*)op)->input_node1],
+                (Vdarray<float32>*)intermediate_results[((Concat*)op)->input_node2],
+                (Vdarray<float32>*)intermediate_results[this->number]);
     }
 }
 

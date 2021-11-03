@@ -59,41 +59,19 @@ std::vector<void*> Graph::forward(void *input) {
      * 2. 遍历graph中所有节点，传入input和output指针
      * 3. 如果某个节点是output节点，那么将它对应的中间结果Vdarray数组指针加入一个vector，并最终返回这个vector
      */
-    for(const Node* node: node_list) {
-        if(node->name == "input") {
+    // 使用各节点进行前向传播计算
+    for(Node *node: node_list) {
+        node->forward(intermediate_results, input);
+    }
 
-        }
-        else if(node->name == "nn.conv2d") {
-
-        }
-        else if(node->name == "nn.relu") {
-
-        }
-        else if(node->name == "nn.maxpool2d") {
-
-        }
-        else if(node->name == "nn.flatten") {
-
-        }
-        else if(node->name == "nn.dense") {
-
-        }
-        else if(node->name == "add") {
-
-        }
-        else if(node->name == "concat") {
-
-        }
-        else {
-            fprintf(stderr, "Found not supported node in graph.forward()\n");
-            exit(-1);
+    // 将output节点的输出push到ret里
+    std::vector<void*> ret;
+    for(Node *node: node_list) {
+        if(node->name == "output") {
+            ret.push_back(intermediate_results[node->number]);
         }
     }
 
-    Vdarray<float32> * temp = new Vdarray<float32>{std::vector<int>{1, 10}};
-    temp->set_rand();
-    std::vector<void*> ret;
-    ret.push_back(temp);
     return ret;
 }
 

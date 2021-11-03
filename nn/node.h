@@ -36,7 +36,12 @@ public:
     explicit Node(const std::string& read_graph_line,
                   const std::vector<std::vector<int> > &output_shape_list);  // constructor
     ~Node();                                                // destructor
-//    void forward(void * input, void* output); // 前向传播函数。由于数据类型不确定，所以使用void*。需要在内部决定类型
+
+    /*
+     * 前向传播函数。Graph在调用node的forward时，将预分配的中间结果空间指针vector
+     * 和整个计算图的输入数据指针传入，这些指针类型均为void*，需要forward内部根据算子名称进行处理
+     */
+    void forward(const std::vector<void*> &intermediate_results, void* input);
 };
 
 int get_number(const std::string &graph_line);

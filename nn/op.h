@@ -45,9 +45,9 @@
 #include <vector>
 #include <string>
 #include <cstdio>
+#include <cassert>
 
 #include "util.h"
-#include "node.h"
 #include "vdarray.h"
 
 class Input {
@@ -55,6 +55,7 @@ public:
     std::vector<int> output_shape;      // 输出尺寸
     explicit Input(const std::vector<std::string>& parameters);             // constructor
     ~Input();
+    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
 };
 
 class Conv2d {
@@ -74,6 +75,7 @@ public:
     Conv2d(const std::vector<std::string>& parameters,
            const std::vector<std::vector<int> > &output_shape_list);       // constructor
     ~Conv2d();
+    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
 };
 
 class Maxpool2d {
@@ -87,6 +89,7 @@ public:
     Maxpool2d(const std::vector<std::string> &parameters,
               const std::vector<std::vector<int> > &output_shape_list);    // constructor
     ~Maxpool2d();
+    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
 };
 
 class Relu {
@@ -96,6 +99,7 @@ public:
     Relu(const std::vector<std::string>& parameters,
          const std::vector<std::vector<int> > &output_shape_list);     // constructor
     ~Relu();
+    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
 };
 
 
@@ -106,6 +110,7 @@ public:
     Flatten(const std::vector<std::string> &parameters,
             const std::vector<std::vector<int> > &output_shape_list);  // constructor
     ~Flatten();
+    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
 };
 
 
@@ -122,6 +127,7 @@ public:
     Dense(const std::vector<std::string> &parameters,
           const std::vector<std::vector<int> > &output_shape_list);     // constructor
     ~Dense();
+    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
 };
 
 
@@ -132,6 +138,7 @@ public:
     Output(const std::vector<std::string> &parameters,
            const std::vector<std::vector<int> > &output_shape_list);        // constructor
     ~Output();
+    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
 };
 
 
@@ -143,6 +150,7 @@ public:
     Add(const std::vector<std::string> &parameters,
         const std::vector<std::vector<int> > &output_shape_list);           // constructor
     ~Add();
+    void forward(Vdarray<float32> *input1, Vdarray<float32> *input2, Vdarray<float32> *output);
 };
 
 
@@ -155,6 +163,7 @@ public:
     Concat(const std::vector<std::string> &parameters,
            const std::vector<std::vector<int> > &output_shape_list);        // constructor
     ~Concat();
+    void forward(Vdarray<float32> *input1, Vdarray<float32> *input2, Vdarray<float32> *output);
 };
 
 #endif //QUANT_OP_H
