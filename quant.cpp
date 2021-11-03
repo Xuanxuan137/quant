@@ -12,11 +12,10 @@
 
 int main(int argc, char *argv[]) {
     /////////////// test
-//    Vdarray<float32> A{std::vector<int>{2,3,4}};
+//    Vdarray<int32> A{std::vector<int>{4}};
 //    A.set_rand();
 //    A.print();
-//    printf("------\n");
-//    Vdarray<float32> B = A.transpose(std::vector<int>{2,1,0});
+//    Vdarray<float32> B = A.astype_float32();
 //    B.print();
 //    return 0;
     ///////////////////////////
@@ -79,8 +78,8 @@ int main(int argc, char *argv[]) {
     Vdarray<float32>* processed_bn_set = preprocess(calc_running_img);
 
     // test accuracy TODO: delete this
-//    int infer_shape[4] = {1, 1, 28, 28};
-//    test_accuracy("../val_set.txt", graph, infer_shape);
+    int infer_shape[4] = {1, 1, 28, 28};
+    test_accuracy("../val_set.txt", graph, infer_shape);
     ///////////////// TODO: delete this
 
     // TODO: fuse operator
