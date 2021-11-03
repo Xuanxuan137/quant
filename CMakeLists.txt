@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(quant)
 
+set(CMAKE_C_COMPILER "/usr/bin/gcc")
+set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-O0 -W -Wall -fno-elide-constructors")
 # -fno-elide-constructors的作用：避免gcc对函数返回对象进行优化。

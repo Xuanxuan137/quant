@@ -133,6 +133,13 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_sha
         // 调用graph->forward
         // 不需要释放result_vector中的结果, 应为它们是指向graph中intermediate_results里空间的指针，在forward返回时不会分配新空间
         std::vector<void*> result_vector = graph->forward(processed_input);
+        // 释放processed_input
+        if(graph->node_list[0]->dtype == "uint8") {
+            delete((Vdarray<uint8>*)processed_input);
+        }
+        else {
+            delete((Vdarray<float32>*)processed_input);
+        }
         int result = ((Vdarray<float32>*)(result_vector[0]))->argmax();
         if(result == answer) {
             correct ++;

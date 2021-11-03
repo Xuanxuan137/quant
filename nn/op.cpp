@@ -31,6 +31,13 @@ Input::Input(const std::vector <std::string>& parameters)
     }
 }
 
+void Input::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+    /*
+     * Input算子的forward
+     */
+    *input = (*output).deep_copy();
+}
+
 Input::~Input() = default;
 
 Relu::Relu(const std::vector<std::string>& parameters,
@@ -50,6 +57,10 @@ Relu::Relu(const std::vector<std::string>& parameters,
     }
     // 设置output_shape
     output_shape = output_shape_list[input_node];
+}
+
+void Relu::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+
 }
 
 Relu::~Relu() = default;
@@ -158,6 +169,10 @@ Conv2d::Conv2d(const std::vector<std::string> &parameters,
     output_shape.push_back(nw);                 // W
 }
 
+void Conv2d::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+
+}
+
 Conv2d::~Conv2d() = default;
 
 
@@ -242,6 +257,10 @@ Maxpool2d::Maxpool2d(const std::vector<std::string> &parameters,
     this->output_shape.push_back(nw);                   // W
 }
 
+void Maxpool2d::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+
+}
+
 Maxpool2d::~Maxpool2d() = default;
 
 Flatten::Flatten(const std::vector<std::string> &parameters,
@@ -270,6 +289,10 @@ Flatten::Flatten(const std::vector<std::string> &parameters,
         len *= input_shape[i];
     }
     this->output_shape.push_back(len);
+}
+
+void Flatten::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+
 }
 
 Flatten::~Flatten() = default;
@@ -325,6 +348,10 @@ Dense::Dense(const std::vector<std::string> &parameters,
     output_shape.push_back(output_channel);
 }
 
+void Dense::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+
+}
+
 Dense::~Dense() = default;
 
 Output::Output(const std::vector<std::string> &parameters,
@@ -344,6 +371,12 @@ Output::Output(const std::vector<std::string> &parameters,
     }
     // 设置output_shape
     this->output_shape = output_shape_list[input_node];
+}
+
+void Output::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+    /*
+     *
+     */
 }
 
 Output::~Output() = default;
@@ -372,6 +405,10 @@ Add::Add(const std::vector<std::string> &parameters,
     // 设置output_shape
     assert(output_shape_list[input_node1] == output_shape_list[input_node2]);
     this->output_shape = output_shape_list[input_node1];
+}
+
+void Add::forward(Vdarray<float32> *input1, Vdarray<float32> *input2, Vdarray<float32> *output) {
+
 }
 
 Add::~Add() = default;
@@ -415,6 +452,10 @@ Concat::Concat(const std::vector<std::string> &parameters,
             output_shape.push_back(input_shape1[i]);
         }
     }
+}
+
+void Concat::forward(Vdarray<float32> *input1, Vdarray<float32> *input2, Vdarray<float32> *output) {
+
 }
 
 Concat::~Concat() = default;

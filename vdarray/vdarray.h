@@ -87,6 +87,7 @@ public:
     Vdarray<T> reshape(const std::vector<int>& new_size);   // reshape
     Vdarray<T> transpose(const std::vector<int>& new_order);// transpose
     Vdarray<T> broadcast_to(const std::vector<int> &size);  // broadcast_to
+    Vdarray<T> deep_copy();                                 // deep copy
 
     // 数据处理
     T to_num();                                             // 返回数值

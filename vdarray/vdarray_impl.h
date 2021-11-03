@@ -866,5 +866,16 @@ Vdarray<uint8> Vdarray<T>::astype_uint8() {
     return result;
 }
 
+template<typename T>
+Vdarray<T> Vdarray<T>::deep_copy() {
+    /*
+     * 创建一个新的数组，使其与this完全相同(但拥有不同的内存空间)，然后返回它
+     */
+    Vdarray<T> ret{this->size};
+    int len = ret.len();
+    memcpy(ret.data, this->data, sizeof(T)*len);
+    return ret;
+}
+
 
 #endif //QUANT_NDARRAY_IMPL_H

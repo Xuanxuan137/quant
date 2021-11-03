@@ -21,3 +21,9 @@
                             (与--running_mean_var_binary二选一，若都出现，以--running_mean_var_binary优先)
                             以文本数字形式提供计算好的running mean和running var。
                             将running mean和running var以文本形式按顺序存在一个文件中，一行一个数
+
+
+
+Graph从导出模型读取，本身就是静态图，无法修改
+
+以后可以再新建一个Module类，作为动态图，允许用户调用接口。用户可以继承Module，然后重载构造函数和forward
