@@ -68,3 +68,10 @@ std::string replace(const std::string &s, const std::string &origin, const std::
 bool is_digit(char c) {
     return (c >= '0' && c <= '9');
 }
+
+
+unsigned long long get_micro_sec_time() {
+    struct timeval time_val;
+    gettimeofday(&time_val, NULL);
+    return time_val.tv_sec * 1000000 + time_val.tv_usec;
+}

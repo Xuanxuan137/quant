@@ -51,6 +51,8 @@
 #include "tensor.h"
 #include "functional.h"
 
+namespace F = functional;
+
 class Input {
 public:
     std::vector<int> output_shape;      // 输出尺寸

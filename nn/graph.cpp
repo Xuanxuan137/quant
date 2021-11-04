@@ -82,10 +82,12 @@ void Graph::alloc_intermediate_results() {
     for(const Node* node: node_list) {
         if(node->dtype == "float32") {
             Tensor<float32> *inter_res = new Tensor<float32>{node->output_shape};
+            inter_res->set_zero();
             intermediate_results.push_back(inter_res);
         }
         else if(node->dtype == "uint8") {
             Tensor<uint8> *inter_res = new Tensor<uint8>{node->output_shape};
+            inter_res->set_zero();
             intermediate_results.push_back(inter_res);
         }
     }

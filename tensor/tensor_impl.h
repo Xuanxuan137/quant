@@ -23,7 +23,7 @@ Tensor<T>::Tensor() {
        !std::is_same<T, double>::value &&
        !std::is_same<T, char>::value &&
        !std::is_same<T, unsigned char>::value) {
-        std::cerr << "Only digital type allowed in Tensor\n";
+        fprintf(stderr, "File: tensor_inpl.h, line: %d. Only digital type allowed in Tensor\n", __LINE__);
         exit(-1);
     }
     data = nullptr;
@@ -48,7 +48,7 @@ Tensor<T>::Tensor(const std::vector<int>& size) {
        !std::is_same<T, double>::value &&
        !std::is_same<T, char>::value &&
        !std::is_same<T, unsigned char>::value) {
-        std::cerr << "Only digital type allowed in Tensor\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Only digital type allowed in Tensor\n", __LINE__);
         exit(-1);
     }
     this->size = size;
@@ -63,7 +63,7 @@ Tensor<T>::Tensor(const std::vector<int>& size) {
 
     // 对刚分配的空间引用计数(如果没有bug，应该找不到)
     if(counter.find(mem_addr) != counter.end()) {   // if found
-        std::cerr << "Found just malloced \'data\' in counter when constructing\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Found just malloced \'data\' in counter when constructing\n", __LINE__);
         exit(-1);
     }
     else {
@@ -90,7 +90,7 @@ Tensor<T>::Tensor(const Tensor<T> &src) {
         counter[mem_addr]++;
     }
     else {
-        std::cerr << "Not found src \'data\' when copy constructing\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Not found src \'data\' when copy constructing\n", __LINE__);
         exit(-1);
     }
 }
@@ -117,7 +117,7 @@ Tensor<T>::~Tensor() {
         }
     }
     else {
-        std::cerr << "Not found \'data\' in counter when destructing\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Not found \'data\' in counter when destructing\n", __LINE__);
         exit(-1);
     }
 }
@@ -139,11 +139,11 @@ Tensor<T> Tensor<T>::operator[](int index)
      * 一个数值，并可使用to_num()将这个数值提取出来
      */
     if(is_num) {
-        std::cerr << "You cannot use [] on a num\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. You cannot use [] on a num\n", __LINE__);
         exit(-1);
     }
     if(index >= size[0]) {
-        std::cerr << "Index out of range\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Index out of range\n", __LINE__);
         exit(-1);
     }
     int other_dim_len = 1;      // 除第一维度外，其他维度长度的乘积，用于计算截取后长度
@@ -167,7 +167,7 @@ Tensor<T> Tensor<T>::operator[](int index)
         counter[mem_addr]++;
     }
     else {
-        std::cerr << "Not found \'data\' in []\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Not found \'data\' in []\n", __LINE__);
         exit(-1);
     }
     return temp;
@@ -184,7 +184,7 @@ Tensor<T>& Tensor<T>::operator=(Tensor<T> array)
      */
     if(this->cut > 0) {         // 如果左值是截取
         if(this->size != array.size) {
-            std::cerr << "could not broadcast input array from shape (";
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Could not broadcast input array from shape (", __LINE__);
             for(int i = 0; i<(int)array.size.size(); i++) {
                 std::cerr << array.size[i] << ", ";
             }
@@ -212,7 +212,7 @@ Tensor<T>& Tensor<T>::operator=(Tensor<T> array)
                     counter.erase(mem_addr);
                 }
             } else {
-                std::cerr << "Not found old \'data\' in counter when operator=\n";
+                fprintf(stderr, "File: tensor_impl.h, line: %d. Not found old \'data\' in counter when operator=\n", __LINE__);
                 exit(-1);
             }
         }
@@ -229,7 +229,7 @@ Tensor<T>& Tensor<T>::operator=(Tensor<T> array)
             counter[mem_addr]++;
         }
         else {
-            std::cerr << "Not found new \'data\' in counter when operator=\n";
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Not found new \'data\' in counter when operator=\n", __LINE__);
             exit(-1);
         }
     }
@@ -243,7 +243,7 @@ T Tensor<T>::to_num() {
      * 如果数组已经是数值，返回这个值
      */
     if(!is_num) {
-        std::cerr << "You cannot call to_num on a non-num array\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. You cannot call to_num on a non-num array\n", __LINE__);
         exit(-1);
     }
     return data[0];
@@ -256,7 +256,7 @@ Tensor<T> &Tensor<T>::operator=(T value) {
      * 例如, array[0][2][3] = 5;
      */
     if(!is_num) {
-        std::cerr << "You cannot assign value to a non-num array\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. You cannot assign value to a non-num array\n", __LINE__);
         exit(-1);
     }
     data[0] = value;
@@ -269,7 +269,7 @@ void Tensor<T>::set_zero() {
      * data中所有值设为0
      */
     if(data == nullptr) {
-        std::cerr << "You cannot set zero to an array not malloced\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. You cannot set zero to an array not malloced\n", __LINE__);
         exit(-1);
     }
     int space = 1;
@@ -285,7 +285,7 @@ void Tensor<T>::set_rand() {
      * data中所有值设为随机值
      */
     if(data == nullptr) {
-        std::cerr << "You cannot set rand to an array not malloced\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. You cannot set rand to an array not malloced\n", __LINE__);
         exit(-1);
     }
     int space = 1;
@@ -319,7 +319,7 @@ Tensor<T> Tensor<T>::reshape(const std::vector<int> &new_size) {
             negative_count++;
         }
         else if(i == 0) {
-            fprintf(stderr, "Cannot reshape array of size %d into shape(", old_space);
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Cannot reshape array of size %d into shape(", __LINE__, old_space);
             for(const int &j: new_size) {
                 fprintf(stderr, "%d, ", j);
             }
@@ -331,12 +331,12 @@ Tensor<T> Tensor<T>::reshape(const std::vector<int> &new_size) {
         }
     }
     if(negative_count > 1) {
-        fprintf(stderr, "Can only specify one unknown dimension\n");
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Can only specify one unknown dimension\n", __LINE__);
         exit(-1);
     }
     if(negative_count == 0) {
         if(old_space != new_space) {
-            fprintf(stderr, "Cannot reshape array of size %d into shape(", old_space);
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Cannot reshape array of size %d into shape(", __LINE__, old_space);
             for(const int &j: new_size) {
                 fprintf(stderr, "%d, ", j);
             }
@@ -361,7 +361,7 @@ Tensor<T> Tensor<T>::reshape(const std::vector<int> &new_size) {
         counter[mem_addr]++;
     }
     else {
-        std::cerr << "Not found \'data\' when reshape\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Not found \'data\' when reshape\n", __LINE__);
         exit(-1);
     }
     return temp;
@@ -421,7 +421,7 @@ Tensor<T> Tensor<T>::transpose(const std::vector<int> &new_order) {
      */
     // new_order的长度应与旧size相同
     if(this->size.size() != new_order.size()) {
-        std::cerr << "Axes don't match array\n";
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Axes don't match array\n", __LINE__);
         exit(-1);
     }
     // 检查new_order：每个元素只能出现一次，且其值应在0到n-1之间
@@ -432,14 +432,14 @@ Tensor<T> Tensor<T>::transpose(const std::vector<int> &new_order) {
     }
     for(int i = 0; i<new_order_len; i++) {
         if(new_order[i] >= new_order_len || new_order[i] < 0) {
-            fprintf(stderr, "Axis %d is out of bounds for array of dimension %d\n", new_order[i], new_order_len);
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Axis %d is out of bounds for array of dimension %d\n", __LINE__, new_order[i], new_order_len);
             exit(-1);
         }
         appear[new_order[i]]++;
     }
     for(int i = 0; i<new_order_len; i++) {
         if(appear[i] > 1) {
-            fprintf(stderr, "Repeated axis in transpose\n");
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Repeated axis in transpose\n", __LINE__);
             exit(-1);
         }
         else if(appear[i] == 0) {
@@ -531,7 +531,7 @@ Tensor<int> Tensor<T>::argmax(int axis) {
      */
     // 检查axis: axis不应超过维度，不应小于0
     if(axis >= size.size() || axis < 0) {
-        fprintf(stderr, "axis %d is out of bounds for array of dimension %d\n", axis, size.size());
+        fprintf(stderr, "File: tensor_impl.h, line: %d. axis %d is out of bounds for array of dimension %d\n", __LINE__, axis, size.size());
         exit(-1);
     }
     /*
@@ -692,13 +692,13 @@ Tensor<T> Tensor<T>::broadcast_to(const std::vector<int> &target_size) {
     // 检查target_size中不能有负值
     for(const int &i: target_size) {
         if(i <= 0) {
-            fprintf(stderr, "all elements of broadcast shape must be non-negative\n");
+            fprintf(stderr, "File: tensor_impl.h, line: %d. all elements of broadcast shape must be non-negative\n", __LINE__);
             exit(-1);
         }
     }
     // 检查target_size维度不能比this少
     if(target_size.size() < this->size.size()) {
-        fprintf(stderr, "broadcast shape has less dimensions than now\n");
+        fprintf(stderr, "File: tensor_impl.h, line: %d. broadcast shape has less dimensions than now\n", __LINE__);
         exit(-1);
     }
     // 新建new_size
@@ -720,7 +720,7 @@ Tensor<T> Tensor<T>::broadcast_to(const std::vector<int> &target_size) {
             continue;
         }
         else {
-            fprintf(stderr, "cannot broadcast (");
+            fprintf(stderr, "File: tensor_impl.h, line: %d. cannot broadcast (", __LINE__);
             for(const int &s: this->size) {
                 fprintf(stderr, "%d, ", s);
             }
@@ -875,6 +875,61 @@ Tensor<T> Tensor<T>::deep_copy() {
     int len = ret.len();
     memcpy(ret.data, this->data, sizeof(T)*len);
     return ret;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::dot(Tensor<T> B) {
+    /*
+     * 矩阵乘法
+     */
+    Tensor<T> A = *this;
+    Tensor<T> C{std::vector<int>{A.size[0], B.size[1]}};
+    int M = A.size[0];
+    int K = A.size[1];
+    int N = B.size[1];
+    for(int i = 0; i<M; i++) {
+        for(int j = 0; j<N; j++) {
+            T temp = 0;
+            for(int k = 0; k<K; k++) {
+                temp += A.data[i * K + k] * B.data[k * N + j];
+            }
+            C.data[i * N + j] = temp;
+        }
+    }
+    return C;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::add(float64 adder) {
+    /*
+     * add
+     */
+    Tensor<T> result{this->size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = this->data[i] + adder;
+    }
+    return result;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::operator+(float64 adder) {
+    /*
+     * overload +
+     */
+    return this->add(adder);
+}
+
+template<typename T>
+Tensor<T> &Tensor<T>::operator+=(float64 adder) {
+    /*
+     * overload +=
+     */
+    int len = this->len();
+    for(int i = 0; i<len; i++) {
+        this->data[i] += adder;
+    }
+    return *this;
 }
 
 

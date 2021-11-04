@@ -35,7 +35,7 @@ void Input::forward(Tensor<float32> *input, Tensor<float32> *output) {
     /*
      * Input算子的forward
      */
-    *input = (*output).deep_copy();
+    *output = (*input).deep_copy();
 }
 
 Input::~Input() = default;
@@ -63,7 +63,7 @@ void Relu::forward(Tensor<float32> *input, Tensor<float32> *output) {
     /*
      * Relu算子的forward
      */
-
+    *output = F::relu(input);
 }
 
 Relu::~Relu() = default;
@@ -173,7 +173,10 @@ Conv2d::Conv2d(const std::vector<std::string> &parameters,
 }
 
 void Conv2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
-
+    /*
+     * Conv2d算子的forward
+     */
+    *output = F::conv2d(input, &weight, &bias, stride, padding, dilation);
 }
 
 Conv2d::~Conv2d() = default;
@@ -261,7 +264,10 @@ Maxpool2d::Maxpool2d(const std::vector<std::string> &parameters,
 }
 
 void Maxpool2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
-
+    /*
+     * Maxpool2d算子的forward
+     */
+    *output = F::maxpool2d(input, kernel_size, stride, padding, dilation);
 }
 
 Maxpool2d::~Maxpool2d() = default;
@@ -295,7 +301,10 @@ Flatten::Flatten(const std::vector<std::string> &parameters,
 }
 
 void Flatten::forward(Tensor<float32> *input, Tensor<float32> *output) {
-
+    /*
+     * Flatten算子的forward
+     */
+    *output = F::flatten(input);
 }
 
 Flatten::~Flatten() = default;
@@ -337,6 +346,7 @@ Dense::Dense(const std::vector<std::string> &parameters,
     FILE * weight_file = fopen(weight_path.c_str(), "rb");
     fread(weight.data, sizeof(float), output_channel*input_channel, weight_file);
     fclose(weight_file);
+    weight = weight.transpose(std::vector<int>{1,0});
     // 读取 bias
     bias = Tensor<float32>(std::vector<int>{output_channel});
     FILE * bias_file = fopen(bias_path.c_str(), "rb");
@@ -352,7 +362,10 @@ Dense::Dense(const std::vector<std::string> &parameters,
 }
 
 void Dense::forward(Tensor<float32> *input, Tensor<float32> *output) {
-
+    /*
+     * Dense算子的forward
+     */
+    *output = F::dense(input, &weight, &bias);
 }
 
 Dense::~Dense() = default;
@@ -378,8 +391,9 @@ Output::Output(const std::vector<std::string> &parameters,
 
 void Output::forward(Tensor<float32> *input, Tensor<float32> *output) {
     /*
-     *
+     * Output算子forward
      */
+    *output = (*input).deep_copy();
 }
 
 Output::~Output() = default;

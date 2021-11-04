@@ -100,17 +100,21 @@ public:
     Tensor<float32> astype_float32();                      // astype("float32")
 
     // 数学运算
-    Tensor<T> divide(float64 divisor);                     // 除法
-    Tensor<T> true_divide(float64 divisor);                // 除法
-    Tensor<T> floor_divide(float64 divisor);               // 向下取整除法
-    Tensor<T> divide(Tensor<T> divisor);                  // 除法
-    Tensor<T> true_divide(Tensor<T> divisor);             // 除法
-    Tensor<T> floor_divide(Tensor<T> divisor);            // 向下取整乘法
+    Tensor<T> add(float64 adder);                         // 加法
+    Tensor<T> divide(float64 divisor);                      // 除法
+    Tensor<T> true_divide(float64 divisor);                 // 除法
+    Tensor<T> floor_divide(float64 divisor);                // 向下取整除法
+    Tensor<T> divide(Tensor<T> divisor);                    // 除法
+    Tensor<T> true_divide(Tensor<T> divisor);               // 除法
+    Tensor<T> floor_divide(Tensor<T> divisor);              // 向下取整乘法
+    Tensor<T> dot(Tensor<T> B);                             // matmul
 
     // 运算符重载
     Tensor<T> operator[](int index);                       // overload []
     Tensor<T>& operator=(Tensor<T> array);                // overload =
     Tensor<T>& operator=(T value);                         // overload =
+    Tensor<T> operator+(float64 adder);                     // overload +
+    Tensor<T>& operator+=(float64 adder);                   // overload +=
     Tensor<T> operator/(float64 divisor);                  // overload /
     Tensor<T> operator/(Tensor<T> divisor);               // overload /
 

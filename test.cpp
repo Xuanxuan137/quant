@@ -61,8 +61,10 @@ int main(int argc, char *argv[]) {
     }
 
     // 目前，计算图已经生成
+    unsigned long long start_time = get_micro_sec_time();
     test_accuracy(val_set_path, graph, infer_shape);
-
+    unsigned long long end_time = get_micro_sec_time();
+    printf("time: %llu\n", end_time-start_time);
 
 
 
@@ -145,7 +147,7 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_sha
             correct ++;
         }
         total ++;
-        printf("\rProcessing: %d", total);
+        printf("\rProcessing: %d. Correct: %d, accuracy: %f", total, correct, (float)correct/(float)total);
         fflush(stdout);
     }
     printf("\n");
