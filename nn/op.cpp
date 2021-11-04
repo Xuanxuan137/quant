@@ -31,7 +31,7 @@ Input::Input(const std::vector <std::string>& parameters)
     }
 }
 
-void Input::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+void Input::forward(Tensor<float32> *input, Tensor<float32> *output) {
     /*
      * Input算子的forward
      */
@@ -59,7 +59,10 @@ Relu::Relu(const std::vector<std::string>& parameters,
     output_shape = output_shape_list[input_node];
 }
 
-void Relu::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+void Relu::forward(Tensor<float32> *input, Tensor<float32> *output) {
+    /*
+     * Relu算子的forward
+     */
 
 }
 
@@ -134,12 +137,12 @@ Conv2d::Conv2d(const std::vector<std::string> &parameters,
         }
     }
     // 读取 weight
-    weight = Vdarray<float32>(std::vector<int>{output_channel, input_channel, kernel_size[0], kernel_size[1]});
+    weight = Tensor<float32>(std::vector<int>{output_channel, input_channel, kernel_size[0], kernel_size[1]});
     FILE * weight_file = fopen(weight_path.c_str(), "rb");
     fread(weight.data, sizeof(float), output_channel*input_channel*kernel_size[0]*kernel_size[1], weight_file);
     fclose(weight_file);
     // 读取 bias
-    bias = Vdarray<float32>(std::vector<int>{output_channel});
+    bias = Tensor<float32>(std::vector<int>{output_channel});
     FILE * bias_file = fopen(bias_path.c_str(), "rb");
     fread(bias.data, sizeof(float), output_channel, bias_file);
     fclose(bias_file);
@@ -169,7 +172,7 @@ Conv2d::Conv2d(const std::vector<std::string> &parameters,
     output_shape.push_back(nw);                 // W
 }
 
-void Conv2d::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+void Conv2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
 
 }
 
@@ -257,7 +260,7 @@ Maxpool2d::Maxpool2d(const std::vector<std::string> &parameters,
     this->output_shape.push_back(nw);                   // W
 }
 
-void Maxpool2d::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+void Maxpool2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
 
 }
 
@@ -291,7 +294,7 @@ Flatten::Flatten(const std::vector<std::string> &parameters,
     this->output_shape.push_back(len);
 }
 
-void Flatten::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+void Flatten::forward(Tensor<float32> *input, Tensor<float32> *output) {
 
 }
 
@@ -330,12 +333,12 @@ Dense::Dense(const std::vector<std::string> &parameters,
         }
     }
     // 读取 weight
-    weight = Vdarray<float32>(std::vector<int>{output_channel, input_channel});
+    weight = Tensor<float32>(std::vector<int>{output_channel, input_channel});
     FILE * weight_file = fopen(weight_path.c_str(), "rb");
     fread(weight.data, sizeof(float), output_channel*input_channel, weight_file);
     fclose(weight_file);
     // 读取 bias
-    bias = Vdarray<float32>(std::vector<int>{output_channel});
+    bias = Tensor<float32>(std::vector<int>{output_channel});
     FILE * bias_file = fopen(bias_path.c_str(), "rb");
     fread(bias.data, sizeof(float), output_channel, bias_file);
     fclose(bias_file);
@@ -348,7 +351,7 @@ Dense::Dense(const std::vector<std::string> &parameters,
     output_shape.push_back(output_channel);
 }
 
-void Dense::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+void Dense::forward(Tensor<float32> *input, Tensor<float32> *output) {
 
 }
 
@@ -373,7 +376,7 @@ Output::Output(const std::vector<std::string> &parameters,
     this->output_shape = output_shape_list[input_node];
 }
 
-void Output::forward(Vdarray<float32> *input, Vdarray<float32> *output) {
+void Output::forward(Tensor<float32> *input, Tensor<float32> *output) {
     /*
      *
      */
@@ -407,7 +410,7 @@ Add::Add(const std::vector<std::string> &parameters,
     this->output_shape = output_shape_list[input_node1];
 }
 
-void Add::forward(Vdarray<float32> *input1, Vdarray<float32> *input2, Vdarray<float32> *output) {
+void Add::forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output) {
 
 }
 
@@ -454,7 +457,7 @@ Concat::Concat(const std::vector<std::string> &parameters,
     }
 }
 
-void Concat::forward(Vdarray<float32> *input1, Vdarray<float32> *input2, Vdarray<float32> *output) {
+void Concat::forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output) {
 
 }
 

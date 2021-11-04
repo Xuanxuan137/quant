@@ -2,15 +2,15 @@
 // Created by noname on 2021/10/25.
 //
 
-#ifndef QUANT_NDARRAY_IMPL_H
-#define QUANT_NDARRAY_IMPL_H
+#ifndef QUANT_TENSOR_IMPL_H
+#define QUANT_TENSOR_IMPL_H
 
-#include "vdarray.h"
+#include "tensor.h"
 
 template<typename T>
-Vdarray<T>::Vdarray() {
+Tensor<T>::Tensor() {
     /*
-     * Vdarray 构造函数：
+     * Tensor 构造函数：
      * 只创建对象，不分配空间
      */
     if(!std::is_same<T, int>::value &&
@@ -23,7 +23,7 @@ Vdarray<T>::Vdarray() {
        !std::is_same<T, double>::value &&
        !std::is_same<T, char>::value &&
        !std::is_same<T, unsigned char>::value) {
-        std::cerr << "Only digital type allowed in Vdarray\n";
+        std::cerr << "Only digital type allowed in Tensor\n";
         exit(-1);
     }
     data = nullptr;
@@ -33,9 +33,9 @@ Vdarray<T>::Vdarray() {
 }
 
 template<typename T>
-Vdarray<T>::Vdarray(const std::vector<int>& size) {
+Tensor<T>::Tensor(const std::vector<int>& size) {
     /*
-     * Vdarray 构造函数：
+     * Tensor 构造函数：
      * 根据输入size分配空间，设置size
      */
     if(!std::is_same<T, int>::value &&
@@ -48,7 +48,7 @@ Vdarray<T>::Vdarray(const std::vector<int>& size) {
        !std::is_same<T, double>::value &&
        !std::is_same<T, char>::value &&
        !std::is_same<T, unsigned char>::value) {
-        std::cerr << "Only digital type allowed in Vdarray\n";
+        std::cerr << "Only digital type allowed in Tensor\n";
         exit(-1);
     }
     this->size = size;
@@ -72,7 +72,7 @@ Vdarray<T>::Vdarray(const std::vector<int>& size) {
 }
 
 template<typename T>
-Vdarray<T>::Vdarray(const Vdarray<T> &src) {
+Tensor<T>::Tensor(const Tensor<T> &src) {
     /*
      * 拷贝构造函数
      */
@@ -96,9 +96,9 @@ Vdarray<T>::Vdarray(const Vdarray<T> &src) {
 }
 
 template<typename T>
-Vdarray<T>::~Vdarray() {
+Tensor<T>::~Tensor() {
     /*
-     * Vdarray destructor：
+     * Tensor destructor：
      * 释放内存
      */
     // 查找引用计数
@@ -123,7 +123,7 @@ Vdarray<T>::~Vdarray() {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::operator[](int index)
+Tensor<T> Tensor<T>::operator[](int index)
 {
     /*
      * 重载[]
@@ -131,7 +131,7 @@ Vdarray<T> Vdarray<T>::operator[](int index)
      * 创建对象，使data指向截取后地址。mem_addr仍指向旧地址，以保持对整块内存的引用计数
      * 修改size
      */
-    Vdarray<T> temp;
+    Tensor<T> temp;
     /*
      * 例:
      * 当声明3维数组A时，A[0]应返回2维数组，A[0][0]应返回1维数组，A[0][0][0]应返回数值
@@ -174,7 +174,7 @@ Vdarray<T> Vdarray<T>::operator[](int index)
 }
 
 template<typename T>
-Vdarray<T>& Vdarray<T>::operator=(Vdarray<T> array)
+Tensor<T>& Tensor<T>::operator=(Tensor<T> array)
 {
     /*
      * 重载=
@@ -238,7 +238,7 @@ Vdarray<T>& Vdarray<T>::operator=(Vdarray<T> array)
 }
 
 template<typename T>
-T Vdarray<T>::to_num() {
+T Tensor<T>::to_num() {
     /*
      * 如果数组已经是数值，返回这个值
      */
@@ -250,7 +250,7 @@ T Vdarray<T>::to_num() {
 }
 
 template<typename T>
-Vdarray<T> &Vdarray<T>::operator=(T value) {
+Tensor<T> &Tensor<T>::operator=(T value) {
     /*
      * 重载 =，使能对is_num数组直接复制
      * 例如, array[0][2][3] = 5;
@@ -264,7 +264,7 @@ Vdarray<T> &Vdarray<T>::operator=(T value) {
 }
 
 template<typename T>
-void Vdarray<T>::set_zero() {
+void Tensor<T>::set_zero() {
     /*
      * data中所有值设为0
      */
@@ -280,7 +280,7 @@ void Vdarray<T>::set_zero() {
 }
 
 template<typename T>
-void Vdarray<T>::set_rand() {
+void Tensor<T>::set_rand() {
     /*
      * data中所有值设为随机值
      */
@@ -298,7 +298,7 @@ void Vdarray<T>::set_rand() {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::reshape(const std::vector<int> &new_size) {
+Tensor<T> Tensor<T>::reshape(const std::vector<int> &new_size) {
     /*
      * reshape
      * 检查旧size和新size
@@ -345,7 +345,7 @@ Vdarray<T> Vdarray<T>::reshape(const std::vector<int> &new_size) {
         }
     }
     // 如果size检查通过，对负值进行推断
-    Vdarray<T> temp;
+    Tensor<T> temp;
     temp.data = this->data;
     temp.mem_addr = this->mem_addr;
     temp.size = new_size;
@@ -368,7 +368,7 @@ Vdarray<T> Vdarray<T>::reshape(const std::vector<int> &new_size) {
 }
 
 template<typename T>
-void Vdarray<T>::print() {
+void Tensor<T>::print() {
     /*
      * 打印数据
      */
@@ -414,7 +414,7 @@ void Vdarray<T>::print() {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::transpose(const std::vector<int> &new_order) {
+Tensor<T> Tensor<T>::transpose(const std::vector<int> &new_order) {
     /*
      * transpose:
      * transpose(2,0,1) => dst[k][i][j] = src[i][j][k]
@@ -452,7 +452,7 @@ Vdarray<T> Vdarray<T>::transpose(const std::vector<int> &new_order) {
     for(const int& i: new_order) {
         new_size.push_back(this->size[i]);
     }
-    Vdarray<T> temp(new_size);
+    Tensor<T> temp(new_size);
     // 遍历旧数组中的元素(根据data进行遍历)，计算其下标，并转换到新下标
     int dim = this->size.size();    // 维度
     int old_index[dim];             // 旧下标
@@ -484,7 +484,7 @@ Vdarray<T> Vdarray<T>::transpose(const std::vector<int> &new_order) {
 }
 
 template<typename T>
-std::vector<int> Vdarray<T>::shape() {
+std::vector<int> Tensor<T>::shape() {
     /*
      * 返回size
      */
@@ -492,7 +492,7 @@ std::vector<int> Vdarray<T>::shape() {
 }
 
 template<typename T>
-int Vdarray<T>::argmax() {
+int Tensor<T>::argmax() {
     /*
      * argmax
      */
@@ -512,7 +512,7 @@ int Vdarray<T>::argmax() {
 }
 
 template<typename T>
-Vdarray<int> Vdarray<T>::argmax(int axis) {
+Tensor<int> Tensor<T>::argmax(int axis) {
     /*
      * 在给定axis上argmax
      * 创建新数组，其维度应比旧数组少1
@@ -538,7 +538,7 @@ Vdarray<int> Vdarray<T>::argmax(int axis) {
      * 如果原维度为1，那么返回值应为数值。但此函数无法返回数值，所以返回is_num数组
      */
     if(size.size() == 1) {
-        Vdarray<int> result(std::vector<int>{1});
+        Tensor<int> result(std::vector<int>{1});
         result.data[0] = this->argmax();
         return result;
     }
@@ -555,7 +555,7 @@ Vdarray<int> Vdarray<T>::argmax(int axis) {
         }
     }
     // 使用new_size创建结果数组
-    Vdarray<int> result{new_size};
+    Tensor<int> result{new_size};
     // 遍历结果数组的每个元素，计算其argmax
     int new_dim = (int)new_size.size();
     int old_dim = new_dim+1;
@@ -616,7 +616,7 @@ Vdarray<int> Vdarray<T>::argmax(int axis) {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::divide(float64 divisor) {
+Tensor<T> Tensor<T>::divide(float64 divisor) {
     /*
      * 除法: 对true_divide的封装
      * 创建新的数组并分配新的空间。将原数组每个值除以divisor并赋值给新数组
@@ -625,12 +625,12 @@ Vdarray<T> Vdarray<T>::divide(float64 divisor) {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::true_divide(float64 divisor) {
+Tensor<T> Tensor<T>::true_divide(float64 divisor) {
     /*
      * 除法
      * 创建新的数组并分配新的空间。将原数组每个值除以divisor并赋值给新数组
      */
-    Vdarray<T> result{this->size};
+    Tensor<T> result{this->size};
     int len = this->len();
     for(int i = 0; i<len; i++) {
         result.data[i] = this->data[i] / divisor;
@@ -639,12 +639,12 @@ Vdarray<T> Vdarray<T>::true_divide(float64 divisor) {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::floor_divide(float64 divisor) {
+Tensor<T> Tensor<T>::floor_divide(float64 divisor) {
     /*
      * 向下取整除法
      * 创建新的数组并分配新的空间。将原数组每个值除以divisor并赋值给新数组
      */
-    Vdarray<T> result{this->size};
+    Tensor<T> result{this->size};
     int len = this->len();
     for(int i = 0; i<len; i++) {
         result.data[i] = (int)(this->data[i] / divisor);
@@ -653,9 +653,9 @@ Vdarray<T> Vdarray<T>::floor_divide(float64 divisor) {
 }
 
 template<typename T>
-int Vdarray<T>::len() {
+int Tensor<T>::len() {
     /*
-     * 获取当前Vdarray数据空间元素数量
+     * 获取当前Tensor数据空间元素数量
      */
     int len = 1;
     for(const int &i: size) {
@@ -665,7 +665,7 @@ int Vdarray<T>::len() {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::operator/(float64 divisor) {
+Tensor<T> Tensor<T>::operator/(float64 divisor) {
     /*
      * 重载 /
      */
@@ -673,7 +673,7 @@ Vdarray<T> Vdarray<T>::operator/(float64 divisor) {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::broadcast_to(const std::vector<int> &target_size) {
+Tensor<T> Tensor<T>::broadcast_to(const std::vector<int> &target_size) {
     /*
      * broadcast_to: 将原数组广播为size
      * 1. 让size向target_size看齐，不足的部分在前面加1补齐，得到new_this(即若target=(2,3,4), size=(4), 则new_size=(1,1,4))
@@ -733,7 +733,7 @@ Vdarray<T> Vdarray<T>::broadcast_to(const std::vector<int> &target_size) {
         }
     }
     // 使用new_size新建result
-    Vdarray<T> result{target_size};
+    Tensor<T> result{target_size};
     // 遍历result，按照上面第4条规则从new_this取数据
     int res_index[target_dim];              // 遍历result时，当前访问元素的index
     int this_index[target_dim];             // result中元素对应的new_this中元素的下标
@@ -766,7 +766,7 @@ Vdarray<T> Vdarray<T>::broadcast_to(const std::vector<int> &target_size) {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::divide(Vdarray<T> divisor) {
+Tensor<T> Tensor<T>::divide(Tensor<T> divisor) {
     /*
      * 除法，对true_divide的封装
      */
@@ -774,12 +774,12 @@ Vdarray<T> Vdarray<T>::divide(Vdarray<T> divisor) {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::true_divide(Vdarray<T> divisor) {
+Tensor<T> Tensor<T>::true_divide(Tensor<T> divisor) {
     /*
      * 除法。将this广播到divisor，或将divisor广播到this，然后进行elementwise除法
      */
-    Vdarray<T> broadcasted_this;
-    Vdarray<T> broadcasted_divisor;
+    Tensor<T> broadcasted_this;
+    Tensor<T> broadcasted_divisor;
     if(this->size.size() < divisor.size.size()) {
         broadcasted_this = this->broadcast_to(divisor.size);
         broadcasted_divisor = divisor;
@@ -788,7 +788,7 @@ Vdarray<T> Vdarray<T>::true_divide(Vdarray<T> divisor) {
         broadcasted_this = *this;
         broadcasted_divisor = divisor.broadcast_to(this->size);
     }
-    Vdarray<T> result{broadcasted_this.size};
+    Tensor<T> result{broadcasted_this.size};
     int len = result.len();
     for(int i = 0; i<len; i++) {
         result.data[i] = broadcasted_this.data[i] / broadcasted_divisor.data[i];
@@ -797,12 +797,12 @@ Vdarray<T> Vdarray<T>::true_divide(Vdarray<T> divisor) {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::floor_divide(Vdarray<T> divisor) {
+Tensor<T> Tensor<T>::floor_divide(Tensor<T> divisor) {
     /*
      * 向下取整除法。将this广播到divisor，或将divisor广播到this，然后进行elementwise除法
      */
-    Vdarray<T> broadcasted_this;
-    Vdarray<T> broadcasted_divisor;
+    Tensor<T> broadcasted_this;
+    Tensor<T> broadcasted_divisor;
     if(this->size.size() < divisor.size.size()) {
         broadcasted_this = this->broadcast_to(divisor.size);
         broadcasted_divisor = divisor;
@@ -811,7 +811,7 @@ Vdarray<T> Vdarray<T>::floor_divide(Vdarray<T> divisor) {
         broadcasted_this = *this;
         broadcasted_divisor = divisor.broadcast_to(this->size);
     }
-    Vdarray<T> result{broadcasted_this.size};
+    Tensor<T> result{broadcasted_this.size};
     int len = result.len();
     for(int i = 0; i<len; i++) {
         result.data[i] = (int)(broadcasted_this.data[i] / broadcasted_divisor.data[i]);
@@ -820,7 +820,7 @@ Vdarray<T> Vdarray<T>::floor_divide(Vdarray<T> divisor) {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::operator/(Vdarray<T> divisor) {
+Tensor<T> Tensor<T>::operator/(Tensor<T> divisor) {
     /*
      * overload /
      */
@@ -828,11 +828,11 @@ Vdarray<T> Vdarray<T>::operator/(Vdarray<T> divisor) {
 }
 
 template<typename T>
-Vdarray<float32> Vdarray<T>::astype_float32() {
+Tensor<float32> Tensor<T>::astype_float32() {
     /*
      * 创建一个新数组，使其值与this相同，但类型为float32
      */
-    Vdarray<float32> result{this->size};
+    Tensor<float32> result{this->size};
     int len = result.len();
     for(int i = 0; i<len; i++) {
         result.data[i] = (float32)(this->data[i]);
@@ -841,11 +841,11 @@ Vdarray<float32> Vdarray<T>::astype_float32() {
 }
 
 template<typename T>
-Vdarray<int32> Vdarray<T>::astype_int32() {
+Tensor<int32> Tensor<T>::astype_int32() {
     /*
      * 创建一个新数组，使其值与this相同，但类型为int32
      */
-    Vdarray<int32> result{this->size};
+    Tensor<int32> result{this->size};
     int len = result.len();
     for(int i = 0; i<len; i++) {
         result.data[i] = (int32)(this->data[i]);
@@ -854,11 +854,11 @@ Vdarray<int32> Vdarray<T>::astype_int32() {
 }
 
 template<typename T>
-Vdarray<uint8> Vdarray<T>::astype_uint8() {
+Tensor<uint8> Tensor<T>::astype_uint8() {
     /*
      * 创建一个新数组，使其值与this相同，但类型为uint8
      */
-    Vdarray<uint8> result{this->size};
+    Tensor<uint8> result{this->size};
     int len = result.len();
     for(int i = 0; i<len; i++) {
         result.data[i] = (uint8) (this->data[i]);
@@ -867,15 +867,15 @@ Vdarray<uint8> Vdarray<T>::astype_uint8() {
 }
 
 template<typename T>
-Vdarray<T> Vdarray<T>::deep_copy() {
+Tensor<T> Tensor<T>::deep_copy() {
     /*
      * 创建一个新的数组，使其与this完全相同(但拥有不同的内存空间)，然后返回它
      */
-    Vdarray<T> ret{this->size};
+    Tensor<T> ret{this->size};
     int len = ret.len();
     memcpy(ret.data, this->data, sizeof(T)*len);
     return ret;
 }
 
 
-#endif //QUANT_NDARRAY_IMPL_H
+#endif //QUANT_TENSOR_IMPL_H

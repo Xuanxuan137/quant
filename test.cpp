@@ -21,7 +21,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/core/hal/interface.h>
 
-#include "vdarray.h"
+#include "tensor.h"
 #include "util.h"
 #include "preprocess.h"
 #include "graph.h"
@@ -95,7 +95,7 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_sha
         std::vector<std::string> line_split = split(line, " ");
         std::string img_path = line_split[0];
         int answer = (int)strtol(line_split[1].c_str(), nullptr, 10);
-        // 将img读入Vdarray
+        // 将img读入Tensor
         cv::Mat img;
         cv::Mat dst;
         if(infer_shape[1] == 1) {
@@ -106,13 +106,13 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_sha
         }
         // Resize
         cv::resize(img, dst, cv::Size(infer_shape[3], infer_shape[2]), 0, 0, cv::INTER_LINEAR);
-        // 存储resized图片到Vdarray
-        Vdarray<uint8> bgr_hwc_img(std::vector<int>{infer_shape[2], infer_shape[3], infer_shape[1]});
+        // 存储resized图片到Tensor
+        Tensor<uint8> bgr_hwc_img(std::vector<int>{infer_shape[2], infer_shape[3], infer_shape[1]});
         memcpy(bgr_hwc_img.data, dst.data, sizeof(unsigned char)*infer_shape[2]*infer_shape[3]*infer_shape[1]);
         // hwc to chw
-        Vdarray<uint8> bgr_chw_img = bgr_hwc_img.transpose(std::vector<int>{2, 0, 1});
+        Tensor<uint8> bgr_chw_img = bgr_hwc_img.transpose(std::vector<int>{2, 0, 1});
         // bgr to rgb
-        Vdarray<uint8> rgb_chw_img(bgr_chw_img.shape());
+        Tensor<uint8> rgb_chw_img(bgr_chw_img.shape());
         if(infer_shape[1] == 3) {
             rgb_chw_img[0] = bgr_chw_img[2];
             rgb_chw_img[1] = bgr_chw_img[1];
@@ -135,12 +135,12 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_sha
         std::vector<void*> result_vector = graph->forward(processed_input);
         // 释放processed_input
         if(graph->node_list[0]->dtype == "uint8") {
-            delete((Vdarray<uint8>*)processed_input);
+            delete((Tensor<uint8>*)processed_input);
         }
         else {
-            delete((Vdarray<float32>*)processed_input);
+            delete((Tensor<float32>*)processed_input);
         }
-        int result = ((Vdarray<float32>*)(result_vector[0]))->argmax();
+        int result = ((Tensor<float32>*)(result_vector[0]))->argmax();
         if(result == answer) {
             correct ++;
         }

@@ -15,7 +15,7 @@ aux_source_directory(. DIR_SRCS)
 # Add header file include directories
 include_directories(
         ${PROJECT_SOURCE_DIR}/nn
-        ${PROJECT_SOURCE_DIR}/vdarray
+        ${PROJECT_SOURCE_DIR}/tensor
         ${PROJECT_SOURCE_DIR}/util
         /usr/local/include/opencv4
 )
@@ -26,7 +26,7 @@ link_directories(
 
 # Add block directories
 add_subdirectory(nn)
-add_subdirectory(vdarray)
+add_subdirectory(tensor)
 add_subdirectory(util)
 
 # Target
@@ -34,12 +34,12 @@ add_executable(
         quant quant.cpp
 )
 target_link_libraries(
-        quant vdarray nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs
+        quant tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs
 )
 
 add_executable(
         test test.cpp
 )
 target_link_libraries(
-        test vdarray nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs
+        test tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs
 )

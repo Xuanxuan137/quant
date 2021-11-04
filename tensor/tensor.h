@@ -2,21 +2,21 @@
 // Created by noname on 2021/10/23.
 //
 
-#ifndef QUANT_VDARRAY_H
-#define QUANT_VDARRAY_H
+#ifndef QUANT_TENSOR_H
+#define QUANT_TENSOR_H
 
 /*
  * 设计思路：
- * Vdarray(Variable dimension array)是一个用来存储变维数据的类
- * 我们不在Vdarray对象中存储数据, 而是存储一个名为data的指针
+ * Tensor 是一个用来存储变维数据的类
+ * 我们不在Tensor对象中存储数据, 而是存储一个名为data的指针
  * 此外，还在对象中以vector形式存储尺寸
  *
- * 构造Vdarray:
+ * 构造Tensor:
  * 1. 不给定尺寸：仅创建对象，数据均设为0或null
  * 2. 给定尺寸：申请空间data，同时记录空间首地址mem_addr。size设为输入的size。对mem_addr引用计数
  * 3. 拷贝构造：函数返回对象时会自动调用拷贝构造。将新对象data指向旧对象data，对mem_addr引用计数。cut如果大于0则减1
  * 
- * 析构Vdarray:
+ * 析构Tensor:
  * mem_addr查找引用计数，释放空间
  *
  * 重载 =
@@ -67,7 +67,7 @@ typedef double float64;
 
 
 template <typename T>
-class Vdarray {
+class Tensor {
 public:
     // 属性
     T * data;                   // 数据空间
@@ -75,44 +75,44 @@ public:
     int cut;                    // 是否是截取
 
     // 构造与析构
-    Vdarray();                                              // constructor
-    explicit Vdarray(const std::vector<int>& size);         // constructor with input shape
-    Vdarray(const Vdarray<T> &src);                         // 拷贝构造函数
-    ~Vdarray();                                             // 析构函数
+    Tensor();                                              // constructor
+    explicit Tensor(const std::vector<int>& size);         // constructor with input shape
+    Tensor(const Tensor<T> &src);                         // 拷贝构造函数
+    ~Tensor();                                             // 析构函数
 
     // 数组处理
     void print();                                           // print
     int len();                                              // 返回数据空间元素数量
     std::vector<int> shape();                               // shape
-    Vdarray<T> reshape(const std::vector<int>& new_size);   // reshape
-    Vdarray<T> transpose(const std::vector<int>& new_order);// transpose
-    Vdarray<T> broadcast_to(const std::vector<int> &size);  // broadcast_to
-    Vdarray<T> deep_copy();                                 // deep copy
+    Tensor<T> reshape(const std::vector<int>& new_size);   // reshape
+    Tensor<T> transpose(const std::vector<int>& new_order);// transpose
+    Tensor<T> broadcast_to(const std::vector<int> &size);  // broadcast_to
+    Tensor<T> deep_copy();                                 // deep copy
 
     // 数据处理
     T to_num();                                             // 返回数值
     void set_zero();                                        // data置0
     void set_rand();                                        // data置随机值
     int argmax();                                           // argmax
-    Vdarray<int> argmax(int axis);                          // argmax
-    Vdarray<uint8> astype_uint8();                          // astype("uint8");
-    Vdarray<int32> astype_int32();                          // astype("int32")
-    Vdarray<float32> astype_float32();                      // astype("float32")
+    Tensor<int> argmax(int axis);                          // argmax
+    Tensor<uint8> astype_uint8();                          // astype("uint8");
+    Tensor<int32> astype_int32();                          // astype("int32")
+    Tensor<float32> astype_float32();                      // astype("float32")
 
     // 数学运算
-    Vdarray<T> divide(float64 divisor);                     // 除法
-    Vdarray<T> true_divide(float64 divisor);                // 除法
-    Vdarray<T> floor_divide(float64 divisor);               // 向下取整除法
-    Vdarray<T> divide(Vdarray<T> divisor);                  // 除法
-    Vdarray<T> true_divide(Vdarray<T> divisor);             // 除法
-    Vdarray<T> floor_divide(Vdarray<T> divisor);            // 向下取整乘法
+    Tensor<T> divide(float64 divisor);                     // 除法
+    Tensor<T> true_divide(float64 divisor);                // 除法
+    Tensor<T> floor_divide(float64 divisor);               // 向下取整除法
+    Tensor<T> divide(Tensor<T> divisor);                  // 除法
+    Tensor<T> true_divide(Tensor<T> divisor);             // 除法
+    Tensor<T> floor_divide(Tensor<T> divisor);            // 向下取整乘法
 
     // 运算符重载
-    Vdarray<T> operator[](int index);                       // overload []
-    Vdarray<T>& operator=(Vdarray<T> array);                // overload =
-    Vdarray<T>& operator=(T value);                         // overload =
-    Vdarray<T> operator/(float64 divisor);                  // overload /
-    Vdarray<T> operator/(Vdarray<T> divisor);               // overload /
+    Tensor<T> operator[](int index);                       // overload []
+    Tensor<T>& operator=(Tensor<T> array);                // overload =
+    Tensor<T>& operator=(T value);                         // overload =
+    Tensor<T> operator/(float64 divisor);                  // overload /
+    Tensor<T> operator/(Tensor<T> divisor);               // overload /
 
 private:
     T * mem_addr;               // 记录内存地址
@@ -121,18 +121,14 @@ private:
     static std::map<T*, int> counter;   // reference counter
 };
 template <typename T>
-std::map<T*, int> Vdarray<T>::counter;   // reference counter
+std::map<T*, int> Tensor<T>::counter;   // reference counter
 
 
 void array_add_1(int array[], const std::vector<int> &size);    // 数组自增
-void print_size(const std::vector<int> &size);                  // 打印Vdarray的size
+void print_size(const std::vector<int> &size);                  // 打印Tensor的size
 
 
-namespace VDarray {
-    Vdarray<float> zeros(const std::vector<int>& size);
-    Vdarray<float> rand(const std::vector<int>& size);
-}
 
-#include "vdarray_impl.h"
+#include "tensor_impl.h"
 
-#endif //QUANT_VDARRAY_H
+#endif //QUANT_TENSOR_H

@@ -16,7 +16,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/core/hal/interface.h>
 
-#include "vdarray.h"
+#include "tensor.h"
 #include "node.h"
 #include "util.h"
 #include "preprocess.h"
@@ -24,14 +24,14 @@
 /*
  * 计算图：
  * 计算图使用vector存储节点列表，里面每个元素是一个节点
- * 当调用forward进行推理时，我们将预先存储好的Vdarray类型的input数据的指针传入forward方法，经过计算后返回Vdarray数据
- * Graph不管理类型，所以无法知道Vdarray数据类型，因此传输指针时使用Void*。需要在内部真正使用数据时根据情况改变指针类型
+ * 当调用forward进行推理时，我们将预先存储好的Tensor类型的input数据的指针传入forward方法，经过计算后返回Tensor数据
+ * Graph不管理类型，所以无法知道Tensor数据类型，因此传输指针时使用Void*。需要在内部真正使用数据时根据情况改变指针类型
  *
  * forward的计算思路：
  * 考虑到需要处理大量图片，如果每张图片计算过程中都需要重新申请中间结果存储空间，必然十分浪费时间
  * 所以我们需要在计算之前提前申请好存储空间，在每张图片计算过程中重复利用这些空间。那么就必须能够在Graph中就知道数据类型(flot32? uint8)
  * 和每个节点的output尺寸，那么我们最好在Node中保存这两个数据。这样在forward计算的时候可以按照以下步骤进行：
- * 1. 根据Node的dtype和output尺寸为每个Node的输出申请空间(Vdarray类型)
+ * 1. 根据Node的dtype和output尺寸为每个Node的输出申请空间(Tensor类型)
  * 2. 遍历每一个Node，将输入(上一层的输出空间指针)和输出空间指针传入(Node内部自动根据算子类型进行计算)
  * 3. 得到最后结果后，将结果指针返回(void*)
  * 调用forward的函数自行根据上下文处理返回值类型
@@ -51,7 +51,7 @@ public:
 
     /*
      * 这个vector用于存储forward过程中的中间结果，即各节点的输出
-     * vector里存储的实际类型是Vdarray<>*，但由于graph不处理类型，所以将它设为void*。forward函数需要自己处理类型
+     * vector里存储的实际类型是Tensor<>*，但由于graph不处理类型，所以将它设为void*。forward函数需要自己处理类型
      */
     std::vector<void*> intermediate_results;
 
@@ -68,7 +68,7 @@ public:
 
     /*
      * 前向传播函数。由于graph不限制数据类型(float32 uint8等)，这里只返回std::vector<void*>。实际返回类型为
-     * std::vector<Vdarray<>*>。调用者需要根据上下文修改指针类型
+     * std::vector<Tensor<>*>。调用者需要根据上下文修改指针类型
      * 考虑到某些神经网络可能有超过1个输出节点，这里使用vector存储返回值
      */
      std::vector<void*> forward(void * input);
@@ -77,8 +77,8 @@ public:
      * 融合算子。将batch_norm2d融入conv2d
      * 只能在dtype=="float32"时使用此函数
      */
-     void fuse_op(bool calc_running, int running_size, Vdarray<uint8>* calc_running_img,
-                  Vdarray<float32>* running_mean, Vdarray<float32>* running_var);
+     void fuse_op(bool calc_running, int running_size, Tensor<uint8>* calc_running_img,
+                  Tensor<float32>* running_mean, Tensor<float32>* running_var);
 };
 
 

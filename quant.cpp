@@ -6,16 +6,16 @@
 
 #include "graph.h"
 #include "arg_handle.h"
-#include "vdarray.h"
+#include "tensor.h"
 #include "preprocess.h"
 
 
 int main(int argc, char *argv[]) {
     /////////////// test
-//    Vdarray<int32> A{std::vector<int>{4}};
+//    Tensor<int32> A{std::vector<int>{4}};
 //    A.set_rand();
 //    A.print();
-//    Vdarray<float32> B = A.astype_float32();
+//    Tensor<float32> B = A.astype_float32();
 //    B.print();
 //    return 0;
     ///////////////////////////
@@ -23,12 +23,12 @@ int main(int argc, char *argv[]) {
     Graph * graph = nullptr;                                    // 计算图
     std::string calib_set_path;                                 // calibration set 路径
     int calib_size[4];                                          // calibration尺寸
-    Vdarray<uint8>* calib_set = nullptr;                        // calibration set
+    Tensor<uint8>* calib_set = nullptr;                        // calibration set
     bool calc_running = false;                                  // 是否现场计算running
     int running_size;                                           // running尺寸
-    Vdarray<uint8>* calc_running_img = nullptr;                 // 计算running数据集
-    Vdarray<float32>* running_mean = nullptr;                   // running mean
-    Vdarray<float32>* running_var = nullptr;                    // running var
+    Tensor<uint8>* calc_running_img = nullptr;                 // 计算running数据集
+    Tensor<float32>* running_mean = nullptr;                   // running mean
+    Tensor<float32>* running_var = nullptr;                    // running var
 
     for(int i = 1; i<argc; i++) {
         std::string option(argv[i]);    // 从argv读取选项
@@ -74,8 +74,8 @@ int main(int argc, char *argv[]) {
     // calibration set，calibration尺寸 ，bn数据集(或bn数据)已经获得
 
     // TODO: 数据预处理
-    Vdarray<float32>* processed_calib_set = preprocess(calib_set);
-    Vdarray<float32>* processed_bn_set = preprocess(calc_running_img);
+    Tensor<float32>* processed_calib_set = preprocess(calib_set);
+    Tensor<float32>* processed_bn_set = preprocess(calc_running_img);
 
     // TODO: fuse operator
 //    graph->fuse_op(calc_running, running_size, calc_running_img, running_mean, running_var);

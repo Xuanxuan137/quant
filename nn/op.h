@@ -9,7 +9,7 @@
  * 每个类是一个具体的算子，不同算子使用不同的类
  *
  * forward():
- * 每个算子应有一个forward方法，该方法接受两个参数：input 和 output，其返回值类型为Vdarray<>*
+ * 每个算子应有一个forward方法，该方法接受两个参数：input 和 output，其返回值类型为Tensor<>*
  * forward使用input和其他属性进行计算，并将结果存入output(已分配好空间)中
  * 不需要返回值
  */
@@ -48,23 +48,24 @@
 #include <cassert>
 
 #include "util.h"
-#include "vdarray.h"
+#include "tensor.h"
+#include "functional.h"
 
 class Input {
 public:
     std::vector<int> output_shape;      // 输出尺寸
     explicit Input(const std::vector<std::string>& parameters);             // constructor
     ~Input();
-    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
+    void forward(Tensor<float32> *input, Tensor<float32> *output);
 };
 
 class Conv2d {
 public:
     int input_node;                     // 输入节点编号
     std::string weight_path;            // weight file path
-    Vdarray<float32> weight;            // weight
+    Tensor<float32> weight;            // weight
     std::string bias_path;              // bias file path
-    Vdarray<float32> bias;              // bias
+    Tensor<float32> bias;              // bias
     int output_channel;
     int input_channel;
     std::vector<int> kernel_size;       // kernel_size
@@ -75,7 +76,7 @@ public:
     Conv2d(const std::vector<std::string>& parameters,
            const std::vector<std::vector<int> > &output_shape_list);       // constructor
     ~Conv2d();
-    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
+    void forward(Tensor<float32> *input, Tensor<float32> *output);
 };
 
 class Maxpool2d {
@@ -89,7 +90,7 @@ public:
     Maxpool2d(const std::vector<std::string> &parameters,
               const std::vector<std::vector<int> > &output_shape_list);    // constructor
     ~Maxpool2d();
-    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
+    void forward(Tensor<float32> *input, Tensor<float32> *output);
 };
 
 class Relu {
@@ -99,7 +100,7 @@ public:
     Relu(const std::vector<std::string>& parameters,
          const std::vector<std::vector<int> > &output_shape_list);     // constructor
     ~Relu();
-    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
+    void forward(Tensor<float32> *input, Tensor<float32> *output);
 };
 
 
@@ -110,7 +111,7 @@ public:
     Flatten(const std::vector<std::string> &parameters,
             const std::vector<std::vector<int> > &output_shape_list);  // constructor
     ~Flatten();
-    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
+    void forward(Tensor<float32> *input, Tensor<float32> *output);
 };
 
 
@@ -118,16 +119,16 @@ class Dense {
 public:
     int input_node;                     // 输入节点编号
     std::string weight_path;
-    Vdarray<float32> weight;
+    Tensor<float32> weight;
     std::string bias_path;
-    Vdarray<float32> bias;
+    Tensor<float32> bias;
     int output_channel;
     int input_channel;
     std::vector<int> output_shape;      // 输出尺寸
     Dense(const std::vector<std::string> &parameters,
           const std::vector<std::vector<int> > &output_shape_list);     // constructor
     ~Dense();
-    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
+    void forward(Tensor<float32> *input, Tensor<float32> *output);
 };
 
 
@@ -138,7 +139,7 @@ public:
     Output(const std::vector<std::string> &parameters,
            const std::vector<std::vector<int> > &output_shape_list);        // constructor
     ~Output();
-    void forward(Vdarray<float32> *input, Vdarray<float32> *output);
+    void forward(Tensor<float32> *input, Tensor<float32> *output);
 };
 
 
@@ -150,7 +151,7 @@ public:
     Add(const std::vector<std::string> &parameters,
         const std::vector<std::vector<int> > &output_shape_list);           // constructor
     ~Add();
-    void forward(Vdarray<float32> *input1, Vdarray<float32> *input2, Vdarray<float32> *output);
+    void forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output);
 };
 
 
@@ -163,7 +164,7 @@ public:
     Concat(const std::vector<std::string> &parameters,
            const std::vector<std::vector<int> > &output_shape_list);        // constructor
     ~Concat();
-    void forward(Vdarray<float32> *input1, Vdarray<float32> *input2, Vdarray<float32> *output);
+    void forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output);
 };
 
 #endif //QUANT_OP_H

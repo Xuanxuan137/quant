@@ -28,11 +28,11 @@ int get_running_size(const std::string &value) {
 }
 
 
-Vdarray<unsigned char>* get_calib_set(const std::string& calib_set_path, int calib_size[])
+Tensor<unsigned char>* get_calib_set(const std::string& calib_set_path, int calib_size[])
 {
     /*
      * 打开包含calib set数据集路径的txt文件，读取里面的路径
-     * 使用这些图片创建Vdarray对象，并返回指针
+     * 使用这些图片创建Tensor对象，并返回指针
      */
     std::cout << "Reading calib set...\n";
 
@@ -59,7 +59,7 @@ Vdarray<unsigned char>* get_calib_set(const std::string& calib_set_path, int cal
     }
 
     // 读取图片，存入calib_set
-    Vdarray<unsigned char> *calib_set = new Vdarray<unsigned char>(std::vector<int>{img_num, calib_size[1], calib_size[2], calib_size[3]});   // create calib_set space
+    Tensor<unsigned char> *calib_set = new Tensor<unsigned char>(std::vector<int>{img_num, calib_size[1], calib_size[2], calib_size[3]});   // create calib_set space
     int count = 0;
     while(std::getline(file, img_path)) {   // 读取一个图片路径
         cv::Mat img;
@@ -76,13 +76,13 @@ Vdarray<unsigned char>* get_calib_set(const std::string& calib_set_path, int cal
         cv::Mat dst;
         // resize为输入的尺寸
         cv::resize(img, dst, cv::Size(calib_size[3], calib_size[2]), 0, 0, cv::INTER_LINEAR);
-        // 将resized图片存入Vdarray
-        Vdarray<unsigned char> bgr_hwc_img(std::vector<int>{calib_size[2], calib_size[3], calib_size[1]});
+        // 将resized图片存入Tensor
+        Tensor<unsigned char> bgr_hwc_img(std::vector<int>{calib_size[2], calib_size[3], calib_size[1]});
         memcpy(bgr_hwc_img.data, dst.data, sizeof(unsigned char)*calib_size[2]*calib_size[3]*calib_size[1]);
         // hwc to chw
-        Vdarray<unsigned char> bgr_chw_img = bgr_hwc_img.transpose(std::vector<int>{2, 0, 1});
+        Tensor<unsigned char> bgr_chw_img = bgr_hwc_img.transpose(std::vector<int>{2, 0, 1});
         // bgr to rgb
-        Vdarray<unsigned char> rgb_chw_img(bgr_chw_img.shape());
+        Tensor<unsigned char> rgb_chw_img(bgr_chw_img.shape());
         if(calib_size[1] == 3) {
             rgb_chw_img[0] = bgr_chw_img[2];
             rgb_chw_img[1] = bgr_chw_img[1];
@@ -102,11 +102,11 @@ Vdarray<unsigned char>* get_calib_set(const std::string& calib_set_path, int cal
 }
 
 
-Vdarray<unsigned char>* get_calc_running_img(const std::string& running_set_path, int calib_size[])
+Tensor<unsigned char>* get_calc_running_img(const std::string& running_set_path, int calib_size[])
 {
     /*
      * 打开包含bn数据集路径的txt文件，并读取里面的路径
-     * 根据这些图片创建Vdarray，并返回指针
+     * 根据这些图片创建Tensor，并返回指针
      */
     std::cout << "Reading running set...\n";
 
@@ -133,7 +133,7 @@ Vdarray<unsigned char>* get_calc_running_img(const std::string& running_set_path
     }
 
     // 读取图片，存入running_set
-    Vdarray<uint8> *running_set = new Vdarray<unsigned char>(std::vector<int>{img_num, calib_size[1], calib_size[2], calib_size[3]});   // create dataset space
+    Tensor<uint8> *running_set = new Tensor<unsigned char>(std::vector<int>{img_num, calib_size[1], calib_size[2], calib_size[3]});   // create dataset space
     int count = 0;
     while(std::getline(file, img_path)) {   // read a picture path
         cv::Mat img;
@@ -150,13 +150,13 @@ Vdarray<unsigned char>* get_calc_running_img(const std::string& running_set_path
         cv::Mat dst;
         // Resize图片为输入尺寸
         cv::resize(img, dst, cv::Size(calib_size[3], calib_size[2]), 0, 0, cv::INTER_LINEAR);
-        // 存储resized图片到Vdarray
-        Vdarray<uint8> bgr_hwc_img(std::vector<int>{calib_size[2], calib_size[3], calib_size[1]});
+        // 存储resized图片到Tensor
+        Tensor<uint8> bgr_hwc_img(std::vector<int>{calib_size[2], calib_size[3], calib_size[1]});
         memcpy(bgr_hwc_img.data, dst.data, sizeof(unsigned char)*calib_size[2]*calib_size[3]*calib_size[1]);
         // hwc to chw
-        Vdarray<uint8> bgr_chw_img = bgr_hwc_img.transpose(std::vector<int>{2, 0, 1});
+        Tensor<uint8> bgr_chw_img = bgr_hwc_img.transpose(std::vector<int>{2, 0, 1});
         // bgr to rgb
-        Vdarray<uint8> rgb_chw_img(bgr_chw_img.shape());
+        Tensor<uint8> rgb_chw_img(bgr_chw_img.shape());
         if(calib_size[1] == 3) {
             rgb_chw_img[0] = bgr_chw_img[2];
             rgb_chw_img[1] = bgr_chw_img[1];
@@ -175,15 +175,15 @@ Vdarray<unsigned char>* get_calc_running_img(const std::string& running_set_path
     return running_set;
 }
 
-void get_running_mean_var_binary(Vdarray<float>* &running_mean, Vdarray<float>* &running_var,
+void get_running_mean_var_binary(Tensor<float>* &running_mean, Tensor<float>* &running_var,
                                  const std::string& path, int size)
 {
     /*
      * 根据size为running_mean_var分配空间
-     * 读取二进制浮点文件，并存入Vdarray
+     * 读取二进制浮点文件，并存入Tensor
      */
-    running_mean = new Vdarray<float>(std::vector<int>{size});
-    running_var = new Vdarray<float>(std::vector<int>{size});
+    running_mean = new Tensor<float>(std::vector<int>{size});
+    running_var = new Tensor<float>(std::vector<int>{size});
     FILE * file = fopen(path.c_str(), "r");
     if((int)fread(running_mean->data, sizeof(float), size, file) != size) {
         std::cerr << "Read size error when reading running mean\n";
@@ -195,12 +195,12 @@ void get_running_mean_var_binary(Vdarray<float>* &running_mean, Vdarray<float>* 
     }
 }
 
-void get_running_mean_var_txt(Vdarray<float>* &running_mean, Vdarray<float>* &running_var,
+void get_running_mean_var_txt(Tensor<float>* &running_mean, Tensor<float>* &running_var,
                               const std::string& path, int size)
 {
     /*
      * 根据size为running_mean_var分配空间
-     * 读取txt浮点文件，并存入Vdarray
+     * 读取txt浮点文件，并存入Tensor
      */
     std::ifstream file;
     file.open(path, std::ios::in);
@@ -209,8 +209,8 @@ void get_running_mean_var_txt(Vdarray<float>* &running_mean, Vdarray<float>* &ru
         exit(-1);
     }
 
-    running_mean = new Vdarray<float>(std::vector<int>{size});
-    running_var = new Vdarray<float>(std::vector<int>{size});
+    running_mean = new Tensor<float>(std::vector<int>{size});
+    running_var = new Tensor<float>(std::vector<int>{size});
     std::string data_str;
     for (int i = 0; i < size; i++) {
         std::getline(file, data_str);
