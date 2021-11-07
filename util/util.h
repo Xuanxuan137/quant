@@ -10,6 +10,15 @@
 #include <vector>
 #include <cstddef>
 #include <sys/time.h>
+#include <unistd.h>
+
+
+class System_info {
+public:
+    int n_proc;         // 可用cpu数量
+
+    System_info();
+};
 
 
 bool string_to_bool(const std::string &value);

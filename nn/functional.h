@@ -5,8 +5,11 @@
 #ifndef QUANT_FUNCTIONAL_H
 #define QUANT_FUNCTIONAL_H
 
+#include <thread>
 #include <cassert>
 #include "tensor.h"
+#include "util.h"
+
 
 namespace functional {
     Tensor<float32> conv2d(Tensor<float32> *input, Tensor<float32> *weight, Tensor<float32> *bias= nullptr,

@@ -67,7 +67,7 @@ std::vector<void*> Graph::forward(void *input) {
     // 将output节点的输出push到ret里
     std::vector<void*> ret;
     for(Node *node: node_list) {
-        if(node->name == "output") {
+        if(node->name == OPN_OUTPUT) {
             ret.push_back(intermediate_results[node->number]);
         }
     }

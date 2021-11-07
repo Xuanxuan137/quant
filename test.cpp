@@ -30,8 +30,11 @@
 
 void test_accuracy(const std::string &val_set_path, Graph * graph, int *infer_shape);   // 根据val set路径测试准确率
 
+System_info * sys_info;
+
 int main(int argc, char *argv[]) {
 
+    sys_info = new System_info();
     Graph * graph = nullptr;                                    // 计算图
     std::string val_set_path;                                   // calibration set 路径
     int infer_shape[4];                                         // calibration尺寸

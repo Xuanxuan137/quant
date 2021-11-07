@@ -75,3 +75,7 @@ unsigned long long get_micro_sec_time() {
     gettimeofday(&time_val, NULL);
     return time_val.tv_sec * 1000000 + time_val.tv_usec;
 }
+
+System_info::System_info() {
+    n_proc = sysconf(_SC_NPROCESSORS_ONLN);
+}

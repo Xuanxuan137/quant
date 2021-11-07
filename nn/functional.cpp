@@ -4,6 +4,8 @@
 
 #include "functional.h"
 
+extern System_info * sys_info;
+
 
 Tensor<float32>
 functional::conv2d(Tensor<float32> *input, Tensor<float32> *weight, Tensor<float32> *bias, const std::vector<int>& stride,
@@ -102,15 +104,66 @@ functional::conv2d(Tensor<float32> *input, Tensor<float32> *weight, Tensor<float
     return result;
 }
 
+void mt_relu(float32 * R, float32 * I, int len)
+{
+    /*
+     * 多线程relu的子线程
+     */
+    int new_len = len / 4 * 4;
+    for(int i = 0; i<len; i+=4) {
+        R[i] = (I[i] > 0) ? I[i] : 0;
+        R[i+1] = (I[i+1] > 0) ? I[i+1] : 0;
+        R[i+2] = (I[i+2] > 0) ? I[i+2] : 0;
+        R[i+3] = (I[i+3] > 0) ? I[i+3] : 0;
+    }
+    for(int i = new_len; i<len; i++) {
+        R[i] = (I[i] > 0) ? I[i] : 0;
+    }
+}
+
+
+//Tensor<float32>
+//functional::relu(Tensor<float32> *input) {
+//    /*
+//     * 原始Relu
+//     */
+//    Tensor<float32> result{input->size};
+//    float32 * I = input->data;
+//    float32 * R = result.data;
+//
+//    int len = result.len();
+//    for(int i = 0; i<len; i++) {
+//        R[i] = (I[i] > 0) ? I[i] : 0;
+//    }
+//    return result;
+//}
+
 Tensor<float32>
 functional::relu(Tensor<float32> *input) {
     /*
-     * Relu
+     * 优化Relu
      */
     Tensor<float32> result{input->size};
-    int len = result.len();
-    for(int i = 0; i<len; i++) {
-        result.data[i] = (input->data[i] > 0) ? input->data[i] : 0;
+    float32 * I = input->data;          // 输入的数据地址
+    float32 * R = result.data;          // 输出的数据地址
+    int len = result.len();             // 总的要计算的元素数量
+
+    if(len > 500000) {  // 一般大于此值，多线程才有加速效果
+        int n_proc = sys_info->n_proc;      // 处理器数量
+        int len_per_proc = len / n_proc;    // 每个处理器要计算的元素数量(可能由于不能整除而有剩余)
+        std::thread t[n_proc];              // 创建子线程
+        for (int i = 0; i < n_proc; i++) {     // 为子线程分配任务
+            t[i] = std::thread(mt_relu, R + i * len_per_proc, I + i * len_per_proc, len_per_proc);
+        }
+        for (int i = n_proc * len_per_proc; i < len; i++) {    // 让主线程处理剩余的一点任务
+            R[i] = (I[i] > 0) ? I[i] : 0;
+        }
+        for (int i = 0; i < n_proc; i++) {     // 等待子线程结束
+            t[i].join();
+        }
+    }
+    else {
+        mt_relu(R, I, len);
     }
     return result;
 }

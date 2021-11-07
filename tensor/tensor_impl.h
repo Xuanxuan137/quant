@@ -616,7 +616,7 @@ Tensor<int> Tensor<T>::argmax(int axis) {
 }
 
 template<typename T>
-Tensor<T> Tensor<T>::divide(float64 divisor) {
+Tensor<T> Tensor<T>::divide(T divisor) {
     /*
      * 除法: 对true_divide的封装
      * 创建新的数组并分配新的空间。将原数组每个值除以divisor并赋值给新数组
@@ -625,7 +625,7 @@ Tensor<T> Tensor<T>::divide(float64 divisor) {
 }
 
 template<typename T>
-Tensor<T> Tensor<T>::true_divide(float64 divisor) {
+Tensor<T> Tensor<T>::true_divide(T divisor) {
     /*
      * 除法
      * 创建新的数组并分配新的空间。将原数组每个值除以divisor并赋值给新数组
@@ -639,7 +639,7 @@ Tensor<T> Tensor<T>::true_divide(float64 divisor) {
 }
 
 template<typename T>
-Tensor<T> Tensor<T>::floor_divide(float64 divisor) {
+Tensor<T> Tensor<T>::floor_divide(T divisor) {
     /*
      * 向下取整除法
      * 创建新的数组并分配新的空间。将原数组每个值除以divisor并赋值给新数组
@@ -665,7 +665,7 @@ int Tensor<T>::len() {
 }
 
 template<typename T>
-Tensor<T> Tensor<T>::operator/(float64 divisor) {
+Tensor<T> Tensor<T>::operator/(T divisor) {
     /*
      * 重载 /
      */
@@ -877,30 +877,81 @@ Tensor<T> Tensor<T>::deep_copy() {
     return ret;
 }
 
+
+//template<typename T>
+//Tensor<T> Tensor<T>::dot(Tensor<T> B_tensor) {
+//    /*
+//     * 矩阵乘法
+//     */
+//    Tensor<T> A_tensor = *this;
+//    Tensor<T> C_tensor{std::vector<int>{A_tensor.size[0], B_tensor.size[1]}};
+//    T * A = A_tensor.data;
+//    T * B = B_tensor.data;
+//    T * C = C_tensor.data;
+//    int M = A_tensor.size[0];
+//    int K = A_tensor.size[1];
+//    int N = B_tensor.size[1];
+//
+//    for(int i = 0; i<M; i++) {
+//        for(int j = 0; j<N; j++) {
+//            T temp = 0;
+//            for(int k = 0; k<K; k++) {
+//                temp += A[i * K + k] * B[k * N + j];
+//            }
+//            C[i * N + j] = temp;
+//        }
+//    }
+//
+//    return C_tensor;
+//}
+
 template<typename T>
-Tensor<T> Tensor<T>::dot(Tensor<T> B) {
+Tensor<T> Tensor<T>::dot(Tensor<T> B_tensor) {
     /*
      * 矩阵乘法
      */
-    Tensor<T> A = *this;
-    Tensor<T> C{std::vector<int>{A.size[0], B.size[1]}};
-    int M = A.size[0];
-    int K = A.size[1];
-    int N = B.size[1];
+    Tensor<T> A_tensor = *this;
+    Tensor<T> C_tensor{std::vector<int>{A_tensor.size[0], B_tensor.size[1]}};
+    T * A = A_tensor.data;
+    T * B = B_tensor.data;
+    T * C = C_tensor.data;
+    int M = A_tensor.size[0];
+    int K = A_tensor.size[1];
+    int N = B_tensor.size[1];
+
     for(int i = 0; i<M; i++) {
-        for(int j = 0; j<N; j++) {
+        int new_N = N / 4 * 4;
+        for(int j = 0; j<new_N; j+=4) {
+            T temp1 = 0;
+            T temp2 = 0;
+            T temp3 = 0;
+            T temp4 = 0;
+            for(int k = 0; k<K; k++) {
+                temp1 += A[i*K + k] * B[k*N + j];
+                temp2 += A[i*K + k] * B[k*N + j+1];
+                temp3 += A[i*K + k] * B[k*N + j+2];
+                temp4 += A[i*K + k] * B[k*N + j+3];
+            }
+            C[i*N + j] = temp1;
+            C[i*N + j+1] = temp2;
+            C[i*N + j+2] = temp3;
+            C[i*N + j+3] = temp4;
+        }
+        for(int j = new_N; j<N; j++) {
             T temp = 0;
             for(int k = 0; k<K; k++) {
-                temp += A.data[i * K + k] * B.data[k * N + j];
+                temp += A[i*K + k] * B[k*N + j];
             }
-            C.data[i * N + j] = temp;
+            C[i*N + j] = temp;
         }
     }
-    return C;
+
+    return C_tensor;
 }
 
+
 template<typename T>
-Tensor<T> Tensor<T>::add(float64 adder) {
+Tensor<T> Tensor<T>::add(T adder) {
     /*
      * add
      */
@@ -913,7 +964,7 @@ Tensor<T> Tensor<T>::add(float64 adder) {
 }
 
 template<typename T>
-Tensor<T> Tensor<T>::operator+(float64 adder) {
+Tensor<T> Tensor<T>::operator+(T adder) {
     /*
      * overload +
      */
@@ -921,7 +972,7 @@ Tensor<T> Tensor<T>::operator+(float64 adder) {
 }
 
 template<typename T>
-Tensor<T> &Tensor<T>::operator+=(float64 adder) {
+Tensor<T> &Tensor<T>::operator+=(T adder) {
     /*
      * overload +=
      */
@@ -930,6 +981,29 @@ Tensor<T> &Tensor<T>::operator+=(float64 adder) {
         this->data[i] += adder;
     }
     return *this;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::add(Tensor<T> adder) {
+    /*
+     * 加法。将this广播到adder，或将adder广播到this，然后进行elementwise加法
+     */
+    Tensor<T> broadcasted_this;
+    Tensor<T> broadcasted_divisor;
+    if(this->size.size() < adder.size.size()) {
+        broadcasted_this = this->broadcast_to(adder.size);
+        broadcasted_divisor = adder;
+    }
+    else {
+        broadcasted_this = *this;
+        broadcasted_divisor = adder.broadcast_to(this->size);
+    }
+    Tensor<T> result{broadcasted_this.size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = broadcasted_this.data[i] + broadcasted_divisor.data[i];
+    }
+    return result;
 }
 
 

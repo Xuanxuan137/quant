@@ -35,7 +35,7 @@ void Input::forward(Tensor<float32> *input, Tensor<float32> *output) {
     /*
      * Input算子的forward
      */
-    *output = (*input).deep_copy();
+    *output = *input;
 }
 
 Input::~Input() = default;

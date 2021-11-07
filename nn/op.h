@@ -41,6 +41,16 @@
  */
 
 
+#define OPN_INPUT               1
+#define OPN_NN_CONV2D           2
+#define OPN_NN_RELU             3
+#define OPN_NN_FLATTEN          4
+#define OPN_NN_DENSE            5
+#define OPN_OUTPUT              6
+#define OPN_ADD                 7
+#define OPN_CONCAT              8
+#define OPN_MAXPOOL2D           9
+
 #include <iostream>
 #include <vector>
 #include <string>
