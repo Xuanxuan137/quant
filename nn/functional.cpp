@@ -410,7 +410,7 @@ functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, 
         }
     }
     Var_x += eps;
-    Var_x = Var_x.sqrt();
+    Var_x = Var_x.elewise_sqrt();
     Tensor<float32> y = (x / Var_x) * (*weight) + (*bias);
     return y;
 }

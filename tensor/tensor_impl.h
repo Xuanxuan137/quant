@@ -1293,13 +1293,13 @@ Tensor<T> &Tensor<T>::operator-=(T subtractend) {
      */
     int len = this->len();
     for(int i = 0; i<len; i++) {
-        this->data[i] += subtractend;
+        this->data[i] -= subtractend;
     }
     return *this;
 }
 
 template<typename T>
-Tensor<T> Tensor<T>::sqrt() {
+Tensor<T> Tensor<T>::elewise_sqrt() {
     /*
      * sqrt
      */
@@ -1309,6 +1309,82 @@ Tensor<T> Tensor<T>::sqrt() {
         result.data[i] = sqrt(this->data[i]);
     }
     return result;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::mult(T multiplier) {
+    /*
+     * 乘法
+     */
+    Tensor<T> result{this->size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = this->data[i] * multiplier;
+    }
+    return result;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::mult(Tensor<T> multiplier) {
+    /*
+     * 乘法。将this广播到multiplier，或将multiplier广播到this，然后进行elementwise加法
+     */
+    Tensor<T> broadcasted_this;
+    Tensor<T> broadcasted_multiplier;
+    if(this->size.size() < multiplier.size.size()) {
+        broadcasted_this = this->broadcast_to(multiplier.size);
+        broadcasted_multiplier = multiplier;
+    }
+    else {
+        broadcasted_this = *this;
+        broadcasted_multiplier = multiplier.broadcast_to(this->size);
+    }
+    Tensor<T> result{broadcasted_this.size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = broadcasted_this.data[i] * broadcasted_multiplier.data[i];
+    }
+    return result;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::operator*(T multiplier) {
+    /*
+     * overload *
+     */
+    return this->mult(multiplier);
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::operator*(Tensor<T> multiplier) {
+    /*
+     * overload *
+     */
+    return this->mult(multiplier);
+}
+
+template<typename T>
+Tensor<T> &Tensor<T>::operator*=(Tensor<T> multiplier) {
+    /*
+     * overload *=
+     */
+    int len = this->len();
+    for(int i = 0; i<len; i++) {
+        this->data[i] *= multiplier;
+    }
+    return *this;
+}
+
+template<typename T>
+Tensor<T> &Tensor<T>::operator/=(Tensor<T> divisor) {
+    /*
+     * overload /=
+     */
+    int len = this->len();
+    for(int i = 0; i<len; i++) {
+        this->data[i] /= divisor;
+    }
+    return *this;
 }
 
 

@@ -34,12 +34,12 @@ add_executable(
         quant quant.cpp
 )
 target_link_libraries(
-        quant tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs
+        quant tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs m
 )
 
 add_executable(
         test test.cpp
 )
 target_link_libraries(
-        test tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs
+        test tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs m
 )

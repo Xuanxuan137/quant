@@ -154,13 +154,15 @@ public:
     Tensor<T> add(Tensor<T> adder);                         // 加法
     Tensor<T> sub(T subtractend);                           // 减法
     Tensor<T> sub(Tensor<T> subtractend);                   // 减法
+    Tensor<T> mult(T multiplier);                           // 乘法
+    Tensor<T> mult(Tensor<T> multiplier);                   // 乘法
     Tensor<T> divide(T divisor);                            // 除法
     Tensor<T> true_divide(T divisor);                       // 除法
     Tensor<T> floor_divide(T divisor);                      // 向下取整除法
     Tensor<T> divide(Tensor<T> divisor);                    // 除法
     Tensor<T> true_divide(Tensor<T> divisor);               // 除法
     Tensor<T> floor_divide(Tensor<T> divisor);              // 向下取整乘法
-    Tensor<T> sqrt();                                       // 开平方
+    Tensor<T> elewise_sqrt();                               // 开平方
     Tensor<T> dot(Tensor<T> B);                             // matmul
 
     // 运算符重载
@@ -173,8 +175,12 @@ public:
     Tensor<T> operator-(T subtractend);                     // overload -   : Tensor - value
     Tensor<T> operator-(Tensor<T> subtractend);             // overload -   : Tensor - Tensor
     Tensor<T>& operator-=(T subtractend);                   // overload -=  : Tensor -= value
+    Tensor<T> operator*(T multiplier);                      // overload *   : Tensor * value
+    Tensor<T> operator*(Tensor<T> multiplier);              // overload *   : Tensor * Tensor
+    Tensor<T>& operator*=(Tensor<T> multiplier);            // overload *=  : Tensor *= value
     Tensor<T> operator/(T divisor);                         // overload /   : Tensor / value
     Tensor<T> operator/(Tensor<T> divisor);                 // overload /   : Tensor / Tensor
+    Tensor<T>& operator/=(Tensor<T> divisor);               // overload /=  : Tensor /= value
 
 private:
     T * mem_addr;               // 记录内存地址
