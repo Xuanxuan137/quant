@@ -881,7 +881,7 @@ Tensor<T> Tensor<T>::deep_copy() {
 //template<typename T>
 //Tensor<T> Tensor<T>::dot(Tensor<T> B_tensor) {
 //    /*
-//     * 矩阵乘法
+//     * 矩阵乘法。原始算法
 //     */
 //    Tensor<T> A_tensor = *this;
 //    Tensor<T> C_tensor{std::vector<int>{A_tensor.size[0], B_tensor.size[1]}};
@@ -905,10 +905,159 @@ Tensor<T> Tensor<T>::deep_copy() {
 //    return C_tensor;
 //}
 
+//template<typename T>
+//Tensor<T> Tensor<T>::dot(Tensor<T> B_tensor) {
+//    /*
+//     * 矩阵乘法。利用cache line，在矩阵B取数时，同时使用在同一个cache line中的数据进行计算
+//     * 即在计算时，一次计算C的横向相连的4个数据，使用A的1行和B的4列
+//     */
+//    Tensor<T> A_tensor = *this;
+//    Tensor<T> C_tensor{std::vector<int>{A_tensor.size[0], B_tensor.size[1]}};
+//    T * A = A_tensor.data;
+//    T * B = B_tensor.data;
+//    T * C = C_tensor.data;
+//    int M = A_tensor.size[0];
+//    int K = A_tensor.size[1];
+//    int N = B_tensor.size[1];
+//
+//    for(int i = 0; i<M; i++) {
+//        int new_N = N / 4 * 4;
+//        for(int j = 0; j<new_N; j+=4) {
+//            T temp1 = 0;
+//            T temp2 = 0;
+//            T temp3 = 0;
+//            T temp4 = 0;
+//            for(int k = 0; k<K; k++) {
+//                temp1 += A[i*K + k] * B[k*N + j];
+//                temp2 += A[i*K + k] * B[k*N + j+1];
+//                temp3 += A[i*K + k] * B[k*N + j+2];
+//                temp4 += A[i*K + k] * B[k*N + j+3];
+//            }
+//            C[i*N + j] = temp1;
+//            C[i*N + j+1] = temp2;
+//            C[i*N + j+2] = temp3;
+//            C[i*N + j+3] = temp4;
+//        }
+//        for(int j = new_N; j<N; j++) {
+//            T temp = 0;
+//            for(int k = 0; k<K; k++) {
+//                temp += A[i*K + k] * B[k*N + j];
+//            }
+//            C[i*N + j] = temp;
+//        }
+//    }
+//
+//    return C_tensor;
+//}
+
+
+//template<typename T>
+//Tensor<T> Tensor<T>::dot(Tensor<T> B_tensor) {
+//    /*
+//     * 矩阵乘法。利用cache line，在矩阵A和B取数时，同时使用在同一个cache line中的数据进行计算
+//     * 即在计算时，一次计算C的横向纵向相连的16个数据，使用A的4行和B的4列
+//     */
+//    Tensor<T> A_tensor = *this;
+//    Tensor<T> C_tensor{std::vector<int>{A_tensor.size[0], B_tensor.size[1]}};
+//    T * A = A_tensor.data;
+//    T * B = B_tensor.data;
+//    T * C = C_tensor.data;
+//    int M = A_tensor.size[0];
+//    int K = A_tensor.size[1];
+//    int N = B_tensor.size[1];
+//
+//    int new_M = M / 4 * 4;
+//    for (int i = 0; i < new_M; i+=4) {
+//        int new_N = N / 4 * 4;
+//        for (int j = 0; j < new_N; j += 4) {
+//            float temp11 = 0; float temp12 = 0; float temp13 = 0; float temp14 = 0;
+//            float temp21 = 0; float temp22 = 0; float temp23 = 0; float temp24 = 0;
+//            float temp31 = 0; float temp32 = 0; float temp33 = 0; float temp34 = 0;
+//            float temp41 = 0; float temp42 = 0; float temp43 = 0; float temp44 = 0;
+//            for (int k = 0; k < K; k++) {
+//                temp11 += A[i * K + k] * B[k * N + j];
+//                temp12 += A[(i+1) * K + k] * B[k * N + j];
+//                temp13 += A[(i+2) * K + k] * B[k * N + j];
+//                temp14 += A[(i+3) * K + k] * B[k * N + j];
+//                temp21 += A[i * K + k] * B[k * N + j + 1];
+//                temp22 += A[(i+1) * K + k] * B[k * N + j + 1];
+//                temp23 += A[(i+2) * K + k] * B[k * N + j + 1];
+//                temp24 += A[(i+3) * K + k] * B[k * N + j + 1];
+//                temp31 += A[i * K + k] * B[k * N + j + 2];
+//                temp32 += A[(i+1) * K + k] * B[k * N + j + 2];
+//                temp33 += A[(i+2) * K + k] * B[k * N + j + 2];
+//                temp34 += A[(i+3) * K + k] * B[k * N + j + 2];
+//                temp41 += A[i * K + k] * B[k * N + j + 3];
+//                temp42 += A[(i+1) * K + k] * B[k * N + j + 3];
+//                temp43 += A[(i+2) * K + k] * B[k * N + j + 3];
+//                temp44 += A[(i+3) * K + k] * B[k * N + j + 3];
+//            }
+//            C[i * N + j] = temp11;
+//            C[(i+1) * N + j] = temp12;
+//            C[(i+2) * N + j] = temp13;
+//            C[(i+3) * N + j] = temp14;
+//            C[i * N + j + 1] = temp21;
+//            C[(i+1) * N + j + 1] = temp22;
+//            C[(i+2) * N + j + 1] = temp23;
+//            C[(i+3) * N + j + 1] = temp24;
+//            C[i * N + j + 2] = temp31;
+//            C[(i+1) * N + j + 2] = temp32;
+//            C[(i+2) * N + j + 2] = temp33;
+//            C[(i+3) * N + j + 2] = temp34;
+//            C[i * N + j + 3] = temp41;
+//            C[(i+1) * N + j + 3] = temp42;
+//            C[(i+2) * N + j + 3] = temp43;
+//            C[(i+3) * N + j + 3] = temp44;
+//        }
+//        for (int j = new_N; j < N; j++) {
+//            float temp1 = 0; float temp2 = 0; float temp3 = 0; float temp4 = 0;
+//            for (int k = 0; k < K; k++) {
+//                temp1 += A[i * K + k] * B[k * N + j];
+//                temp2 += A[(i+1) * K + k] * B[k * N + j];
+//                temp3 += A[(i+2) * K + k] * B[k * N + j];
+//                temp4 += A[(i+3) * K + k] * B[k * N + j];
+//            }
+//            C[i * N + j] = temp1;
+//            C[(i+1) * N + j] = temp2;
+//            C[(i+2) * N + j] = temp3;
+//            C[(i+3) * N + j] = temp4;
+//        }
+//    }
+//    for (int i = new_M; i < M; i++) {
+//        int new_N = N / 4 * 4;
+//        for (int j = 0; j < new_N; j += 4) {
+//            float temp1 = 0;
+//            float temp2 = 0;
+//            float temp3 = 0;
+//            float temp4 = 0;
+//            for (int k = 0; k < K; k++) {
+//                temp1 += A[i * K + k] * B[k * N + j];
+//                temp2 += A[i * K + k] * B[k * N + j + 1];
+//                temp3 += A[i * K + k] * B[k * N + j + 2];
+//                temp4 += A[i * K + k] * B[k * N + j + 3];
+//            }
+//            C[i * N + j] = temp1;
+//            C[i * N + j + 1] = temp2;
+//            C[i * N + j + 2] = temp3;
+//            C[i * N + j + 3] = temp4;
+//        }
+//        for (int j = new_N; j < N; j++) {
+//            float temp = 0;
+//            for (int k = 0; k < K; k++) {
+//                temp += A[i * K + k] * B[k * N + j];
+//            }
+//            C[i * N + j] = temp;
+//        }
+//    }
+//
+//    return C_tensor;
+//}
+
+
 template<typename T>
 Tensor<T> Tensor<T>::dot(Tensor<T> B_tensor) {
     /*
-     * 矩阵乘法
+     * 矩阵乘法。多线程
      */
     Tensor<T> A_tensor = *this;
     Tensor<T> C_tensor{std::vector<int>{A_tensor.size[0], B_tensor.size[1]}};
@@ -919,31 +1068,19 @@ Tensor<T> Tensor<T>::dot(Tensor<T> B_tensor) {
     int K = A_tensor.size[1];
     int N = B_tensor.size[1];
 
-    for(int i = 0; i<M; i++) {
-        int new_N = N / 4 * 4;
-        for(int j = 0; j<new_N; j+=4) {
-            T temp1 = 0;
-            T temp2 = 0;
-            T temp3 = 0;
-            T temp4 = 0;
-            for(int k = 0; k<K; k++) {
-                temp1 += A[i*K + k] * B[k*N + j];
-                temp2 += A[i*K + k] * B[k*N + j+1];
-                temp3 += A[i*K + k] * B[k*N + j+2];
-                temp4 += A[i*K + k] * B[k*N + j+3];
-            }
-            C[i*N + j] = temp1;
-            C[i*N + j+1] = temp2;
-            C[i*N + j+2] = temp3;
-            C[i*N + j+3] = temp4;
-        }
-        for(int j = new_N; j<N; j++) {
-            T temp = 0;
-            for(int k = 0; k<K; k++) {
-                temp += A[i*K + k] * B[k*N + j];
-            }
-            C[i*N + j] = temp;
-        }
+    // 最大线程数n_proc。每150000计算量增加一个线程，最大不超过n_proc
+    int n_proc = (int)sysconf(_SC_NPROCESSORS_ONLN);
+    int max_calc_amount = 150000 * n_proc;
+    n_proc = n_proc - (max_calc_amount - M*K*N) / 150000;
+
+    int M_per_proc = M / n_proc;
+    std::thread t[n_proc];
+    for(int i = 0; i<n_proc; i++) {
+        t[i] = std::thread(mt_dot, &C[i*M_per_proc*N], &A[i*M_per_proc*K], B, M_per_proc, K, N);
+    }
+    mt_dot(&C[n_proc*M_per_proc*N], &A[n_proc*M_per_proc*K], B, M-n_proc*M_per_proc, K, N);
+    for(int i = 0; i<n_proc; i++) {
+        t[i].join();
     }
 
     return C_tensor;
@@ -989,19 +1126,187 @@ Tensor<T> Tensor<T>::add(Tensor<T> adder) {
      * 加法。将this广播到adder，或将adder广播到this，然后进行elementwise加法
      */
     Tensor<T> broadcasted_this;
-    Tensor<T> broadcasted_divisor;
+    Tensor<T> broadcasted_adder;
     if(this->size.size() < adder.size.size()) {
         broadcasted_this = this->broadcast_to(adder.size);
-        broadcasted_divisor = adder;
+        broadcasted_adder = adder;
     }
     else {
         broadcasted_this = *this;
-        broadcasted_divisor = adder.broadcast_to(this->size);
+        broadcasted_adder = adder.broadcast_to(this->size);
     }
     Tensor<T> result{broadcasted_this.size};
     int len = result.len();
     for(int i = 0; i<len; i++) {
-        result.data[i] = broadcasted_this.data[i] + broadcasted_divisor.data[i];
+        result.data[i] = broadcasted_this.data[i] + broadcasted_adder.data[i];
+    }
+    return result;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::operator+(Tensor<T> adder) {
+    /*
+     * overload +
+     */
+    return this->add(adder);
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::concat(Tensor<T> array, int dim) {
+    /*
+     * concat: 创建新张量使其尺寸为拼接后的尺寸。遍历新张量的元素，根据其偏移计算下标，根据下标
+     * 计算应从哪个输入张量中提取元素，并计算其下标，根据此下标计算该元素在输入张量中的偏移，并使用
+     * 此元素填充新张量
+     */
+    // 计算新尺寸(检查：拼接双方维度相同，dim外其他维度尺寸相同)
+    std::vector<int> new_size;
+    if(this->size.size() != array.size.size()) {
+        fprintf(stderr, "the dimension of the tensors to concat should be same\n");
+        exit(-1);
+    }
+    for(int i = 0; i<this->size.size(); i++) {
+        if(i != dim) {
+            if(this->size[i] != array.size[i]) {
+                fprintf(stderr, "the dimensions to concat should exactly match. Cannot match"
+                                "%d to %d\n", this->size[i], array.size[i]);
+                exit(-1);
+            }
+            new_size.push_back(this->size[i]);
+        }
+        else {
+            new_size.push_back(this->size[i] + array.size[i]);
+        }
+    }
+    // 创建返回对象
+    Tensor<T> result{new_size};
+    // concat
+    int new_dim = (int)new_size.size();
+    int new_index[new_dim];
+    int old_index[new_dim];
+    memset(new_index, 0, sizeof(int)*new_dim);
+    memset(old_index, 0, sizeof(int)*new_dim);
+    int len = result.len();
+    for(int i = 0; i<len; i++) {    // 遍历新张量中的每个元素
+        // new_index即为当前访问元素在result中的下标，判断此下标应从哪个输入张量中取数
+        int get_from_this = 0;
+        if(new_index[dim] <= this->size[dim]-1) {
+            get_from_this = 1;
+        }
+        // 计算要取的数在输入张量中的下标
+        for(int j = 0; j<new_dim; j++) {
+            if(j == dim) {
+                if(get_from_this) {
+                    old_index[j] = new_index[j];
+                }
+                else {
+                    old_index[j] = new_index[j] - this->size[j];
+                }
+            }
+            else {
+                old_index[j] = new_index[j];
+            }
+        }
+        // 根据下标计算此数在输入张量中的偏移
+        int offset = 0;
+        int weight = 1;
+        if(get_from_this) {
+            for(int j = this->size.size()-1; j >= 0; j--) {
+                offset += weight * old_index[j];
+                weight *= this->size[j];
+            }
+        }
+        else {
+            for(int j = array.size.size()-1; j >= 0; j--) {
+                offset += weight * old_index[j];
+                weight *= array.size[j];
+            }
+        }
+        // 从输入张量中取数置于result中
+        if(get_from_this) {
+            result.data[i] = this->data[offset];
+        }
+        else {
+            result.data[i] = array.data[offset];
+        }
+        // 将新张量下标加一
+        array_add_1(new_index, result.size);
+    }
+    return result;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::sub(T subtractend) {
+    /*
+     * 减法
+     */
+    Tensor<T> result{this->size};
+    int len = this->len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = this->data[i] - subtractend;
+    }
+    return result;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::operator-(T subtractend) {
+    /*
+     * overload -
+     */
+    return this->sub(subtractend);
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::sub(Tensor<T> subtractend) {
+    /*
+     * 减法。将this广播到adder，或将adder广播到this，然后进行elementwise减法
+     */
+    Tensor<T> broadcasted_this;
+    Tensor<T> broadcasted_subtractend;
+    if(this->size.size() < subtractend.size.size()) {
+        broadcasted_this = this->broadcast_to(subtractend.size);
+        broadcasted_subtractend = subtractend;
+    }
+    else {
+        broadcasted_this = *this;
+        broadcasted_subtractend = subtractend.broadcast_to(this->size);
+    }
+    Tensor<T> result{broadcasted_this.size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = broadcasted_this.data[i] - broadcasted_subtractend.data[i];
+    }
+    return result;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::operator-(Tensor<T> subtractend) {
+    /*
+     * overload -
+     */
+    return this->sub(subtractend);
+}
+
+template<typename T>
+Tensor<T> &Tensor<T>::operator-=(T subtractend) {
+    /*
+     * overload -=
+     */
+    int len = this->len();
+    for(int i = 0; i<len; i++) {
+        this->data[i] += subtractend;
+    }
+    return *this;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::sqrt() {
+    /*
+     * sqrt
+     */
+    Tensor<T> result{this->size};
+    int len = result.len();
+    for(int i = 0; i<len; i++) {
+        result.data[i] = sqrt(this->data[i]);
     }
     return result;
 }

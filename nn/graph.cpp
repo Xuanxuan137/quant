@@ -23,7 +23,9 @@ Graph::Graph(const std::string& path)
     // 根据每行创建一个节点
     std::string graph_line;
     while(std::getline(graph_file, graph_line)) {
-        if(replace(graph_line, " ", "") == "\n") {
+        graph_line = delete_annotation(graph_line, "#");
+        graph_line = replace(graph_line, " ", "");
+        if(graph_line.empty()) {
             continue;
         }
         Node * new_node = new Node(graph_line, output_shape_list);  // 不需要delete new_node，因为它后面还会用

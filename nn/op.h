@@ -24,6 +24,7 @@
  * Output: output
  * Add: add
  * Concat: concat
+ * Batch_Normalization: nn.batch_norm
  *
  * QConv2d
  * QRelu
@@ -50,6 +51,7 @@
 #define OPN_ADD                 7
 #define OPN_CONCAT              8
 #define OPN_MAXPOOL2D           9
+#define OPN_BATCH_NORM2D        10
 
 #include <iostream>
 #include <vector>
@@ -177,6 +179,19 @@ public:
            const std::vector<std::vector<int> > &output_shape_list);        // constructor
     ~Concat();
     void forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output);
+};
+
+class Batch_Norm2d {
+public:
+    int input_node;
+    int num_features;
+    float eps=1e-5;
+    float momentum=0.1;
+    std::vector<int> output_shape;
+    Batch_Norm2d(const std::vector<std::string> &parameters,
+                        const std::vector<std::vector<int> > &output_shape_list);       // constructor
+    ~Batch_Norm2d();
+    void forward(Tensor<float32> *input, Tensor<float32> *output);
 };
 
 #endif //QUANT_OP_H

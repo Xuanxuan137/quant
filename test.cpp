@@ -33,7 +33,6 @@ void test_accuracy(const std::string &val_set_path, Graph * graph, int *infer_sh
 System_info * sys_info;
 
 int main(int argc, char *argv[]) {
-
     sys_info = new System_info();
     Graph * graph = nullptr;                                    // 计算图
     std::string val_set_path;                                   // calibration set 路径

@@ -45,7 +45,7 @@ Tensor<unsigned char>* get_calib_set(const std::string& calib_set_path, int cali
     int img_num = 0;        // 计算图片数量
     std::string img_path;
     while(std::getline(file, img_path)) {
-        if(replace(img_path, " ", "") == "\n") {
+        if(replace(img_path, " ", "").empty()) {
             continue;
         }
         img_num++;
@@ -119,7 +119,7 @@ Tensor<unsigned char>* get_calc_running_img(const std::string& running_set_path,
     int img_num = 0;        // 计算图片数量
     std::string img_path;
     while(std::getline(file, img_path)) {
-        if(replace(img_path, " ", "") == "\n") {
+        if(replace(img_path, " ", "").empty()) {
             continue;
         }
         img_num++;

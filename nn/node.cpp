@@ -70,6 +70,11 @@ Node::Node(const std::string& read_graph_line,
         op = new Concat(parameters, output_shape_list);
         this->output_shape = ((Concat*)op)->output_shape;
     }
+    else if(this->name == OPN_BATCH_NORM2D) {
+        this->dtype = "float32";
+        op = new Batch_Norm2d(parameters, output_shape_list);
+        this->output_shape = ((Batch_Norm2d*)op)->output_shape;
+    }
 }
 
 Node::~Node() {
@@ -102,6 +107,9 @@ Node::~Node() {
     }
     else if(this->name == OPN_CONCAT) {
         delete((Concat*)op);
+    }
+    else if(this->name == OPN_BATCH_NORM2D) {
+        delete((Batch_Norm2d*)op);
     }
 }
 
@@ -157,6 +165,11 @@ void Node::forward(const std::vector<void *> &intermediate_results, void *input)
         ((Concat*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Concat*)op)->input_node1],
                 (Tensor<float32>*)intermediate_results[((Concat*)op)->input_node2],
+                (Tensor<float32>*)intermediate_results[this->number]);
+    }
+    else if(this->name == OPN_BATCH_NORM2D) {
+        ((Batch_Norm2d*)op)->forward(
+                (Tensor<float32>*)intermediate_results[((Batch_Norm2d*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
 }

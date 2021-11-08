@@ -1,12 +1,37 @@
+# conv2 cat
 %0=input(shape=(1,1,28,28), dtype=float32);
 %1=nn.conv2d(input=%0, weight=../weight/conv1_weight.bin, bias=../weight/conv1_bias.bin, output_channel=16, input_channel=1, kernel_size=(3,3), stride=(1,1), padding=(1,1), dilation=(1,1));
-%2=nn.relu(input=%1);
-%3=nn.maxpool2d(input=%2, kernel_size=(2,2), stride=None, padding=(0,0), dilation=(1,1));
-%4=nn.conv2d(input=%3, weight=../weight/conv2_weight.bin, bias=../weight/conv2_bias.bin, output_channel=32, input_channel=16, kernel_size=(3,3), stride=(1,1), padding=(1,1), dilation=(1,1));
-%5=nn.relu(input=%4);
-%6=nn.maxpool2d(input=%5, kernel_size=(2,2), stride=None, padding=(0,0), dilation=(1,1));
-%7=nn.conv2d(input=%6, weight=../weight/conv3_weight.bin, bias=../weight/conv3_bias.bin, output_channel=64, input_channel=32, kernel_size=(3,3), stride=(1,1), padding=(1,1), dilation=(1,1));
-%8=nn.relu(input=%7);
-%9=nn.flatten(input=%8);
-%10=nn.dense(input=%9, weight=../weight/fc1_weight.bin, bias=../weight/fc1_bias.bin, output_channel=10, input_channel=3136);
-%11=output(input=%10);
+%2=nn.conv2d(input=%0, weight=../weight/conv2_weight.bin, bias=../weight/conv2_bias.bin, output_channel=16, input_channel=1, kernel_size=(3,3), stride=(1,1), padding=(1,1), dilation=(1,1));
+%3=concat(input1=%1, input2=%2, dim=1);
+%4=nn.relu(input=%3);
+%5=nn.maxpool2d(input=%4, kernel_size=(2,2), stride=None, padding=(0,0), dilation=(1,1));
+%6=nn.flatten(input=%5);
+%7=nn.dense(input=%6, weight=../weight/fc1_weight.bin, bias=../weight/fc1_bias.bin, output_channel=10, input_channel=6272);
+%8=output(input=%7);
+
+
+# conv2 add
+#%0=input(shape=(1,1,28,28), dtype=float32);
+#%1=nn.conv2d(input=%0, weight=../weight/conv1_weight.bin, bias=../weight/conv1_bias.bin, output_channel=16, input_channel=1, kernel_size=(3,3), stride=(1,1), padding=(1,1), dilation=(1,1));
+#%2=nn.conv2d(input=%0, weight=../weight/conv2_weight.bin, bias=../weight/conv2_bias.bin, output_channel=16, input_channel=1, kernel_size=(3,3), stride=(1,1), padding=(1,1), dilation=(1,1));
+#%3=add(input1=%1, input2=%2);
+#%4=nn.relu(input=%3);
+#%5=nn.maxpool2d(input=%4, kernel_size=(2,2), stride=None, padding=(0,0), dilation=(1,1));
+#%6=nn.flatten(input=%5);
+#%7=nn.dense(input=%6, weight=../weight/fc1_weight.bin, bias=../weight/fc1_bias.bin, output_channel=10, input_channel=3136);
+#%8=output(input=%7);
+
+
+# conv3fc1
+#%0=input(shape=(1,1,28,28), dtype=float32);
+#%1=nn.conv2d(input=%0, weight=../weight/conv1_weight.bin, bias=../weight/conv1_bias.bin, output_channel=16, input_channel=1, kernel_size=(3,3), stride=(1,1), padding=(1,1), dilation=(1,1));
+#%2=nn.relu(input=%1);
+#%3=nn.maxpool2d(input=%2, kernel_size=(2,2), stride=None, padding=(0,0), dilation=(1,1));
+#%4=nn.conv2d(input=%3, weight=../weight/conv2_weight.bin, bias=../weight/conv2_bias.bin, output_channel=32, input_channel=16, kernel_size=(3,3), stride=(1,1), padding=(1,1), dilation=(1,1));
+#%5=nn.relu(input=%4);
+#%6=nn.maxpool2d(input=%5, kernel_size=(2,2), stride=None, padding=(0,0), dilation=(1,1));
+#%7=nn.conv2d(input=%6, weight=../weight/conv3_weight.bin, bias=../weight/conv3_bias.bin, output_channel=64, input_channel=32, kernel_size=(3,3), stride=(1,1), padding=(1,1), dilation=(1,1));
+#%8=nn.relu(input=%7);
+#%9=nn.flatten(input=%8);
+#%10=nn.dense(input=%9, weight=../weight/fc1_weight.bin, bias=../weight/fc1_bias.bin, output_channel=10, input_channel=3136);
+#%11=output(input=%10);

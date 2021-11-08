@@ -425,7 +425,10 @@ Add::Add(const std::vector<std::string> &parameters,
 }
 
 void Add::forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output) {
-
+    /*
+     * Add算子forward
+     */
+    *output = F::add(input1, input2);
 }
 
 Add::~Add() = default;
@@ -472,7 +475,44 @@ Concat::Concat(const std::vector<std::string> &parameters,
 }
 
 void Concat::forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output) {
-
+    /*
+     * concat算子forward
+     */
+    *output = F::concat(input1, input2, dim);
 }
 
 Concat::~Concat() = default;
+
+Batch_Norm2d::Batch_Norm2d(const std::vector<std::string> &parameters,
+                                         const std::vector<std::vector<int>> &output_shape_list)
+{
+    /*
+     * 分析参数为算子设置属性
+     * input=%1
+     * num_features=64
+     * eps=0.00001
+     * momentum=0.1
+     */
+    // 遍历参数对
+    for(const std::string &s: parameters) {
+        std::vector<std::string> para_pair = split(s, "=");
+        if(para_pair[0] == "input") {
+            std::string temp = replace(para_pair[0], "%", "");
+            this->input_node = (int)strtol(temp.c_str(), nullptr, 10);
+        }
+        else if(para_pair[0] == "num_features") {
+            this->num_features = (int)strtol(para_pair[1].c_str(), nullptr, 10);
+        }
+        else if(para_pair[0] == "eps") {
+            this->eps = (float)strtof(para_pair[1].c_str(), nullptr);
+        }
+        else if(para_pair[0] == "momentum") {
+            this->momentum = (float)strtof(para_pair[1].c_str(), nullptr);
+        }
+    }
+    // 设置output_shape
+    this->output_shape = output_shape_list[input_node];
+}
+
+Batch_Norm2d::~Batch_Norm2d() = default;
+

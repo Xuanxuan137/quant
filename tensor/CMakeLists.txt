@@ -16,5 +16,5 @@ add_library(
         tensor ${DIR_TENSOR_SRCS}
 )
 target_link_libraries(
-        tensor
+        tensor pthread
 )

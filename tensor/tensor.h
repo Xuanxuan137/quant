@@ -102,6 +102,10 @@
 #include <vector>
 #include <map>
 #include <type_traits>
+#include <thread>
+#include <unistd.h>
+#include <cassert>
+#include <cmath>
 
 typedef char int8;
 typedef unsigned char uint8;
@@ -129,10 +133,11 @@ public:
     void print();                                           // print
     int len();                                              // 返回数据空间元素数量
     std::vector<int> shape();                               // shape
-    Tensor<T> reshape(const std::vector<int>& new_size);   // reshape
-    Tensor<T> transpose(const std::vector<int>& new_order);// transpose
-    Tensor<T> broadcast_to(const std::vector<int> &size);  // broadcast_to
-    Tensor<T> deep_copy();                                 // deep copy
+    Tensor<T> reshape(const std::vector<int>& new_size);    // reshape
+    Tensor<T> transpose(const std::vector<int>& new_order); // transpose
+    Tensor<T> broadcast_to(const std::vector<int> &size);   // broadcast_to
+    Tensor<T> deep_copy();                                  // deep copy
+    Tensor<T> concat(Tensor<T> array, int dim = 0);         // concat
 
     // 数据处理
     T to_num();                                             // 返回数值
@@ -147,22 +152,29 @@ public:
     // 数学运算
     Tensor<T> add(T adder);                                 // 加法
     Tensor<T> add(Tensor<T> adder);                         // 加法
+    Tensor<T> sub(T subtractend);                           // 减法
+    Tensor<T> sub(Tensor<T> subtractend);                   // 减法
     Tensor<T> divide(T divisor);                            // 除法
     Tensor<T> true_divide(T divisor);                       // 除法
     Tensor<T> floor_divide(T divisor);                      // 向下取整除法
     Tensor<T> divide(Tensor<T> divisor);                    // 除法
     Tensor<T> true_divide(Tensor<T> divisor);               // 除法
     Tensor<T> floor_divide(Tensor<T> divisor);              // 向下取整乘法
+    Tensor<T> sqrt();                                       // 开平方
     Tensor<T> dot(Tensor<T> B);                             // matmul
 
     // 运算符重载
-    Tensor<T> operator[](int index);                        // overload []
-    Tensor<T>& operator=(Tensor<T> array);                  // overload =
-    Tensor<T>& operator=(T value);                          // overload =
-    Tensor<T> operator+(T adder);                           // overload +
-    Tensor<T>& operator+=(T adder);                         // overload +=
-    Tensor<T> operator/(T divisor);                         // overload /
-    Tensor<T> operator/(Tensor<T> divisor);                 // overload /
+    Tensor<T> operator[](int index);                        // overload []  : Tensor[]
+    Tensor<T>& operator=(Tensor<T> array);                  // overload =   : Tensor = Tensor
+    Tensor<T>& operator=(T value);                          // overload =   : is_num_Tensor = value
+    Tensor<T> operator+(T adder);                           // overload +   : Tensor + value
+    Tensor<T> operator+(Tensor<T> adder);                   // overload +   : Tensor + Tensor
+    Tensor<T>& operator+=(T adder);                         // overload +=  : Tensor += value
+    Tensor<T> operator-(T subtractend);                     // overload -   : Tensor - value
+    Tensor<T> operator-(Tensor<T> subtractend);             // overload -   : Tensor - Tensor
+    Tensor<T>& operator-=(T subtractend);                   // overload -=  : Tensor -= value
+    Tensor<T> operator/(T divisor);                         // overload /   : Tensor / value
+    Tensor<T> operator/(Tensor<T> divisor);                 // overload /   : Tensor / Tensor
 
 private:
     T * mem_addr;               // 记录内存地址
@@ -176,7 +188,7 @@ std::map<T*, int> Tensor<T>::counter;   // reference counter
 
 void array_add_1(int array[], const std::vector<int> &size);    // 数组自增
 void print_size(const std::vector<int> &size);                  // 打印Tensor的size
-
+void mt_dot(float * C, float * A, float * B, int mt_M, int mt_K, int mt_N);
 
 
 #include "tensor_impl.h"

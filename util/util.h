@@ -26,4 +26,5 @@ std::vector<std::string> split(const std::string &s, const std::string &seperato
 std::string replace(const std::string &s, const std::string &origin, const std::string &substitute);
 bool is_digit(char c);
 unsigned long long get_micro_sec_time();
+std::string delete_annotation(const std::string &s, const std::string &annotation);
 #endif //QUANT_UTIL_H

@@ -76,6 +76,23 @@ unsigned long long get_micro_sec_time() {
     return time_val.tv_sec * 1000000 + time_val.tv_usec;
 }
 
+std::string delete_annotation(const std::string &s, const std::string &annotation) {
+    /*
+     * 根据输入的注释标记符号，删除注释部分
+     */
+    unsigned long index = s.find(annotation);
+    std::string result;
+    if(index != std::string::npos) {
+        for (int i = 0; i < (int) index; i++) {
+            result.push_back(s[i]);
+        }
+    }
+    else {
+        result = s;
+    }
+    return result;
+}
+
 System_info::System_info() {
     n_proc = sysconf(_SC_NPROCESSORS_ONLN);
 }

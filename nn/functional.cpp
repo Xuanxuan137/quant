@@ -132,6 +132,7 @@ void mt_relu(float32 * R, float32 * I, int len)
 //    float32 * R = result.data;
 //
 //    int len = result.len();
+//    printf("len %d\n", len);
 //    for(int i = 0; i<len; i++) {
 //        R[i] = (I[i] > 0) ? I[i] : 0;
 //    }
@@ -141,7 +142,7 @@ void mt_relu(float32 * R, float32 * I, int len)
 Tensor<float32>
 functional::relu(Tensor<float32> *input) {
     /*
-     * 优化Relu
+     * 多线程优化Relu
      */
     Tensor<float32> result{input->size};
     float32 * I = input->data;          // 输入的数据地址
@@ -163,7 +164,16 @@ functional::relu(Tensor<float32> *input) {
         }
     }
     else {
-        mt_relu(R, I, len);
+        int new_len = len / 4 * 4;
+        for(int i = 0; i<len; i+=4) {
+            R[i] = (I[i] > 0) ? I[i] : 0;
+            R[i+1] = (I[i+1] > 0) ? I[i+1] : 0;
+            R[i+2] = (I[i+2] > 0) ? I[i+2] : 0;
+            R[i+3] = (I[i+3] > 0) ? I[i+3] : 0;
+        }
+        for(int i = new_len; i<len; i++) {
+            R[i] = (I[i] > 0) ? I[i] : 0;
+        }
     }
     return result;
 }
@@ -344,4 +354,63 @@ Tensor<float32> functional::dense(Tensor<float32> *input, Tensor<float32> *weigh
         }
     }
     return dot_res;
+}
+
+Tensor<float32> functional::add(Tensor<float32> *input1, Tensor<float32> *input2) {
+    /*
+     * add
+     */
+    return (*input1) + (*input2);
+}
+
+Tensor<float32> functional::concat(Tensor<float32> *input1, Tensor<float32> *input2, int dim) {
+    /*
+     * concat
+     */
+    return input1->concat(*input2, dim);
+}
+
+Tensor<float32>
+functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, Tensor<float32> *running_var,
+                       Tensor<float32> *weight, Tensor<float32> *bias, float eps, float momentum)
+{
+    /*
+     * batch normalization 2d
+     */
+    if(input->size.size() != 4) {
+        fprintf(stderr, "File functional.cpp, line %d. Only 4 dimension input is allowed in batch_norm2d\n", __LINE__);
+        exit(-1);
+    }
+    if(running_mean->size.size() != 1) {
+        fprintf(stderr, "File functional.cpp, line %d. Only 1 dimension running_mean is allowed in batch_norm2d\n", __LINE__);
+        exit(-1);
+    }
+    if(running_var->size.size() != 1) {
+        fprintf(stderr, "File functional.cpp, line %d. Only 1 dimension running_var is allowed in batch_norm2d\n", __LINE__);
+        exit(-1);
+    }
+    if(weight->size.size() != 1) {
+        fprintf(stderr, "File functional.cpp, line %d. Only 1 dimension weight is allowed in batch_norm2d\n", __LINE__);
+        exit(-1);
+    }
+    if(bias->size.size() != 1) {
+        fprintf(stderr, "File functional.cpp, line %d. Only 1 dimension bias is allowed in batch_norm2d\n", __LINE__);
+        exit(-1);
+    }
+    Tensor<float32> x = input->deep_copy();
+    Tensor<float32> E_x = running_mean->deep_copy();
+    Tensor<float32> Var_x = running_var->deep_copy();
+    int batch_size = x.size[0];
+    int channel = x.size[1];
+    int height = x.size[2];
+    int width = x.size[3];
+    for(int n = 0; n < batch_size; n++) {
+        for (int c = 0; c < channel; c++) {
+            x[n][c] -= running_mean[c].to_num();
+        }
+    }
+    Var_x += eps;
+    Var_x = Var_x.sqrt();
+    Tensor<float32> y = (x / Var_x) * (*weight) + (*bias);
+    return y;
 }
