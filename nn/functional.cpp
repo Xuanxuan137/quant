@@ -402,8 +402,6 @@ functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, 
     Tensor<float32> Var_x = running_var->deep_copy();
     int batch_size = x.size[0];
     int channel = x.size[1];
-    int height = x.size[2];
-    int width = x.size[3];
     for(int n = 0; n < batch_size; n++) {
         for (int c = 0; c < channel; c++) {
             x[n][c] -= running_mean[c].to_num();

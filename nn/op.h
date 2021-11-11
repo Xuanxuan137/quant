@@ -18,6 +18,7 @@
  * 支持的算子: 算子名称
  * Conv2d: nn.conv2d
  * Relu: nn.relu
+ * Maxpool2d: nn.maxpool2d
  * Input: input
  * Flatten: nn.flatten
  * Dense: nn.dense

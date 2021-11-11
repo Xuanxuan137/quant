@@ -514,5 +514,11 @@ Batch_Norm2d::Batch_Norm2d(const std::vector<std::string> &parameters,
     this->output_shape = output_shape_list[input_node];
 }
 
+void Batch_Norm2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
+    /*
+     * TODO: bn2d forward
+     */
+}
+
 Batch_Norm2d::~Batch_Norm2d() = default;
 
