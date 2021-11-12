@@ -404,11 +404,13 @@ functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, 
     int channel = x.size[1];
     for(int n = 0; n < batch_size; n++) {
         for (int c = 0; c < channel; c++) {
-            x[n][c] -= running_mean[c].to_num();
+            x[n][c] -= E_x[c].to_num();
         }
     }
     Var_x += eps;
     Var_x = Var_x.elewise_sqrt();
-    Tensor<float32> y = (x / Var_x) * (*weight) + (*bias);
+    Tensor<float32> y = (x / Var_x.reshape(std::vector<int>{1,-1,1,1}))
+            * (weight->reshape(std::vector<int>{1,-1,1,1}))
+            + (bias->reshape(std::vector<int>{1,-1,1,1}));
     return y;
 }

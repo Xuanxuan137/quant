@@ -77,8 +77,7 @@ public:
      * 融合算子。将batch_norm2d融入conv2d
      * 只能在dtype=="float32"时使用此函数
      */
-     void fuse_op(bool calc_running, int running_size, Tensor<uint8>* calc_running_img,
-                  Tensor<float32>* running_mean, Tensor<float32>* running_var);
+     void fuse_op(Tensor<uint8>* calc_running_img);
 };
 
 

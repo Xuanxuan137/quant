@@ -40,6 +40,7 @@
  * 1. Node::Node()
  * 2. Node::~Node()
  * 3. Graph::forward()
+ * 4. node.cpp  get_name()
  */
 
 
@@ -188,6 +189,10 @@ public:
     int num_features;
     float eps=1e-5;
     float momentum=0.1;
+    std::string weight_path;
+    Tensor<float32> weight;
+    std::string bias_path;
+    Tensor<float32> bias;
     std::vector<int> output_shape;
     Batch_Norm2d(const std::vector<std::string> &parameters,
                         const std::vector<std::vector<int> > &output_shape_list);       // constructor

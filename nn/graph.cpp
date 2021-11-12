@@ -43,10 +43,16 @@ Graph::~Graph() {
     }
 }
 
-void Graph::fuse_op(bool calc_running, int running_size, Tensor<uint8> *calc_running_img,
-               Tensor<float32> *running_mean, Tensor<float32> *running_var)
+void Graph::fuse_op(Tensor<uint8> *calc_running_img)
 {
     // TODO: fill this function
+    /*
+     * 算子融合：将batch_norm2d融合进conv2d中
+     * 步骤：考虑到计算图限定了batch_size，而算子融合提供的数据集的图片数量可能与计算图的batch_size不同
+     * 所以重新创建一张计算图，新计算图的结构与原始计算图完全相同，但每个算子的尺寸中batch_size改为与输入
+     * 数据集的batch_size相同
+     */
+    print_size(calc_running_img->size);
 }
 
 std::vector<void*> Graph::forward(void *input) {

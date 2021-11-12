@@ -35,6 +35,18 @@ void Input::forward(Tensor<float32> *input, Tensor<float32> *output) {
     /*
      * Input算子的forward
      */
+    if(input->size != output_shape) {
+        fprintf(stderr, "Cannot input data with shape (");
+        for(const int &i: input->size) {
+            fprintf(stderr, "%d, ", i);
+        }
+        fprintf(stderr, ") into Input Node with shape (");
+        for(const int &i: output_shape) {
+            fprintf(stderr, "%d, ", i);
+        }
+        fprintf(stderr, ")\n");
+        exit(-1);
+    }
     *output = *input;
 }
 
@@ -489,6 +501,8 @@ Batch_Norm2d::Batch_Norm2d(const std::vector<std::string> &parameters,
     /*
      * 分析参数为算子设置属性
      * input=%1
+     * weight=../weight/bn1_weight.bin
+     * bias=../weight/bn1_bias.bin
      * num_features=64
      * eps=0.00001
      * momentum=0.1
@@ -497,7 +511,7 @@ Batch_Norm2d::Batch_Norm2d(const std::vector<std::string> &parameters,
     for(const std::string &s: parameters) {
         std::vector<std::string> para_pair = split(s, "=");
         if(para_pair[0] == "input") {
-            std::string temp = replace(para_pair[0], "%", "");
+            std::string temp = replace(para_pair[1], "%", "");
             this->input_node = (int)strtol(temp.c_str(), nullptr, 10);
         }
         else if(para_pair[0] == "num_features") {
@@ -509,7 +523,23 @@ Batch_Norm2d::Batch_Norm2d(const std::vector<std::string> &parameters,
         else if(para_pair[0] == "momentum") {
             this->momentum = (float)strtof(para_pair[1].c_str(), nullptr);
         }
+        else if(para_pair[0] == "weight") {
+            this->weight_path = (std::string)para_pair[1];
+        }
+        else if(para_pair[0] == "bias") {
+            this->bias_path = (std::string)para_pair[1];
+        }
     }
+    // 读取weight
+    weight = Tensor<float32>{std::vector<int>{num_features}};
+    FILE * weight_file = fopen(weight_path.c_str(), "rb");
+    fread(weight.data, sizeof(float), num_features, weight_file);
+    fclose(weight_file);
+    // 读取bias
+    bias = Tensor<float32>{std::vector<int>{num_features}};
+    FILE * bias_file = fopen(bias_path.c_str(), "rb");
+    fread(bias.data, sizeof(float), num_features, bias_file);
+    fclose(bias_file);
     // 设置output_shape
     this->output_shape = output_shape_list[input_node];
 }
@@ -518,6 +548,11 @@ void Batch_Norm2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
     /*
      * TODO: bn2d forward
      */
+    // 根据input计算running mean和running var
+    Tensor<float32> running_mean = input->mean(std::vector<int>{0,2,3});
+    Tensor<float32> running_var = input->var(std::vector<int>{0,2,3});
+    // 调用Functional
+    *output = F::batch_norm2d(input, &running_mean, &running_var, &weight, &bias, eps, momentum);
 }
 
 Batch_Norm2d::~Batch_Norm2d() = default;

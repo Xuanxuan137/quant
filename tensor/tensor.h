@@ -164,6 +164,10 @@ public:
     Tensor<T> floor_divide(Tensor<T> divisor);              // 向下取整乘法
     Tensor<T> elewise_sqrt();                               // 开平方
     Tensor<T> dot(Tensor<T> B);                             // matmul
+    T mean();                                               // mean
+    Tensor<T> mean(std::vector<int> axis);                  // mean
+    T var();                                                // var
+    Tensor<T> var(std::vector<int> axis);                   // var
 
     // 运算符重载
     Tensor<T> operator[](int index);                        // overload []  : Tensor[]

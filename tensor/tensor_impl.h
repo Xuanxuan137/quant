@@ -63,7 +63,8 @@ Tensor<T>::Tensor(const std::vector<int>& size) {
 
     // 对刚分配的空间引用计数(如果没有bug，应该找不到)
     if(counter.find(mem_addr) != counter.end()) {   // if found
-        fprintf(stderr, "File: tensor_impl.h, line: %d. Found just malloced \'data\' in counter when constructing\n", __LINE__);
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Found just malloced \'data\' in counter "
+                        "when constructing\n", __LINE__);
         exit(-1);
     }
     else {
@@ -90,7 +91,8 @@ Tensor<T>::Tensor(const Tensor<T> &src) {
         counter[mem_addr]++;
     }
     else {
-        fprintf(stderr, "File: tensor_impl.h, line: %d. Not found src \'data\' when copy constructing\n", __LINE__);
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Not found src \'data\' when copy "
+                        "constructing\n", __LINE__);
         exit(-1);
     }
 }
@@ -117,7 +119,8 @@ Tensor<T>::~Tensor() {
         }
     }
     else {
-        fprintf(stderr, "File: tensor_impl.h, line: %d. Not found \'data\' in counter when destructing\n", __LINE__);
+        fprintf(stderr, "File: tensor_impl.h, line: %d. Not found \'data\' in counter when "
+                        "destructing\n", __LINE__);
         exit(-1);
     }
 }
@@ -184,7 +187,8 @@ Tensor<T>& Tensor<T>::operator=(Tensor<T> array)
      */
     if(this->cut > 0) {         // 如果左值是截取
         if(this->size != array.size) {
-            fprintf(stderr, "File: tensor_impl.h, line: %d. Could not broadcast input array from shape (", __LINE__);
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Could not broadcast input array "
+                            "from shape (", __LINE__);
             for(int i = 0; i<(int)array.size.size(); i++) {
                 std::cerr << array.size[i] << ", ";
             }
@@ -212,7 +216,8 @@ Tensor<T>& Tensor<T>::operator=(Tensor<T> array)
                     counter.erase(mem_addr);
                 }
             } else {
-                fprintf(stderr, "File: tensor_impl.h, line: %d. Not found old \'data\' in counter when operator=\n", __LINE__);
+                fprintf(stderr, "File: tensor_impl.h, line: %d. Not found old \'data\' in counter "
+                                "when operator=\n", __LINE__);
                 exit(-1);
             }
         }
@@ -229,7 +234,8 @@ Tensor<T>& Tensor<T>::operator=(Tensor<T> array)
             counter[mem_addr]++;
         }
         else {
-            fprintf(stderr, "File: tensor_impl.h, line: %d. Not found new \'data\' in counter when operator=\n", __LINE__);
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Not found new \'data\' in "
+                            "counter when operator=\n", __LINE__);
             exit(-1);
         }
     }
@@ -319,7 +325,8 @@ Tensor<T> Tensor<T>::reshape(const std::vector<int> &new_size) {
             negative_count++;
         }
         else if(i == 0) {
-            fprintf(stderr, "File: tensor_impl.h, line: %d. Cannot reshape array of size %d into shape(", __LINE__, old_space);
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Cannot reshape array of "
+                            "size %d into shape(", __LINE__, old_space);
             for(const int &j: new_size) {
                 fprintf(stderr, "%d, ", j);
             }
@@ -336,7 +343,8 @@ Tensor<T> Tensor<T>::reshape(const std::vector<int> &new_size) {
     }
     if(negative_count == 0) {
         if(old_space != new_space) {
-            fprintf(stderr, "File: tensor_impl.h, line: %d. Cannot reshape array of size %d into shape(", __LINE__, old_space);
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Cannot reshape array of "
+                            "size %d into shape(", __LINE__, old_space);
             for(const int &j: new_size) {
                 fprintf(stderr, "%d, ", j);
             }
@@ -432,7 +440,8 @@ Tensor<T> Tensor<T>::transpose(const std::vector<int> &new_order) {
     }
     for(int i = 0; i<new_order_len; i++) {
         if(new_order[i] >= new_order_len || new_order[i] < 0) {
-            fprintf(stderr, "File: tensor_impl.h, line: %d. Axis %d is out of bounds for array of dimension %d\n", __LINE__, new_order[i], new_order_len);
+            fprintf(stderr, "File: tensor_impl.h, line: %d. Axis %d is out of bounds "
+                            "for array of dimension %d\n", __LINE__, new_order[i], new_order_len);
             exit(-1);
         }
         appear[new_order[i]]++;
@@ -530,8 +539,9 @@ Tensor<int> Tensor<T>::argmax(int axis) {
      *                  O[i][j][k][l] = max(A[i][j][:][k][l])
      */
     // 检查axis: axis不应超过维度，不应小于0
-    if(axis >= size.size() || axis < 0) {
-        fprintf(stderr, "File: tensor_impl.h, line: %d. axis %d is out of bounds for array of dimension %d\n", __LINE__, axis, size.size());
+    if(axis >= (int)size.size() || axis < 0) {
+        fprintf(stderr, "File: tensor_impl.h, line: %d. axis %d is out of bounds "
+                        "for array of dimension %d\n", __LINE__, axis, (int)size.size());
         exit(-1);
     }
     /*
@@ -546,7 +556,7 @@ Tensor<int> Tensor<T>::argmax(int axis) {
     // 如果原数组维度大于1
     // 计算结果数组的size
     std::vector<int> new_size;
-    for(int i = 0; i<size.size(); i++) {
+    for(int i = 0; i<(int)size.size(); i++) {
         if(i == axis) {
             continue;
         }
@@ -692,7 +702,8 @@ Tensor<T> Tensor<T>::broadcast_to(const std::vector<int> &target_size) {
     // 检查target_size中不能有负值
     for(const int &i: target_size) {
         if(i <= 0) {
-            fprintf(stderr, "File: tensor_impl.h, line: %d. all elements of broadcast shape must be non-negative\n", __LINE__);
+            fprintf(stderr, "File: tensor_impl.h, line: %d. all elements of broadcast "
+                            "shape must be non-negative\n", __LINE__);
             exit(-1);
         }
     }
@@ -1164,7 +1175,7 @@ Tensor<T> Tensor<T>::concat(Tensor<T> array, int dim) {
         fprintf(stderr, "the dimension of the tensors to concat should be same\n");
         exit(-1);
     }
-    for(int i = 0; i<this->size.size(); i++) {
+    for(int i = 0; i<(int)this->size.size(); i++) {
         if(i != dim) {
             if(this->size[i] != array.size[i]) {
                 fprintf(stderr, "the dimensions to concat should exactly match. Cannot match"
@@ -1385,6 +1396,218 @@ Tensor<T> &Tensor<T>::operator/=(Tensor<T> divisor) {
         this->data[i] /= divisor;
     }
     return *this;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::mean(std::vector<int> axis) {
+    /*
+     * mean。对axis指定的轴求平均值
+     * 使用不在axis中包含的维度的尺寸创建新数组。遍历新数组，计算其在旧数组中对应的下标，并使用对应的轴
+     */
+    // 检查输入的axis。不能有重复，不能有负数，轴编号必须比维度数小
+    int appear[this->size.size()];
+    memset(appear, 0, sizeof(int)*this->size.size());
+    for(int &i: axis) {
+        if(i < 0) {
+            fprintf(stderr, "Negative value not allowed in axis\n");
+            exit(-1);
+        }
+        else if(i >= (int)this->size.size()) {
+            fprintf(stderr, "Axis %d is out of bounds for array of dimension of %d\n", i, (int)this->size.size());
+            exit(-1);
+        }
+        else {
+            appear[i]++;
+        }
+    }
+    for(int i = 0; i<(int)this->size.size(); i++) {
+        if(appear[i] > 1) {
+            fprintf(stderr, "duplicate value in axis\n");
+            exit(-1);
+        }
+    }
+    if(axis.size() == this->size.size()) {
+        Tensor<T> result{std::vector<int>{1}};
+        result.data[0] = this->mean();
+        result.is_num = 1;
+        return result;
+    }
+    // 计算axis指定轴的尺寸和结果tensor的尺寸   // 考虑到axis中的轴编号可能不按顺序，我们使用之前统计的appear计算
+    std::vector<int> new_size;
+    std::vector<int> axis_size;
+    // 分别使用axis中出现和未出现的轴，按序排放创建vector，用于在遍历新数组时，将新数组坐标映射到旧数组坐标
+    std::vector<int> did_appear;
+    std::vector<int> never_appear;
+    for(int i = 0; i<(int)this->size.size(); i++) {
+        if(appear[i]) {
+            axis_size.push_back(this->size[i]);
+            did_appear.push_back(i);
+        }
+        else {
+            new_size.push_back(this->size[i]);
+            never_appear.push_back(i);
+        }
+    }
+    // 创建新tensor
+    Tensor<T> result{new_size};
+    // 遍历新数组，对于每一个元素，计算axis中指定轴上的平均值
+    int len = result.len();
+    int new_dim = result.size.size();
+    int old_dim = this->size.size();
+    int new_index[new_dim];
+    int old_index[old_dim];
+    memset(new_index, 0, sizeof(int)*new_dim);
+    memset(old_index, 0, sizeof(int)*old_dim);
+    int axis_dim = (int)axis.size();                    // 指定的轴的个数
+    int axis_index[axis_dim];                           // 遍历axis指定轴时，指定轴之间的下标
+    int axis_len = this->len() / result.len();          // axis指定轴的元素个数
+    for(int i = 0; i<len; i++) {
+        // 将新数组下标映射到旧数组下标
+        for(int j = 0; j<new_dim; j++) {
+            old_index[never_appear[j]] = new_index[j];
+        }
+        // 对于axis指定的轴，将其提取出来，建立一个下标axis_index
+        memset(axis_index, 0, sizeof(int)*axis_dim);
+        // 遍历axis_index并求平均值
+        T sum = 0;
+        for(int j = 0; j<axis_len; j++) {
+            // 将axis_index映射到old_index
+            for(int k = 0; k<axis_dim; k++) {
+                old_index[did_appear[k]] = axis_index[k];
+            }
+            // 根据old_index求该值在this中的偏移
+            int offset = 0;
+            int weight = 1;
+            for(int p = old_dim-1; p >= 0; p--) {
+                offset += weight * old_index[p];
+                weight *= this->size[p];
+            }
+            // 对数值进行累加
+            sum += this->data[offset];
+            // axis_index加一
+            array_add_1(axis_index, axis_size);
+        }
+        sum /= axis_len;
+        // 将平均值存入结果数组
+        result.data[i] = sum;
+        // 新数组下标加一
+        array_add_1(new_index, new_size);
+    }
+    return result;
+}
+
+template<typename T>
+T Tensor<T>::mean() {
+    /*
+     * mean
+     */
+    T sum = 0;
+    int len = this->len();
+    for(int i = 0; i<len; i++) {
+        sum += this->data[i];
+    }
+    sum /= len;
+    return sum;
+}
+
+template<typename T>
+T Tensor<T>::var() {
+    /*
+     * var
+     */
+    T mean = this->mean();
+    T sum = 0;
+    int len = this->len();
+    for(int i = 0; i<len; i++) {
+        sum += (this->data[i] - mean) * (this->data[i] - mean);
+    }
+    sum /= len;
+    return sum;
+}
+
+template<typename T>
+Tensor<T> Tensor<T>::var(std::vector<int> axis) {
+    /*
+     * var
+     */
+    // 首先计算mean
+    Tensor<T> mean = this->mean(axis);
+    // 检查输入的axis。不能有重复，不能有负数，轴编号必须比维度数小
+    // 由于mean中已经检查过axis了，所以这里不再检查
+    int appear[this->size.size()];
+    memset(appear, 0, sizeof(int)*this->size.size());
+    for(int &i: axis) {
+        appear[i]++;
+    }
+    // 如果对所有轴求var，则直接调用var()
+    if(axis.size() == this->size.size()) {
+        Tensor<T> result{std::vector<int>{1}};
+        result.data[0] = this->var();
+        result.is_num = 1;
+        return result;
+    }
+    // 计算axis指定轴的尺寸和结果tensor的尺寸   // 考虑到axis中的轴编号可能不按顺序，我们使用之前统计的appear计算
+    std::vector<int> new_size;
+    std::vector<int> axis_size;
+    // 分别使用axis中出现和未出现的轴，按序排放创建vector，用于在遍历新数组时，将新数组坐标映射到旧数组坐标
+    std::vector<int> did_appear;
+    std::vector<int> never_appear;
+    for(int i = 0; i<(int)this->size.size(); i++) {
+        if(appear[i]) {
+            axis_size.push_back(this->size[i]);
+            did_appear.push_back(i);
+        }
+        else {
+            new_size.push_back(this->size[i]);
+            never_appear.push_back(i);
+        }
+    }
+    // 创建新tensor
+    Tensor<T> result{new_size};
+    // 遍历新数组，对于每一个元素，计算axis中指定轴上的平均值
+    int len = result.len();
+    int new_dim = result.size.size();
+    int old_dim = this->size.size();
+    int new_index[new_dim];
+    int old_index[old_dim];
+    memset(new_index, 0, sizeof(int)*new_dim);
+    memset(old_index, 0, sizeof(int)*old_dim);
+    int axis_dim = (int)axis.size();                    // 指定的轴的个数
+    int axis_index[axis_dim];                           // 遍历axis指定轴时，指定轴之间的下标
+    int axis_len = this->len() / result.len();          // axis指定轴的元素个数
+    for(int i = 0; i<len; i++) {
+        // 将新数组下标映射到旧数组下标
+        for(int j = 0; j<new_dim; j++) {
+            old_index[never_appear[j]] = new_index[j];
+        }
+        // 对于axis指定的轴，将其提取出来，建立一个下标axis_index
+        memset(axis_index, 0, sizeof(int)*axis_dim);
+        // 遍历axis_index并求平均值
+        T sum = 0;
+        for(int j = 0; j<axis_len; j++) {
+            // 将axis_index映射到old_index
+            for(int k = 0; k<axis_dim; k++) {
+                old_index[did_appear[k]] = axis_index[k];
+            }
+            // 根据old_index求该值在this中的偏移
+            int offset = 0;
+            int weight = 1;
+            for(int p = old_dim-1; p >= 0; p--) {
+                offset += weight * old_index[p];
+                weight *= this->size[p];
+            }
+            // 对数值进行累加
+            sum += (this->data[offset] - mean.data[i]) * (this->data[offset] - mean.data[i]);
+            // axis_index加一
+            array_add_1(axis_index, axis_size);
+        }
+        sum /= axis_len;
+        // 将平均值存入结果数组
+        result.data[i] = sum;
+        // 新数组下标加一
+        array_add_1(new_index, new_size);
+    }
+    return result;
 }
 
 

@@ -232,6 +232,9 @@ int get_name(const std::string &graph_line) {
     else if(name == "output") {
         return OPN_OUTPUT;
     }
+    else if(name == "nn.batch_norm2d") {
+        return OPN_BATCH_NORM2D;
+    }
     return -1;
 }
 
