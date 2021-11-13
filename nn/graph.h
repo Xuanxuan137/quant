@@ -16,6 +16,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/core/hal/interface.h>
 
+#include "op.h"
 #include "tensor.h"
 #include "node.h"
 #include "util.h"
@@ -41,6 +42,7 @@
 
 class Graph {
 public:
+    std::string graph_content;          // 计算图文件内容
     std::vector<Node*> node_list;        // 节点列表
 
     /*
@@ -77,7 +79,8 @@ public:
      * 融合算子。将batch_norm2d融入conv2d
      * 只能在dtype=="float32"时使用此函数
      */
-     void fuse_op(Tensor<uint8>* calc_running_img);
+     void fuse_op(Tensor<float32>* calc_running_img);
+
 };
 
 

@@ -44,7 +44,27 @@ int main(int argc, char *argv[]) {
 
         // 处理选项
         if(option == "--graph") {           // 创建计算图
-            graph = new Graph(value);
+            // 将计算图文件里的内容读取到字符串里
+            // 打开计算图文件
+            std::ifstream graph_file;
+            graph_file.open(value, std::ios::in);
+            if(!graph_file.is_open()) {
+                std::cerr << "calib set txt file not found\n";
+                exit(-1);
+            }
+            // 将有信息的行加入graph_content
+            std::string graph_content;
+            std::string graph_line;
+            while(std::getline(graph_file, graph_line)) {
+                graph_line = delete_annotation(graph_line, "#");
+                graph_line = replace(graph_line, " ", "");
+                if(graph_line.empty()) {
+                    continue;
+                }
+                graph_content += graph_line;
+                graph_content.push_back('\n');
+            }
+            graph = new Graph(graph_content);
         }
         else if(option == "--calib_set") {  // 读取包含calib set路径的txt文件路径
             calib_set_path = value;
@@ -81,7 +101,7 @@ int main(int argc, char *argv[]) {
     Tensor<float32>* processed_bn_set = preprocess(calc_running_img);
 
     // TODO: fuse operator
-    graph->fuse_op(calc_running_img);
+    graph->fuse_op(processed_bn_set);   // 如果计算图中不包含bn，会自动跳过此步骤
 
     // TODO: quantization
 

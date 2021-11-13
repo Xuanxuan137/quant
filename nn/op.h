@@ -39,7 +39,7 @@
  * 如果要添加新的算子，你需要修改：
  * 1. Node::Node()
  * 2. Node::~Node()
- * 3. Graph::forward()
+ * 3. Node::forward()
  * 4. node.cpp  get_name()
  */
 

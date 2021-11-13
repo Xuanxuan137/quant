@@ -61,7 +61,27 @@ int main(int argc, char *argv[]) {
 
         // 处理选项
         if(option == "--graph") {           // 创建计算图
-            graph = new Graph(value);
+            // 将计算图文件里的内容读取到字符串里
+            // 打开计算图文件
+            std::ifstream graph_file;
+            graph_file.open(value, std::ios::in);
+            if(!graph_file.is_open()) {
+                std::cerr << "calib set txt file not found\n";
+                exit(-1);
+            }
+            // 将有信息的行加入graph_content
+            std::string graph_content;
+            std::string graph_line;
+            while(std::getline(graph_file, graph_line)) {
+                graph_line = delete_annotation(graph_line, "#");
+                graph_line = replace(graph_line, " ", "");
+                if(graph_line.empty()) {
+                    continue;
+                }
+                graph_content += graph_line;
+                graph_content.push_back('\n');
+            }
+            graph = new Graph(graph_content);
         }
         else if(option == "--val_set") {  // 读取包含calib set路径的txt文件路径
             val_set_path = value;

@@ -1,5 +1,5 @@
 # conv bn
-%0=input(shape=(100,1,28,28), dtype=float32);
+%0=input(shape=(1,1,28,28), dtype=float32);
 %1=nn.conv2d(input=%0, weight=../weight/conv1_weight.bin, bias=../weight/conv1_bias.bin, output_channel=16, input_channel=1, kernel_size=(3,3), stride=(1,1), padding=(1,1), dilation=(1,1));
 %2=nn.batch_norm2d(input=%1, weight=../weight/bn1_weight.bin, bias=../weight/bn1_bias.bin, num_features=16, eps=0.00001, momentum=0.1);
 %3=nn.relu(input=%2);

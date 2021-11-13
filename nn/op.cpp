@@ -36,7 +36,7 @@ void Input::forward(Tensor<float32> *input, Tensor<float32> *output) {
      * Input算子的forward
      */
     if(input->size != output_shape) {
-        fprintf(stderr, "Cannot input data with shape (");
+        fprintf(stderr, "File: op.cpp, line: %d. Cannot input data with shape (", __LINE__);
         for(const int &i: input->size) {
             fprintf(stderr, "%d, ", i);
         }
