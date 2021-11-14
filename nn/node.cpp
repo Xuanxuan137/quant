@@ -15,7 +15,6 @@ Node::Node(const std::string& read_graph_line,
      * 4. 根据算子类型创建算子对象，并传入计算图的一行，使其初始化
      * 5. 根据算子的output_shape属性，设置node的output_shape属性
      */
-    std::cout << read_graph_line << std::endl;
     std::string graph_line = replace(read_graph_line, " ", "");
 
     // 提取编号
@@ -25,52 +24,52 @@ Node::Node(const std::string& read_graph_line,
     // 提取算子参数. 分割参数, 每个存为一个string, 并存在一个vector里
     std::vector<std::string> parameters = get_parameters(graph_line);
     // 根据算子名称创建对象
-    if(this->name == OPN_NN_CONV2D) {
+    if(this->name == "nn.conv2d") {
         this->dtype = "float32";
         op = new Conv2d(parameters, output_shape_list);
         this->output_shape = ((Conv2d*)op)->output_shape;
     }
-    else if(this->name == OPN_NN_RELU) {
+    else if(this->name == "nn.relu") {
         this->dtype = "float32";
         op = new Relu(parameters, output_shape_list);
         this->output_shape = ((Relu*)op)->output_shape;
     }
-    else if(this->name == OPN_MAXPOOL2D) {
+    else if(this->name == "nn.maxpool2d") {
         this->dtype = "float32";
         op = new Maxpool2d(parameters, output_shape_list);
         this->output_shape = ((Maxpool2d*)op)->output_shape;
     }
-    else if(this->name == OPN_INPUT) {
+    else if(this->name == "input") {
         this->dtype = "float32";
         op = new Input(parameters);
         this->output_shape = ((Input*)op)->output_shape;
     }
-    else if(this->name == OPN_NN_FLATTEN) {
+    else if(this->name == "nn.flatten") {
         this->dtype = "float32";
         op = new Flatten(parameters, output_shape_list);
         this->output_shape = ((Flatten*)op)->output_shape;
     }
-    else if(this->name == OPN_NN_DENSE) {
+    else if(this->name == "nn.dense") {
         this->dtype = "float32";
         op = new Dense(parameters, output_shape_list);
         this->output_shape = ((Dense*)op)->output_shape;
     }
-    else if(this->name == OPN_OUTPUT) {
+    else if(this->name == "output") {
         this->dtype = "float32";
         op = new Output(parameters, output_shape_list);
         this->output_shape = ((Output*)op)->output_shape;
     }
-    else if(this->name == OPN_ADD) {
+    else if(this->name == "add") {
         this->dtype = "float32";
         op = new Add(parameters, output_shape_list);
         this->output_shape = ((Add*)op)->output_shape;
     }
-    else if(this->name == OPN_CONCAT) {
+    else if(this->name == "concat") {
         this->dtype = "float32";
         op = new Concat(parameters, output_shape_list);
         this->output_shape = ((Concat*)op)->output_shape;
     }
-    else if(this->name == OPN_BATCH_NORM2D) {
+    else if(this->name == "nn.batch_norm2d") {
         this->dtype = "float32";
         op = new Batch_Norm2d(parameters, output_shape_list);
         this->output_shape = ((Batch_Norm2d*)op)->output_shape;
@@ -81,34 +80,34 @@ Node::~Node() {
     /*
      * destructor: 释放op
      */
-    if(this->name == OPN_NN_CONV2D) {
+    if(this->name == "nn.conv2d") {
         delete((Conv2d*)op);
     }
-    else if(this->name == OPN_NN_RELU) {
+    else if(this->name == "nn.relu") {
         delete((Relu*)op);
     }
-    else if(this->name == OPN_INPUT) {
+    else if(this->name == "input") {
         delete((Input*)op);
     }
-    else if(this->name == OPN_MAXPOOL2D) {
+    else if(this->name == "nn.maxpool2d") {
         delete((Maxpool2d*)op);
     }
-    else if(this->name == OPN_NN_FLATTEN) {
+    else if(this->name == "nn.flatten") {
         delete((Flatten*)op);
     }
-    else if(this->name == OPN_NN_DENSE) {
+    else if(this->name == "nn.dense") {
         delete((Dense*)op);
     }
-    else if(this->name == OPN_OUTPUT) {
+    else if(this->name == "output") {
         delete((Output*)op);
     }
-    else if(this->name == OPN_ADD) {
+    else if(this->name == "add") {
         delete((Add*)op);
     }
-    else if(this->name == OPN_CONCAT) {
+    else if(this->name == "concat") {
         delete((Concat*)op);
     }
-    else if(this->name == OPN_BATCH_NORM2D) {
+    else if(this->name == "nn.batch_norm2d") {
         delete((Batch_Norm2d*)op);
     }
 }
@@ -120,57 +119,94 @@ void Node::forward(const std::vector<void *> &intermediate_results, void *input)
      * 传入存储所有中间结果指针的vector，和graph的input的指针
      * 根据算子名称分类处理：调用算子的forward，传入input和output指针
      */
-    if(this->name == OPN_NN_CONV2D) {
+    if(this->name == "nn.conv2d") {
         ((Conv2d*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Conv2d*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
-    else if(this->name == OPN_NN_RELU) {
+    else if(this->name == "nn.relu") {
         ((Relu*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Relu*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
-    else if(this->name == OPN_INPUT) {
+    else if(this->name == "input") {
         ((Input*)op)->forward(
                 (Tensor<float32>*)input,
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
-    else if(this->name == OPN_MAXPOOL2D) {
+    else if(this->name == "nn.maxpool2d") {
         ((Maxpool2d*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Maxpool2d*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
-    else if(this->name == OPN_NN_FLATTEN) {
+    else if(this->name == "nn.flatten") {
         ((Flatten*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Flatten*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
-    else if(this->name == OPN_NN_DENSE) {
+    else if(this->name == "nn.dense") {
         ((Dense*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Dense*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
-    else if(this->name == OPN_OUTPUT) {
+    else if(this->name == "output") {
         ((Output*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Output*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
-    else if(this->name == OPN_ADD) {
+    else if(this->name == "add") {
         ((Add*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Add*)op)->input_node1],
                 (Tensor<float32>*)intermediate_results[((Add*)op)->input_node2],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
-    else if(this->name == OPN_CONCAT) {
+    else if(this->name == "concat") {
         ((Concat*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Concat*)op)->input_node1],
                 (Tensor<float32>*)intermediate_results[((Concat*)op)->input_node2],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
-    else if(this->name == OPN_BATCH_NORM2D) {
+    else if(this->name == "nn.batch_norm2d") {
         ((Batch_Norm2d*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Batch_Norm2d*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
+    }
+}
+
+void Node::print() {
+    /*
+     * 打印节点参数
+     */
+    printf("%%%d=", number);
+    if(this->name == "nn.conv2d") {
+        ((Conv2d*)op)->print();
+    }
+    else if(this->name == "nn.relu") {
+        ((Relu*)op)->print();
+    }
+    else if(this->name == "input") {
+        ((Input*)op)->print();
+    }
+    else if(this->name == "nn.maxpool2d") {
+        ((Maxpool2d*)op)->print();
+    }
+    else if(this->name == "nn.flatten") {
+        ((Flatten*)op)->print();
+    }
+    else if(this->name == "nn.dense") {
+        ((Dense*)op)->print();
+    }
+    else if(this->name == "output") {
+        ((Output*)op)->print();
+    }
+    else if(this->name == "add") {
+        ((Add*)op)->print();
+    }
+    else if(this->name == "concat") {
+        ((Concat*)op)->print();
+    }
+    else if(this->name == "nn.batch_norm2d") {
+        ((Batch_Norm2d*)op)->print();
     }
 }
 
@@ -190,7 +226,7 @@ int get_number(const std::string &graph_line)
     return (int)strtol(num.c_str(), nullptr, 10);
 }
 
-int get_name(const std::string &graph_line) {
+std::string get_name(const std::string &graph_line) {
     /*
      * 从计算图的一行中提取节点名称
      */
@@ -205,37 +241,7 @@ int get_name(const std::string &graph_line) {
         index++;
     }
 
-    if(name == "input") {
-        return OPN_INPUT;
-    }
-    else if(name == "nn.conv2d") {
-        return OPN_NN_CONV2D;
-    }
-    else if(name == "nn.relu") {
-        return OPN_NN_RELU;
-    }
-    else if(name == "nn.maxpool2d") {
-        return OPN_MAXPOOL2D;
-    }
-    else if(name == "nn.flatten") {
-        return OPN_NN_FLATTEN;
-    }
-    else if(name == "nn.dense") {
-        return OPN_NN_DENSE;
-    }
-    else if(name == "add") {
-        return OPN_ADD;
-    }
-    else if(name == "concat") {
-        return OPN_CONCAT;
-    }
-    else if(name == "output") {
-        return OPN_OUTPUT;
-    }
-    else if(name == "nn.batch_norm2d") {
-        return OPN_BATCH_NORM2D;
-    }
-    return -1;
+    return name;
 }
 
 std::vector<std::string> get_parameters(const std::string &graph_line) {

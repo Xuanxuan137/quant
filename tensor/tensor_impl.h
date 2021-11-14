@@ -795,9 +795,27 @@ Tensor<T> Tensor<T>::true_divide(Tensor<T> divisor) {
         broadcasted_this = this->broadcast_to(divisor.size);
         broadcasted_divisor = divisor;
     }
-    else {
+    else if(this->size.size() > divisor.size.size()){
         broadcasted_this = *this;
         broadcasted_divisor = divisor.broadcast_to(this->size);
+    }
+    else {
+        // 如果两者维度相同，则比较两者各维度的尺寸，将小的广播到大的
+        int this_size_lager = 0;
+        for(int i = 0; i<(int)this->size.size(); i++) {
+            if(this->size[i] > divisor.size[i]) {
+                this_size_lager = 1;
+                break;
+            }
+        }
+        if(this_size_lager) {
+            broadcasted_this = *this;
+            broadcasted_divisor = divisor.broadcast_to(this->size);
+        }
+        else {
+            broadcasted_this = this->broadcast_to(divisor.size);
+            broadcasted_divisor = divisor;
+        }
     }
     Tensor<T> result{broadcasted_this.size};
     int len = result.len();
@@ -818,9 +836,27 @@ Tensor<T> Tensor<T>::floor_divide(Tensor<T> divisor) {
         broadcasted_this = this->broadcast_to(divisor.size);
         broadcasted_divisor = divisor;
     }
-    else {
+    else if(this->size.size() > divisor.size.size()){
         broadcasted_this = *this;
         broadcasted_divisor = divisor.broadcast_to(this->size);
+    }
+    else {
+        // 如果两者维度相同，则比较两者各维度的尺寸，将小的广播到大的
+        int this_size_lager = 0;
+        for(int i = 0; i<(int)this->size.size(); i++) {
+            if(this->size[i] > divisor.size[i]) {
+                this_size_lager = 1;
+                break;
+            }
+        }
+        if(this_size_lager) {
+            broadcasted_this = *this;
+            broadcasted_divisor = divisor.broadcast_to(this->size);
+        }
+        else {
+            broadcasted_this = this->broadcast_to(divisor.size);
+            broadcasted_divisor = divisor;
+        }
     }
     Tensor<T> result{broadcasted_this.size};
     int len = result.len();
@@ -1142,9 +1178,27 @@ Tensor<T> Tensor<T>::add(Tensor<T> adder) {
         broadcasted_this = this->broadcast_to(adder.size);
         broadcasted_adder = adder;
     }
-    else {
+    else if(this->size.size() > adder.size.size()){
         broadcasted_this = *this;
         broadcasted_adder = adder.broadcast_to(this->size);
+    }
+    else {
+        // 如果两者维度相同，则比较两者各维度的尺寸，将小的广播到大的
+        int this_size_lager = 0;
+        for(int i = 0; i<(int)this->size.size(); i++) {
+            if(this->size[i] > adder.size[i]) {
+                this_size_lager = 1;
+                break;
+            }
+        }
+        if(this_size_lager) {
+            broadcasted_this = *this;
+            broadcasted_adder = adder.broadcast_to(this->size);
+        }
+        else {
+            broadcasted_this = this->broadcast_to(adder.size);
+            broadcasted_adder = adder;
+        }
     }
     Tensor<T> result{broadcasted_this.size};
     int len = result.len();
@@ -1277,9 +1331,27 @@ Tensor<T> Tensor<T>::sub(Tensor<T> subtractend) {
         broadcasted_this = this->broadcast_to(subtractend.size);
         broadcasted_subtractend = subtractend;
     }
-    else {
+    else if(this->size.size() > subtractend.size.size()){
         broadcasted_this = *this;
         broadcasted_subtractend = subtractend.broadcast_to(this->size);
+    }
+    else {
+        // 如果两者维度相同，则比较两者各维度的尺寸，将小的广播到大的
+        int this_size_lager = 0;
+        for(int i = 0; i<(int)this->size.size(); i++) {
+            if(this->size[i] > subtractend.size[i]) {
+                this_size_lager = 1;
+                break;
+            }
+        }
+        if(this_size_lager) {
+            broadcasted_this = *this;
+            broadcasted_subtractend = subtractend.broadcast_to(this->size);
+        }
+        else {
+            broadcasted_this = this->broadcast_to(subtractend.size);
+            broadcasted_subtractend = subtractend;
+        }
     }
     Tensor<T> result{broadcasted_this.size};
     int len = result.len();
@@ -1346,9 +1418,27 @@ Tensor<T> Tensor<T>::mult(Tensor<T> multiplier) {
         broadcasted_this = this->broadcast_to(multiplier.size);
         broadcasted_multiplier = multiplier;
     }
-    else {
+    else if(this->size.size() > multiplier.size.size()){
         broadcasted_this = *this;
         broadcasted_multiplier = multiplier.broadcast_to(this->size);
+    }
+    else {
+        // 如果两者维度相同，则比较两者各维度的尺寸，将小的广播到大的
+        int this_size_lager = 0;
+        for(int i = 0; i<(int)this->size.size(); i++) {
+            if(this->size[i] > multiplier.size[i]) {
+                this_size_lager = 1;
+                break;
+            }
+        }
+        if(this_size_lager) {
+            broadcasted_this = *this;
+            broadcasted_multiplier = multiplier.broadcast_to(this->size);
+        }
+        else {
+            broadcasted_this = this->broadcast_to(multiplier.size);
+            broadcasted_multiplier = multiplier;
+        }
     }
     Tensor<T> result{broadcasted_this.size};
     int len = result.len();

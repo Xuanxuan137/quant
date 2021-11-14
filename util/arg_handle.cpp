@@ -113,7 +113,7 @@ Tensor<unsigned char>* get_calc_running_img(const std::string& running_set_path,
     std::ifstream file;
     file.open(running_set_path, std::ios::in);
     if(!file.is_open()) {
-        std::cerr << "calib set txt file not found\n";
+        std::cerr << "running set txt file not found\n";
         exit(-1);
     }
     int img_num = 0;        // 计算图片数量
@@ -128,7 +128,7 @@ Tensor<unsigned char>* get_calc_running_img(const std::string& running_set_path,
     file.close();
     file.open(running_set_path, std::ios::in);
     if(!file.is_open()) {
-        std::cerr << "calib set txt file not found\n";
+        std::cerr << "running set txt file not found\n";
         exit(-1);
     }
 
@@ -144,7 +144,7 @@ Tensor<unsigned char>* get_calc_running_img(const std::string& running_set_path,
             img = cv::imread(img_path, cv::IMREAD_COLOR);;
         }
         else {
-            std::cerr << "Channel of calib_size can only be 1 or 3\n";
+            std::cerr << "Channel of running_size can only be 1 or 3\n";
             exit(-1);
         }
         cv::Mat dst;
@@ -171,7 +171,7 @@ Tensor<unsigned char>* get_calc_running_img(const std::string& running_set_path,
         printf("\r%d/%d", count, img_num);
         fflush(stdout);
     }
-    printf("\rRead calib set finished\n");
+    printf("\rRead running set finished\n");
     return running_set;
 }
 

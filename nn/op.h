@@ -41,19 +41,11 @@
  * 2. Node::~Node()
  * 3. Node::forward()
  * 4. node.cpp  get_name()
+ * 5. Graph::fuse_op()      2处
+ * 6. Node::print()
  */
 
 
-#define OPN_INPUT               1
-#define OPN_NN_CONV2D           2
-#define OPN_NN_RELU             3
-#define OPN_NN_FLATTEN          4
-#define OPN_NN_DENSE            5
-#define OPN_OUTPUT              6
-#define OPN_ADD                 7
-#define OPN_CONCAT              8
-#define OPN_MAXPOOL2D           9
-#define OPN_BATCH_NORM2D        10
 
 #include <iostream>
 #include <vector>
@@ -73,6 +65,7 @@ public:
     explicit Input(const std::vector<std::string>& parameters);             // constructor
     ~Input();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
 };
 
 class Conv2d {
@@ -93,6 +86,7 @@ public:
            const std::vector<std::vector<int> > &output_shape_list);       // constructor
     ~Conv2d();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
 };
 
 class Maxpool2d {
@@ -107,6 +101,7 @@ public:
               const std::vector<std::vector<int> > &output_shape_list);    // constructor
     ~Maxpool2d();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
 };
 
 class Relu {
@@ -117,6 +112,7 @@ public:
          const std::vector<std::vector<int> > &output_shape_list);     // constructor
     ~Relu();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
 };
 
 
@@ -128,6 +124,7 @@ public:
             const std::vector<std::vector<int> > &output_shape_list);  // constructor
     ~Flatten();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
 };
 
 
@@ -145,6 +142,7 @@ public:
           const std::vector<std::vector<int> > &output_shape_list);     // constructor
     ~Dense();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
 };
 
 
@@ -156,6 +154,7 @@ public:
            const std::vector<std::vector<int> > &output_shape_list);        // constructor
     ~Output();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
 };
 
 
@@ -168,6 +167,7 @@ public:
         const std::vector<std::vector<int> > &output_shape_list);           // constructor
     ~Add();
     void forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output);
+    void print();
 };
 
 
@@ -181,6 +181,7 @@ public:
            const std::vector<std::vector<int> > &output_shape_list);        // constructor
     ~Concat();
     void forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output);
+    void print();
 };
 
 class Batch_Norm2d {
@@ -198,6 +199,7 @@ public:
                         const std::vector<std::vector<int> > &output_shape_list);       // constructor
     ~Batch_Norm2d();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
 };
 
 #endif //QUANT_OP_H

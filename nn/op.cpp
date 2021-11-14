@@ -50,6 +50,22 @@ void Input::forward(Tensor<float32> *input, Tensor<float32> *output) {
     *output = *input;
 }
 
+void Input::print() {
+    /*
+     * 打印Input节点信息
+     */
+    std::string str;
+    str += "input(shape=(";
+    for(int i: output_shape) {
+        char temp[10];
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "),dtype=\"float32\");";
+    std::cout << str<< std::endl;
+}
+
 Input::~Input() = default;
 
 Relu::Relu(const std::vector<std::string>& parameters,
@@ -76,6 +92,23 @@ void Relu::forward(Tensor<float32> *input, Tensor<float32> *output) {
      * Relu算子的forward
      */
     *output = F::relu(input);
+}
+
+void Relu::print() {
+    /*
+     * 打印relu算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "nn.relu(input=%%%d, output_shape=(", input_node);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+    std::cout << str;
 }
 
 Relu::~Relu() = default;
@@ -282,6 +315,19 @@ void Maxpool2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
     *output = F::maxpool2d(input, kernel_size, stride, padding, dilation);
 }
 
+void Maxpool2d::print() {
+    /*
+     * 打印maxpool2d算子信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.maxpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
+                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
+            input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
+            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            output_shape[2], output_shape[3]);
+    printf("%s", temp);
+}
+
 Maxpool2d::~Maxpool2d() = default;
 
 Flatten::Flatten(const std::vector<std::string> &parameters,
@@ -317,6 +363,16 @@ void Flatten::forward(Tensor<float32> *input, Tensor<float32> *output) {
      * Flatten算子的forward
      */
     *output = F::flatten(input);
+}
+
+void Flatten::print() {
+    /*
+     * 打印flatten算子信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.flatten(input=%%%d, output_shape=(%d,%d));\n",
+            input_node, output_shape[0], output_shape[1]);
+    printf("%s", temp);
 }
 
 Flatten::~Flatten() = default;
@@ -380,6 +436,17 @@ void Dense::forward(Tensor<float32> *input, Tensor<float32> *output) {
     *output = F::dense(input, &weight, &bias);
 }
 
+void Dense::print() {
+    /*
+     * 打印dense算子信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.dense(input=%%%d, output_channel=%d, input_channel=%d, "
+                  "output_shape=(%d,%d));\n",
+                  input_node, output_channel, input_channel, output_shape[0], output_shape[1]);
+    printf("%s", temp);
+}
+
 Dense::~Dense() = default;
 
 Output::Output(const std::vector<std::string> &parameters,
@@ -406,6 +473,23 @@ void Output::forward(Tensor<float32> *input, Tensor<float32> *output) {
      * Output算子forward
      */
     *output = (*input).deep_copy();
+}
+
+void Output::print() {
+    /*
+     * 打印output算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "output(input=%%%d, output_shape=(", input_node);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+    std::cout << str;
 }
 
 Output::~Output() = default;
@@ -441,6 +525,22 @@ void Add::forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float
      * Add算子forward
      */
     *output = F::add(input1, input2);
+}
+
+void Add::print() {
+    /*
+     * 打印add算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "add(input1=%%%d, input2=%%%d, output_shape=(", input_node1, input_node2);
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+    std::cout << str;
 }
 
 Add::~Add() = default;
@@ -491,6 +591,22 @@ void Concat::forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<fl
      * concat算子forward
      */
     *output = F::concat(input1, input2, dim);
+}
+
+void Concat::print() {
+/*
+     * 打印concat算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "concat(input1=%%%d, input2=%%%d, dim=%d, output_shape=(", input_node1, input_node2, dim);
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+    std::cout << str;
 }
 
 Concat::~Concat() = default;
@@ -555,5 +671,30 @@ void Batch_Norm2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
     *output = F::batch_norm2d(input, &running_mean, &running_var, &weight, &bias, eps, momentum);
 }
 
+void Batch_Norm2d::print() {
+    /*
+     * 打印batch_norm2d算子信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.batch_nor2d(input=%%%d, num_features=%d, eps=%f, "
+                  "momentum=%f, output_shape=(%d,%d,%d,%d));\n",
+                  input_node, num_features, eps, momentum, output_shape[0], output_shape[1],
+                  output_shape[2], output_shape[3]);
+    printf("%s", temp);
+}
+
 Batch_Norm2d::~Batch_Norm2d() = default;
 
+void Conv2d::print() {
+    /*
+     * 打印conv2d信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.conv2d(input=%%%d, output_channel=%d, input_channel=%d,"
+                  "kernel_size=(%d,%d), stride=(%d,%d), padding=(%d,%d), dilation=(%d,%d), "
+                  "output_shape=(%d,%d,%d,%d));\n",
+                  input_node, output_channel, input_channel, kernel_size[0], kernel_size[1],
+                  stride[0], stride[1], padding[0], padding[1], dilation[0], dilation[1],
+                  output_shape[0], output_shape[1], output_shape[2], output_shape[3]);
+    printf("%s", temp);
+}
