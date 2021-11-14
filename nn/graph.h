@@ -81,7 +81,7 @@ public:
      */
      void fuse_op(Tensor<float32>* calc_running_img);
 
-     Graph* quantization(Tensor<float)
+//     Graph* quantization(Tensor<float)
 
      void print();              // 打印计算图结构
 
