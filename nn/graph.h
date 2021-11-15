@@ -21,6 +21,7 @@
 #include "node.h"
 #include "util.h"
 #include "preprocess.h"
+#include "fixed_point.h"
 
 /*
  * 计算图：
@@ -81,7 +82,7 @@ public:
      */
      void fuse_op(Tensor<float32>* calc_running_img);
 
-//     Graph* quantization(Tensor<float)
+     Graph* quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_calib_set);
 
      void print();              // 打印计算图结构
 

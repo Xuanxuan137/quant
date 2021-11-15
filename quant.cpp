@@ -97,6 +97,7 @@ int main(int argc, char *argv[]) {
     graph->fuse_op(processed_bn_set);   // 如果计算图中不包含bn，会自动跳过此步骤
 
     // TODO: quantization
+    Graph * q_graph = graph->quantization(calib_set, processed_calib_set);
 
     // TODO: save quantized model
 

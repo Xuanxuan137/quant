@@ -336,5 +336,53 @@ void Graph::print() {
     }
 }
 
+Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_calib_set) {
+    /*
+     * 模型量化:
+     * 量化过程中需要的数据:
+     * rmin, rmax: 原始前向传播中间结果的上下界；通过进行前向传播以统计该数据
+     * qmin, qmax: 期望的量化后前向传播中间结果的上下界；手动设定
+     * scale: 缩放比例；使用rmin, rmax, qmin, qmax计算
+     * zero: 量化后零点；使用qmax, rmax, scale计算
+     * n: 量化后前向传播计算后右移位数；使用input, weight, output计算
+     * m0: 量化后前向传播计算后相乘的系数；使用input, weight, output计算
+     *
+     * 模型量化: 使用scale, zero, weight计算
+     * 前向传播: 使用input, weight, 输入、权重、输出的zero、n、m0计算
+     *
+     * 只有包含权重数据的层需要量化(conv2d, dense)
+     * 需要进行数据放缩的层需要计算n, m0(relu, maxpool2d, flatten不需要)
+     *
+     * 计算方案：
+     * 0. 根据当前计算图，创建量化计算图
+     * 1. 为各层参数分配空间(使用数组保存，不要保存在量化计算图里。(如果保存在量化计算图里，那么取用的时候还得先确定算子类型))
+     * 2. 使用processed_calib_set进行前向传播计算
+     *      2.1 计算各层的r, q
+     *      2.2 使用r, q计算并累加s, z
+     * 3. 求各层平均的s, z
+     * 4. 为需要的层计算m0, n
+     * 5. 对需要的层的weight和bias进行量化
+     * 6. 将s, z, m0, n存入量化计算图的各个算子之中
+     * 7. 返回量化计算图
+     */
+    // 0. 根据当前计算图，创建量化计算图
+
+    // 1. 为各层参数分配空间(rmax, rmin, qmax, qmin, scale, zero, n, m0)
+
+    // 2. 使用processed_calib_set进行前向传播计算
+
+    // 3. 求各层平均的s, z
+
+    // 4. 为需要的层计算m0, n(除relu, pool, flatten之外)
+
+    // 5. 对需要的层的weight和bias进行量化(conv2d, dense)
+
+    // 6. 将s, z, m0, n存入量化计算图的各个算子之中
+
+    // 7. 返回量化计算图
+
+    return nullptr;
+}
+
 
 
