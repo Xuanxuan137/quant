@@ -210,6 +210,54 @@ void Node::print() {
     }
 }
 
+Node::Node() {
+    /*
+     * 创建空node
+     */
+}
+
+Node *Node::to_qnode() {
+    /*
+     * 创建量化节点。根据当前节点，创建一个新节点，使其内部的算子为对应的量化算子
+     */
+    Node *qnode = new Node();
+    qnode->number = number;
+    qnode->dtype = "uint8";
+    qnode->output_shape = output_shape;
+    if(this->name == "nn.conv2d") {
+        qnode->name = "nn.qconv2d";
+        qnode->op = new QConv2d((Conv2d*)op);
+    }
+    else if(this->name == "nn.relu") {
+        qnode->name = "nn.qrelu";
+    }
+    else if(this->name == "input") {
+
+    }
+    else if(this->name == "nn.maxpool2d") {
+
+    }
+    else if(this->name == "nn.flatten") {
+
+    }
+    else if(this->name == "nn.dense") {
+
+    }
+    else if(this->name == "output") {
+
+    }
+    else if(this->name == "add") {
+
+    }
+    else if(this->name == "concat") {
+
+    }
+    else if(this->name == "nn.batch_norm2d") {
+        fprintf(stderr, "File node.cpp, line %d. Found Batch_norm2d in fused graph\n", __LINE__);
+        exit(-1);
+    }
+}
+
 
 int get_number(const std::string &graph_line)
 {

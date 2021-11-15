@@ -15,13 +15,6 @@ System_info * sys_info;
 
 int main(int argc, char *argv[]) {
     /////////////// test
-//    Tensor<float32> a{std::vector<int>{4,3,3}};
-//    Tensor<float32> b{std::vector<int>{4,1,1}};
-//    a.set_rand();
-//    b.set_rand();
-//    (a/b).print();
-//    (b/a).print();
-//    return 0;
     ///////////////////////////
 
     sys_info = new System_info();       // 读取一些系统信息

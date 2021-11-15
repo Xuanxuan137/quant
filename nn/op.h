@@ -27,14 +27,15 @@
  * Concat: concat
  * Batch_Normalization: nn.batch_norm
  *
- * QConv2d
- * QRelu
- * QInput
- * QFlatten
- * QDense
- * QOutput
- * QAdd
- * QConcat
+ * QConv2d: nn.qconv2d
+ * QRelu: nn.qrelu
+ * QMaxpool2d: nn.qmaxpool2d
+ * QInput: qinput
+ * QFlatten: qflatten
+ * QDense: nn.qdense
+ * QOutput: qoutput
+ * QAdd: qadd
+ * QConcat: qconcat
  *
  * 如果要添加新的算子，你需要修改：
  * 1. Node::Node()
@@ -68,6 +69,15 @@ public:
     void print();
 };
 
+class QInput {
+public:
+    std::vector<int> output_shape;
+    explicit QInput(Input * op);
+    ~QInput();
+//    void forward();
+    void print();
+};
+
 class Conv2d {
 public:
     int input_node;                     // 输入节点编号
@@ -89,6 +99,24 @@ public:
     void print();
 };
 
+class QConv2d {
+public:
+    int input_node;
+    Tensor<uint8> weight;
+    Tensor<uint8> bias;
+    int output_channel;
+    int input_channel;
+    std::vector<int> kernel_size;
+    std::vector<int> stride;
+    std::vector<int> padding;
+    std::vector<int> dilation;
+    std::vector<int> output_shape;
+    explicit QConv2d(Conv2d* op);
+    ~QConv2d();
+//    void forward();
+    void print();
+};
+
 class Maxpool2d {
 public:
     int input_node;                     // 输入节点编号
@@ -104,6 +132,20 @@ public:
     void print();
 };
 
+class QMaxpool2d {
+public:
+    int input_node;
+    std::vector<int> kernel_size;
+    std::vector<int> stride;
+    std::vector<int> padding;
+    std::vector<int> dilation;
+    std::vector<int> output_shape;
+    explicit QMaxpool2d(Maxpool2d * op);
+    ~QMaxpool2d();
+//    void forward();
+    void print();
+};
+
 class Relu {
 public:
     int input_node;                     // 输入节点编号
@@ -115,6 +157,15 @@ public:
     void print();
 };
 
+class QRelu {
+public:
+    int input_node;
+    std::vector<int> output_shape;
+    explicit QRelu(Relu * op);
+    ~QRelu();
+//    void forward();
+    void print();
+};
 
 class Flatten {
 public:
@@ -127,6 +178,15 @@ public:
     void print();
 };
 
+class QFlatten {
+public:
+    int input_node;
+    std::vector<int> output_shape;
+    explicit QFlatten(Flatten * op);
+    ~QFlatten();
+//    void forward();
+    void print();
+};
 
 class Dense {
 public:
@@ -145,6 +205,19 @@ public:
     void print();
 };
 
+class QDense {
+public:
+    int input_node;
+    Tensor<uint8> weight;
+    Tensor<uint8> bias;
+    int output_channel;
+    int input_channel;
+    std::vector<int> output_shape;
+    explicit QDense(Dense *op);
+    ~QDense();
+//    void forward();
+    void print();
+};
 
 class Output {
 public:
@@ -157,6 +230,15 @@ public:
     void print();
 };
 
+class QOutput {
+public:
+    int input_node;
+    std::vector<int> output_shape;
+    explicit QOutput(Output * op);
+    ~QOutput();
+//    void forward();
+    void print();
+};
 
 class Add {
 public:
@@ -170,6 +252,15 @@ public:
     void print();
 };
 
+class QAdd {
+    int input_node1;
+    int input_node2;
+    std::vector<int> output_shape;
+    explicit QAdd(Add * op);
+    ~QAdd();
+//    void forward();
+    void print();
+};
 
 class Concat {
 public:
@@ -181,6 +272,18 @@ public:
            const std::vector<std::vector<int> > &output_shape_list);        // constructor
     ~Concat();
     void forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output);
+    void print();
+};
+
+class QConcat {
+public:
+    int input_node1;
+    int input_node2;
+    int dim;
+    std::vector<int> output_shape;
+    explicit QConcat(Concat * op);
+    ~QConcat();
+//    void forward();
     void print();
 };
 

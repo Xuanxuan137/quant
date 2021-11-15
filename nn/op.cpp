@@ -594,7 +594,7 @@ void Concat::forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<fl
 }
 
 void Concat::print() {
-/*
+    /*
      * 打印concat算子信息
      */
     std::string str;
@@ -698,3 +698,244 @@ void Conv2d::print() {
                   output_shape[0], output_shape[1], output_shape[2], output_shape[3]);
     printf("%s", temp);
 }
+
+QConv2d::QConv2d(Conv2d *op) {
+    /*
+     * QConv2d构造函数。由于量化算子是由普通算子量化得到的，而非直接从计算图中读取到的，
+     * 因此使用conv2d算子进行构建。其他量化算子与此类似
+     */
+    input_node = op->input_node;
+    weight = Tensor<uint8>{op->weight.size};
+    bias = Tensor<uint8>{op->bias.size};
+    output_channel = op->output_channel;
+    input_channel = op->input_channel;
+    kernel_size = op->kernel_size;
+    stride = op->stride;
+    padding = op->padding;
+    dilation = op->dilation;
+    output_shape = op->output_shape;
+
+}
+
+void QConv2d::print() {
+    /*
+     * 打印qconv2d信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.qconv2d(input=%%%d, output_channel=%d, input_channel=%d,"
+                  "kernel_size=(%d,%d), stride=(%d,%d), padding=(%d,%d), dilation=(%d,%d), "
+                  "output_shape=(%d,%d,%d,%d));\n",
+            input_node, output_channel, input_channel, kernel_size[0], kernel_size[1],
+            stride[0], stride[1], padding[0], padding[1], dilation[0], dilation[1],
+            output_shape[0], output_shape[1], output_shape[2], output_shape[3]);
+    printf("%s", temp);
+}
+
+QConv2d::~QConv2d() = default;
+
+QInput::QInput(Input *op) {
+    /*
+     * 创建QInput算子
+     */
+    output_shape = op->output_shape;
+}
+
+void QInput::print() {
+    /*
+     * 打印qInput节点信息
+     */
+    std::string str;
+    str += "qinput(shape=(";
+    for(int i: output_shape) {
+        char temp[10];
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "),dtype=\"float32\");";
+    std::cout << str<< std::endl;
+}
+
+QInput::~QInput() = default;
+
+QMaxpool2d::QMaxpool2d(Maxpool2d *op) {
+    /*
+     * 创建QMaxpool2d算子
+     */
+    input_node = op->input_node;
+    kernel_size = op->kernel_size;
+    stride = op->stride;
+    padding = op->padding;
+    dilation = op->dilation;
+    output_shape = op->output_shape;
+}
+
+void QMaxpool2d::print() {
+    /*
+     * 打印maxpool2d算子信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.qmaxpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
+                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
+            input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
+            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            output_shape[2], output_shape[3]);
+    printf("%s", temp);
+}
+
+QMaxpool2d::~QMaxpool2d() = default;
+
+QRelu::QRelu(Relu *op) {
+    /*
+     * 创建QRelu算子
+     */
+    input_node = op->input_node;
+    output_shape = op->output_shape;
+}
+
+void QRelu::print() {
+    /*
+     * 打印relu算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "nn.qrelu(input=%%%d, output_shape=(", input_node);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+    std::cout << str;
+}
+
+QRelu::~QRelu() = default;
+
+QFlatten::QFlatten(Flatten *op) {
+    /*
+     * 创建QFlatten算子
+     */
+    input_node = op->input_node;
+    output_shape = op->output_shape;
+}
+
+void QFlatten::print() {
+    /*
+     * 打印flatten算子信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.qflatten(input=%%%d, output_shape=(%d,%d));\n",
+            input_node, output_shape[0], output_shape[1]);
+    printf("%s", temp);
+}
+
+QFlatten::~QFlatten() = default;
+
+QDense::QDense(Dense *op) {
+    /*
+     * 创建QDense算子
+     */
+    input_node = op->input_channel;
+    weight = Tensor<uint8>{op->weight.size};
+    bias = Tensor<uint8>{op->bias.size};
+    output_channel = op->output_channel;
+    input_channel = op->input_channel;
+    output_shape = op->output_shape;
+}
+
+void QDense::print() {
+    /*
+     * 打印qdense算子信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.qdense(input=%%%d, output_channel=%d, input_channel=%d, "
+                  "output_shape=(%d,%d));\n",
+            input_node, output_channel, input_channel, output_shape[0], output_shape[1]);
+    printf("%s", temp);
+}
+
+QDense::~QDense() = default;
+
+QOutput::QOutput(Output *op) {
+    /*
+     * 创建QOutput算子
+     */
+    input_node = op->input_node;
+    output_shape = op->output_shape;
+}
+
+void QOutput::print() {
+    /*
+     * 打印output算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "qoutput(input=%%%d, output_shape=(", input_node);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+    std::cout << str;
+}
+
+QOutput::~QOutput() = default;
+
+QAdd::QAdd(Add *op) {
+    /*
+     * 创建QAdd算子
+     */
+    input_node1 = op->input_node1;
+    input_node2 = op->input_node2;
+    output_shape = op->output_shape;
+}
+
+void QAdd::print() {
+    /*
+     * 打印qadd算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "qadd(input1=%%%d, input2=%%%d, output_shape=(", input_node1, input_node2);
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+    std::cout << str;
+}
+}
+
+QAdd::~QAdd() = default;
+
+QConcat::QConcat(Concat *op) {
+    /*
+     * 创建QConcat算子
+     */
+    input_node1 = op->input_node1;
+    input_node2 = op->input_node2;
+    dim = op->dim;
+    output_shape = op->output_shape;
+}
+
+void QConcat::print() {
+    /*
+     * 打印concat算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "qconcat(input1=%%%d, input2=%%%d, dim=%d, output_shape=(", input_node1, input_node2, dim);
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+    std::cout << str;
+}
+
+QConcat::~QConcat() = default;

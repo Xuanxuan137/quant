@@ -58,6 +58,7 @@ public:
      */
     std::vector<void*> intermediate_results;
 
+    explicit Graph();
     explicit Graph(const std::string& path);                // constructor
     ~Graph();
 

@@ -33,6 +33,8 @@ public:
     void * op;                      // 算子
     std::string dtype;              // 数据类型
     std::vector<int> output_shape;  // output shape
+
+    Node();
     explicit Node(const std::string& read_graph_line,
                   const std::vector<std::vector<int> > &output_shape_list);  // constructor
     ~Node();                                                // destructor
@@ -42,6 +44,8 @@ public:
      * 和整个计算图的输入数据指针传入，这些指针类型均为void*，需要forward内部根据算子名称进行处理
      */
     void forward(const std::vector<void*> &intermediate_results, void* input);
+
+    Node* to_qnode();               // 创建量化节点
 
     void print();                   // 打印节点参数
 };

@@ -366,7 +366,10 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
      * 7. 返回量化计算图
      */
     // 0. 根据当前计算图，创建量化计算图
-
+    Graph * qgraph = new Graph();
+    for(Node * node: node_list) {
+        qgraph->node_list.push_back(node->to_qnode());
+    }
     // 1. 为各层参数分配空间(rmax, rmin, qmax, qmin, scale, zero, n, m0)
 
     // 2. 使用processed_calib_set进行前向传播计算
@@ -382,6 +385,13 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
     // 7. 返回量化计算图
 
     return nullptr;
+}
+
+Graph::Graph() {
+    /*
+     * 创建空的计算图
+     */
+    // donothing
 }
 
 
