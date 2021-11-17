@@ -537,7 +537,7 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
     printf("5 finished\n");
     // 6. 对需要的层的weight和bias进行量化
     for(int i = 0; i<node_number; i++) {
-        
+        printf("Hello world\n");
     }
     // 7. 将s, z, m0, n存入量化计算图的各个算子之中
 
