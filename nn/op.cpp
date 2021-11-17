@@ -714,7 +714,12 @@ QConv2d::QConv2d(Conv2d *op) {
     padding = op->padding;
     dilation = op->dilation;
     output_shape = op->output_shape;
-
+    zero_x = 0;
+    zero_w = 0;
+    zero_b = 0;
+    zero_y = 0;
+    coe = 0;
+    rshift = 0;
 }
 
 void QConv2d::print() {
@@ -791,6 +796,7 @@ QRelu::QRelu(Relu *op) {
      */
     input_node = op->input_node;
     output_shape = op->output_shape;
+    zero = 0;
 }
 
 void QRelu::print() {
@@ -836,12 +842,18 @@ QDense::QDense(Dense *op) {
     /*
      * 创建QDense算子
      */
-    input_node = op->input_channel;
+    input_node = op->input_node;
     weight = Tensor<uint8>{op->weight.size};
     bias = Tensor<uint8>{op->bias.size};
     output_channel = op->output_channel;
     input_channel = op->input_channel;
     output_shape = op->output_shape;
+    zero_x = 0;
+    zero_w = 0;
+    zero_b = 0;
+    zero_y = 0;
+    coe = 0;
+    rshift = 0;
 }
 
 void QDense::print() {
@@ -891,6 +903,13 @@ QAdd::QAdd(Add *op) {
     input_node1 = op->input_node1;
     input_node2 = op->input_node2;
     output_shape = op->output_shape;
+    zero_x1 = 0;
+    zero_x2 = 0;
+    zero_y = 0;
+    coe1 = 0;
+    coe2 = 0;
+    rshift1 = 0;
+    rshift2 = 0;
 }
 
 void QAdd::print() {
@@ -908,7 +927,7 @@ void QAdd::print() {
     str += "));\n";
     std::cout << str;
 }
-}
+
 
 QAdd::~QAdd() = default;
 
@@ -920,6 +939,13 @@ QConcat::QConcat(Concat *op) {
     input_node2 = op->input_node2;
     dim = op->dim;
     output_shape = op->output_shape;
+    zero_x1 = 0;
+    zero_x2 = 0;
+    zero_y = 0;
+    coe1 = 0;
+    coe2 = 0;
+    rshift1 = 0;
+    rshift2 = 0;
 }
 
 void QConcat::print() {

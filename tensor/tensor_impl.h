@@ -1700,5 +1700,77 @@ Tensor<T> Tensor<T>::var(std::vector<int> axis) {
     return result;
 }
 
+template<typename T>
+Tensor<T> Tensor<T>::expand_dim(int axis) {
+    /*
+     * 在axis指定的轴添加一个维度
+     * 如果axis为正数，那么在axis处添加一个维度
+     * 如果axis为负数，那么从后向前找到axis指定的位置添加一个维度。
+     * axis不能超过限制
+     */
+    if((axis > (int)this->size.size()) || (axis < (int)(-1-this->size.size()))) {
+        fprintf(stderr, "axis out of bounds\n");
+        exit(-1);
+    }
+    if(axis < 0) {
+        axis = this->size.size() + 1 + axis;
+    }
+    std::vector<int> new_shape;
+    for(int i = 0; i<axis; i++) {
+        new_shape.push_back(this->size[i]);
+    }
+    new_shape.push_back(1);
+    for(int i = axis; i<(int)this->size.size(); i++) {
+        new_shape.push_back(this->size[i]);
+    }
+    return this->reshape(new_shape);
+}
+
+template<typename T>
+T Tensor<T>::max() {
+    /*
+     * max
+     */
+    int len = this->len();
+    T tmax = this->data[0];
+    for(int i = 0; i<len; i++) {
+        if(this->data[i] > tmax) {
+            tmax = this->data[i];
+        }
+    }
+    return tmax;
+}
+
+template<typename T>
+T Tensor<T>::min() {
+    /*
+     * min
+     */
+    int len = this->len();
+    T tmin = this->data[0];
+    for(int i = 0; i<len; i++) {
+        if(this->data[i] < tmin) {
+            tmin = this->data[i];
+        }
+    }
+    return tmin;
+}
+
+template<typename T>
+void Tensor<T>::clip(T min, T max) {
+    /*
+     * clip
+     */
+    int len = this->len();
+    for(int i = 0; i < len; i++) {
+        if(this->data[i] < min) {
+            this->data[i] = min;
+        }
+        else if(this->data[i] > max) {
+            this->data[i] = max;
+        }
+    }
+}
+
 
 #endif //QUANT_TENSOR_IMPL_H

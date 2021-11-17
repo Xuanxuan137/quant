@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include <quant_tools.h>
+
 
 #include "graph.h"
 #include "arg_handle.h"
@@ -186,3 +188,4 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_sha
     printf("Correct: %d, Total: %d, accuracy: %f\n", correct, total, (float)correct/(float)total);
     graph->free_intermediate_results();
 }
+

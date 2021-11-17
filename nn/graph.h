@@ -22,6 +22,7 @@
 #include "util.h"
 #include "preprocess.h"
 #include "fixed_point.h"
+#include "quant_tools.h"
 
 /*
  * 计算图：

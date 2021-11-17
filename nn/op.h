@@ -38,13 +38,37 @@
  * QConcat: qconcat
  *
  * 如果要添加新的算子，你需要修改：
+ * 0. 算子名称宏定义列表
  * 1. Node::Node()
  * 2. Node::~Node()
  * 3. Node::forward()
  * 4. node.cpp  get_name()
  * 5. Graph::fuse_op()      2处
  * 6. Node::print()
+ * 7. Node::to_qnode()
+ * 8. Graph::quantization()     2处
  */
+
+#define OPN_INPUT                   1
+#define OPN_NN_CONV2D               2
+#define OPN_NN_MAXPOOL2D            3
+#define OPN_NN_RELU                 4
+#define OPN_NN_FLATTEN              5
+#define OPN_NN_DENSE                6
+#define OPN_ADD                     7
+#define OPN_CONCAT                  8
+#define OPN_OUTPUT                  9
+#define OPN_NN_BATCH_NORM2D         10
+
+#define OPN_QINPUT                  1001
+#define OPN_NN_QCONV2D              1002
+#define OPN_NN_QMAXPOOL2D           1003
+#define OPN_NN_QRELU                1004
+#define OPN_NN_QFLATTEN             1005
+#define OPN_NN_QDENSE               1006
+#define OPN_QADD                    1007
+#define OPN_QCONCAT                 1008
+#define OPN_QOUTPUT                 1009
 
 
 
@@ -57,6 +81,7 @@
 #include "util.h"
 #include "tensor.h"
 #include "functional.h"
+#include "fixed_point.h"
 
 namespace F = functional;
 
@@ -111,6 +136,12 @@ public:
     std::vector<int> padding;
     std::vector<int> dilation;
     std::vector<int> output_shape;
+    int zero_x;
+    int zero_w;
+    int zero_b;
+    int zero_y;
+    Fixed_point coe;
+    int rshift;
     explicit QConv2d(Conv2d* op);
     ~QConv2d();
 //    void forward();
@@ -161,6 +192,7 @@ class QRelu {
 public:
     int input_node;
     std::vector<int> output_shape;
+    int zero;
     explicit QRelu(Relu * op);
     ~QRelu();
 //    void forward();
@@ -213,6 +245,12 @@ public:
     int output_channel;
     int input_channel;
     std::vector<int> output_shape;
+    int zero_x;
+    int zero_w;
+    int zero_b;
+    int zero_y;
+    Fixed_point coe;
+    int rshift;
     explicit QDense(Dense *op);
     ~QDense();
 //    void forward();
@@ -253,9 +291,17 @@ public:
 };
 
 class QAdd {
+public:
     int input_node1;
     int input_node2;
     std::vector<int> output_shape;
+    int zero_x1;
+    int zero_x2;
+    int zero_y;
+    Fixed_point coe1;
+    Fixed_point coe2;
+    int rshift1;
+    int rshift2;
     explicit QAdd(Add * op);
     ~QAdd();
 //    void forward();
@@ -281,6 +327,13 @@ public:
     int input_node2;
     int dim;
     std::vector<int> output_shape;
+    int zero_x1;
+    int zero_x2;
+    int zero_y;
+    Fixed_point coe1;
+    Fixed_point coe2;
+    int rshift1;
+    int rshift2;
     explicit QConcat(Concat * op);
     ~QConcat();
 //    void forward();

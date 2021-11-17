@@ -4,6 +4,8 @@
 
 #include "graph.h"
 
+#include <cmath>
+
 
 Graph::Graph(const std::string& graph_content)
 {
@@ -54,7 +56,7 @@ void Graph::fuse_op(Tensor<float32> *calc_running_img)
     // 0. 检查是否包含bn
     int found = 0;
     for(Node *node: node_list) {
-        if(node->name == "nn.batch_norm2d") {
+        if(node->name == OPN_NN_BATCH_NORM2D) {
             found = 1;
             break;
         }
@@ -118,11 +120,11 @@ void Graph::fuse_op(Tensor<float32> *calc_running_img)
      * 所有bn融合完毕后，删除bn层
      */
     for(int layer = 0; layer < (int)this->node_list.size(); layer++) {  // 遍历this网络
-        if(this->node_list[layer]->name != "nn.batch_norm2d") {     // 跳过不是bn的层
+        if(this->node_list[layer]->name != OPN_NN_BATCH_NORM2D) {     // 跳过不是bn的层
             continue;
         }
         int bn_input_node = ((Batch_Norm2d*)this->node_list[layer]->op)->input_node; // bn层输入节点编号
-        if(this->node_list[bn_input_node]->name != "nn.conv2d") {
+        if(this->node_list[bn_input_node]->name != OPN_NN_CONV2D) {
             // 检查bn是否在conv2d之后
             fprintf(stderr, "File graph.cpp, line %d. Only bn after conv2d allowed\n", __LINE__);
             exit(-1);
@@ -165,7 +167,7 @@ void Graph::fuse_op(Tensor<float32> *calc_running_img)
     node_list.clear();
     for(Node* i : temp_node_list) {
         // 如果是bn则跳过
-        if(i->name == "nn.batch_norm2d") {
+        if(i->name == OPN_NN_BATCH_NORM2D) {
             continue;
         }
         // 否则修改其number为上一个算子的number+1
@@ -173,47 +175,47 @@ void Graph::fuse_op(Tensor<float32> *calc_running_img)
         // 向上查找当前节点的输入节点
         Node* input_node1 = nullptr;
         Node* input_node2 = nullptr;
-        if(i->name == "nn.conv2d") {
+        if(i->name == OPN_NN_CONV2D) {
             input_node1 = new_graph.node_list[((Conv2d*)i->op)->input_node];
         }
-        else if(i->name == "input") {
+        else if(i->name == OPN_INPUT) {
             // do nothing
         }
-        else if(i->name == "nn.relu") {
+        else if(i->name == OPN_NN_RELU) {
             input_node1 = new_graph.node_list[((Relu*)i->op)->input_node];
         }
-        else if(i->name == "nn.maxpool2d") {
+        else if(i->name == OPN_NN_MAXPOOL2D) {
             input_node1 = new_graph.node_list[((Maxpool2d*)i->op)->input_node];
         }
-        else if(i->name == "nn.flatten") {
+        else if(i->name == OPN_NN_FLATTEN) {
             input_node1 = new_graph.node_list[((Flatten*)i->op)->input_node];
         }
-        else if(i->name == "nn.dense") {
+        else if(i->name == OPN_NN_DENSE) {
             input_node1 = new_graph.node_list[((Dense*)i->op)->input_node];
         }
-        else if(i->name == "add") {
+        else if(i->name == OPN_ADD) {
             input_node1 = new_graph.node_list[((Add*)i->op)->input_node1];
             input_node2 = new_graph.node_list[((Add*)i->op)->input_node2];
         }
-        else if(i->name == "concat") {
+        else if(i->name == OPN_CONCAT) {
             input_node1 = new_graph.node_list[((Concat*)i->op)->input_node1];
             input_node2 = new_graph.node_list[((Concat*)i->op)->input_node2];
         }
-        else if(i->name == "output") {
+        else if(i->name == OPN_OUTPUT) {
             input_node1 = new_graph.node_list[((Output*)i->op)->input_node];
         }
         // 如果是bn，则再向上查找一个输入节点
-        if(input_node1 != nullptr && input_node1->name == "nn.batch_norm2d") {
+        if(input_node1 != nullptr && input_node1->name == OPN_NN_BATCH_NORM2D) {
             input_node1 = new_graph.node_list[((Batch_Norm2d*)input_node1->op)->input_node];
         }
-        if(input_node2 != nullptr && input_node2->name == "nn.batch_norm2d") {
+        if(input_node2 != nullptr && input_node2->name == OPN_NN_BATCH_NORM2D) {
             input_node2 = new_graph.node_list[((Batch_Norm2d*)input_node2->op)->input_node];
         }
         // 计数input_node1和input_node2之前删除的节点数量(即input_node之前的bn数量)
         int count1 = 0;
         if(input_node1 != nullptr) {
             for (int idx = 0; idx < input_node1->number; idx++) {
-                if (new_graph.node_list[idx]->name == "nn.batch_norm2d") {
+                if (new_graph.node_list[idx]->name == OPN_NN_BATCH_NORM2D) {
                     count1++;
                 }
             }
@@ -221,39 +223,39 @@ void Graph::fuse_op(Tensor<float32> *calc_running_img)
         int count2 = 0;
         if(input_node2 != nullptr) {
             for(int idx = 0; idx < input_node2->number; idx++) {
-                if(new_graph.node_list[idx]->name == "nn.batch_norm2d") {
+                if(new_graph.node_list[idx]->name == OPN_NN_BATCH_NORM2D) {
                     count2++;
                 }
             }
         }
         // 用输入节点编号减去删除节点数量
-        if(i->name == "nn.conv2d") {
+        if(i->name == OPN_NN_CONV2D) {
             ((Conv2d*)i->op)->input_node = input_node1->number - count1;
         }
-        else if(i->name == "input") {
+        else if(i->name == OPN_INPUT) {
             // do nothing
         }
-        else if(i->name == "nn.relu") {
+        else if(i->name == OPN_NN_RELU) {
             ((Relu*)i->op)->input_node = input_node1->number - count1;
         }
-        else if(i->name == "nn.maxpool2d") {
+        else if(i->name == OPN_NN_MAXPOOL2D) {
             ((Maxpool2d*)i->op)->input_node = input_node1->number - count1;
         }
-        else if(i->name == "nn.flatten") {
+        else if(i->name == OPN_NN_FLATTEN) {
             ((Flatten*)i->op)->input_node = input_node1->number - count1;
         }
-        else if(i->name == "nn.dense") {
+        else if(i->name == OPN_NN_DENSE) {
             ((Dense*)i->op)->input_node = input_node1->number - count1;
         }
-        else if(i->name == "add") {
+        else if(i->name == OPN_ADD) {
             ((Add*)i->op)->input_node1 = input_node1->number - count1;
             ((Add*)i->op)->input_node2 = input_node2->number - count2;
         }
-        else if(i->name == "concat") {
+        else if(i->name == OPN_CONCAT) {
             ((Concat*)i->op)->input_node1 = input_node1->number - count1;
             ((Concat*)i->op)->input_node2 = input_node2->number - count2;
         }
-        else if(i->name == "output") {
+        else if(i->name == OPN_OUTPUT) {
             ((Output*)i->op)->input_node = input_node1->number - count1;
         }
         // 将修改后的节点加入节点列表
@@ -284,7 +286,7 @@ std::vector<void*> Graph::forward(void *input) {
     // 将output节点的输出push到ret里
     std::vector<void*> ret;
     for(Node *node: node_list) {
-        if(node->name == "output") {
+        if(node->name == OPN_OUTPUT) {
             ret.push_back(intermediate_results[node->number]);
         }
     }
@@ -344,26 +346,36 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
      * qmin, qmax: 期望的量化后前向传播中间结果的上下界；手动设定
      * scale: 缩放比例；使用rmin, rmax, qmin, qmax计算
      * zero: 量化后零点；使用qmax, rmax, scale计算
-     * n: 量化后前向传播计算后右移位数；使用input, weight, output计算
-     * m0: 量化后前向传播计算后相乘的系数；使用input, weight, output计算
+     * rshift: 量化后前向传播计算后右移位数；使用input, weight, output计算
+     * coe: 量化后前向传播按原始算法计算后相乘的系数；使用input, weight, output计算
      *
      * 模型量化: 使用scale, zero, weight计算
-     * 前向传播: 使用input, weight, 输入、权重、输出的zero、n、m0计算
+     * 前向传播: 使用input, weight, 输入、权重、输出的zero、rshift、coe算
      *
      * 只有包含权重数据的层需要量化(conv2d, dense)
-     * 需要进行数据放缩的层需要计算n, m0(relu, maxpool2d, flatten不需要)
+     * 需要进行数据放缩的层需要计算rshift, coe(relu, maxpool2d, flatten不需要)
      *
      * 计算方案：
      * 0. 根据当前计算图，创建量化计算图
-     * 1. 为各层参数分配空间(使用数组保存，不要保存在量化计算图里。(如果保存在量化计算图里，那么取用的时候还得先确定算子类型))
+     * 1. 为各层参数分配空间
+     *      对于量化过程中需要的数据rmin, rmax, qmin, qmax, scale, zero, rshift, coe:
+     *      其中rmin, ramx, qmin, qmax, scale, zero每层需要一个，有权重的层的权重和偏置数据各额外需要一个
+     *      rshift, coe只有部分层需要，且数量不定
+     *      量化后前向传播计算时只会用到zero, rshift, coe
+     *      所以保存方式设定如下：
+     *      对于量化后前向传播计算时需要的参数zero, rshift, coe，在量化算子中保存
+     *      对于每层都需要且数量确定的rmin, ramx, qmin, qmax, scale, zero，使用数组保存
+     *      注意：这里除了要保存各层中间结果的max min之外，还要保存权重的max min
+     *      但权重是不会变的，不需要根据图片计算然后统计。直接单独计算就可以
      * 2. 使用processed_calib_set进行前向传播计算
      *      2.1 计算各层的r, q
      *      2.2 使用r, q计算并累加s, z
-     * 3. 求各层平均的s, z
-     * 4. 为需要的层计算m0, n
-     * 5. 对需要的层的weight和bias进行量化
-     * 6. 将s, z, m0, n存入量化计算图的各个算子之中
-     * 7. 返回量化计算图
+     * 3. 单独计算有权重层的权重的max min参数。不需要使用图片进行前向传播
+     * 4. 求各层平均的s, z
+     * 5. 为需要的算子计算coe, rshift。并将zero, coe, rshift存入对应的算子中
+     * 6. 对需要的层的weight和bias进行量化
+     * 7. 将s, z, coe, rshift存入量化计算图的各个算子之中
+     * 8. 返回量化计算图
      */
     // 0. 根据当前计算图，创建量化计算图
     Graph * qgraph = new Graph();
@@ -371,18 +383,163 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
         qgraph->node_list.push_back(node->to_qnode());
     }
     // 1. 为各层参数分配空间(rmax, rmin, qmax, qmin, scale, zero, n, m0)
-
+    int node_number = (int)node_list.size();
+    float rmax[node_number];
+    float rmin[node_number];
+    int qmax[node_number];
+    int qmin[node_number];
+    float scale[node_number];
+    int zero[node_number];
+    for(int i = 0; i<node_number; i++) {        // 初始化
+        rmax[i] = 0; rmin[i] = 0;
+        qmax[i] = 0; qmin[i] = 0;
+        scale[i] = 0; zero[i] = 0;
+    }
     // 2. 使用processed_calib_set进行前向传播计算
+    printf("Calibrating...\n");
+    int img_number = processed_calib_set->size[0];
+    this->alloc_intermediate_results();
+    for(int i = 0; i<img_number; i++) {
+        // 2.0 前向传播计算
+        Tensor<float32> img = (*processed_calib_set)[i].expand_dim(0);
+        this->forward(&img);
+        for(int j = 0; j<node_number; j++) {
+            // 2.1 计算各层的r, q
+            rmax[j] = ((Tensor<float32>*)intermediate_results[j])->max();
+            rmin[j] = ((Tensor<float32>*)intermediate_results[j])->min();
+            qmax[j] = 255;
+            qmin[j] = 0;
+            float temp_scale = (rmax[j] - rmin[j]) / (float)(qmax[j] - qmin[j]);
+            // 2.2 使用r, q计算并累加s, z
+            scale[j] += temp_scale;
+            zero[j] += (int)std::round((float)qmax[j] - rmax[j]/temp_scale);
+        }
+        printf("\r%d/%d", i, img_number);
+        fflush(stdout);
+    }
+    printf("\rCalibrate finished\n");
+    this->free_intermediate_results();
+    // 3. 计算有权重层的权重的rmin rmax qmin qmax scale zero
+    /*
+     * 为每一层都分配weight和bias的min max空间。虽然不是每一层都有weight和bias，但这样可以直接通过下标访问
+     * 比较方便。用不到的就空着。计算方式为
+     * scale_weight = (rmax - rmin) / (qmax - qmin)
+     * zero_weight = (int)round(qmax - rmax/scale_weight)
+     * scale_bias = scale_weight * scale_input  (本层输入)
+     * zero_bias = 0
+     */
+    float rmax_weight[node_number];
+    float rmin_weight[node_number];
+    float rmax_bias[node_number];
+    float rmin_bias[node_number];
+    int qmax_weight[node_number];
+    int qmin_weight[node_number];
+    int qmax_bias[node_number];
+    int qmin_bias[node_number];
+    float scale_weight[node_number];
+    float scale_bias[node_number];
+    int zero_weight[node_number];
+    int zero_bias[node_number];
+    for(int i = 0; i<node_number; i++) {
+        rmax_weight[i] = 0; rmin_weight[i] = 0;
+        rmax_bias[i] = 0; rmin_bias[i] = 0;
+        qmax_weight[i] = 0; qmin_weight[i] = 0;
+        qmax_bias[i] = 0; qmin_bias[i] = 0;
+        scale_weight[i] = 0; scale_bias[i] = 0;
+        zero_weight[i] = 0; zero_bias[i] = 0;
+    }
+    for(int i = 0; i<node_number; i++) {
+        if(node_list[i]->name == OPN_NN_CONV2D) {
+            rmax_weight[i] = ((Conv2d*)node_list[i]->op)->weight.max();
+            rmin_weight[i] = ((Conv2d*)node_list[i]->op)->weight.min();
+            rmax_bias[i] = ((Conv2d*)node_list[i]->op)->bias.max();
+            rmin_bias[i] = ((Conv2d*)node_list[i]->op)->bias.min();
+            qmax_weight[i] = 255;
+            qmin_weight[i] = 0;
+            qmax_bias[i] = 65535;
+            qmin_bias[i] = 0;
+            scale_weight[i] = (rmax_weight[i] - rmin_weight[i]) / (float)(qmax_weight[i] - qmin_weight[i]);
+            zero_weight[i] = (int)std::round((float)qmax_weight[i] - rmax_weight[i]/scale_weight[i]);
+            scale_bias[i] = scale_weight[i] * scale[((Conv2d*)node_list[i]->op)->input_node];
+            zero_bias[i] = 0;
+        }
+        else if(node_list[i]->name == OPN_NN_DENSE) {
+            rmax_weight[i] = ((Dense*)node_list[i]->op)->weight.max();
+            rmin_weight[i] = ((Dense*)node_list[i]->op)->weight.min();
+            rmax_bias[i] = ((Dense*)node_list[i]->op)->bias.max();
+            rmin_bias[i] = ((Dense*)node_list[i]->op)->bias.min();
+            qmax_weight[i] = 255;
+            qmin_weight[i] = 0;
+            qmax_bias[i] = 65535;
+            qmin_bias[i] = 0;
+            scale_weight[i] = (rmax_weight[i] - rmin_weight[i]) / (float)(qmax_weight[i] - qmin_weight[i]);
+            zero_weight[i] = (int)std::round((float)qmax_weight[i] - rmax_weight[i]/scale_weight[i]);
+            scale_bias[i] = scale_weight[i] * scale[((Dense*)node_list[i]->op)->input_node];
+            zero_bias[i] = 0;
+        }
+    }
+    // 4. 求各层平均的s, z
+    for(int i = 0; i<node_number; i++) {
+        scale[i] /= (float)img_number;
+        zero[i] /= img_number;
+    }
+    // 5. 为需要的算子计算coe, rshift。并将zero, coe, rshift存入对应的算子中
+    for(int i = 0; i<node_number; i++) {
+        if(node_list[i]->name == OPN_NN_CONV2D) {
+            calc_m0_n_input_weight(((QConv2d*)qgraph->node_list[i]->op)->coe,
+                                   ((QConv2d*)qgraph->node_list[i]->op)->rshift,
+                                   scale[((QConv2d*)node_list[i]->op)->input_node],
+                                   scale_weight[i], scale[i]);
+            ((QConv2d*)qgraph->node_list[i]->op)->zero_x = zero[((QConv2d*)qgraph->node_list[i]->op)->input_node];
+            ((QConv2d*)qgraph->node_list[i]->op)->zero_w = zero_weight[i];
+            ((QConv2d*)qgraph->node_list[i]->op)->zero_b = zero_bias[i];
+            ((QConv2d*)qgraph->node_list[i]->op)->zero_y = zero[i];
+        }
+        else if(node_list[i]->name == OPN_NN_RELU) {
+            ((QRelu*)qgraph->node_list[i]->op)->zero = zero[i];
+        }
+        else if(node_list[i]->name == OPN_NN_DENSE) {
+            calc_m0_n_input_weight(((QDense*)qgraph->node_list[i]->op)->coe,
+                                   ((QDense*)qgraph->node_list[i]->op)->rshift,
+                                   scale[((QDense*)node_list[i]->op)->input_node],
+                                   scale_weight[i], scale[i]);
+            printf("node number: %d\n", ((QDense*)qgraph->node_list[i]->op)->input_node);
+            ((QDense*)qgraph->node_list[i]->op)->zero_x = zero[((QDense*)qgraph->node_list[i]->op)->input_node];
+            ((QDense*)qgraph->node_list[i]->op)->zero_w = zero_weight[i];
+            ((QDense*)qgraph->node_list[i]->op)->zero_b = zero_bias[i];
+            ((QDense*)qgraph->node_list[i]->op)->zero_y = zero[i];
+        }
+        else if(node_list[i]->name == OPN_ADD) {
+            calc_m0_n_input_input(((QAdd*)qgraph->node_list[i]->op)->coe1,
+                                  ((QAdd*)qgraph->node_list[i]->op)->coe2,
+                                  ((QAdd*)qgraph->node_list[i]->op)->rshift1,
+                                  ((QAdd*)qgraph->node_list[i]->op)->rshift2,
+                                  scale[((QAdd*)node_list[i]->op)->input_node1],
+                                  scale[((QAdd*)node_list[i]->op)->input_node2],
+                                  scale[i]);
+            ((QAdd*)qgraph->node_list[i]->op)->zero_x1 = zero[((QAdd*)qgraph->node_list[i]->op)->input_node1];
+            ((QAdd*)qgraph->node_list[i]->op)->zero_x2 = zero[((QAdd*)qgraph->node_list[i]->op)->input_node2];
+            ((QAdd*)qgraph->node_list[i]->op)->zero_y = zero[i];
+        }
+        else if(node_list[i]->name == OPN_CONCAT) {
+            calc_m0_n_input_input(((QConcat*)qgraph->node_list[i]->op)->coe1,
+                                  ((QConcat*)qgraph->node_list[i]->op)->coe2,
+                                  ((QConcat*)qgraph->node_list[i]->op)->rshift1,
+                                  ((QConcat*)qgraph->node_list[i]->op)->rshift2,
+                                  scale[((QConcat*)node_list[i]->op)->input_node1],
+                                  scale[((QConcat*)node_list[i]->op)->input_node2],
+                                  scale[i]);
+            ((QConcat*)qgraph->node_list[i]->op)->zero_x1 = zero[((QConcat*)qgraph->node_list[i]->op)->input_node1];
+            ((QConcat*)qgraph->node_list[i]->op)->zero_x2 = zero[((QConcat*)qgraph->node_list[i]->op)->input_node2];
+            ((QConcat*)qgraph->node_list[i]->op)->zero_y = zero[i];
+        }
+    }
+    printf("5 finished\n");
+    // 6. 对需要的层的weight和bias进行量化
 
-    // 3. 求各层平均的s, z
+    // 7. 将s, z, m0, n存入量化计算图的各个算子之中
 
-    // 4. 为需要的层计算m0, n(除relu, pool, flatten之外)
-
-    // 5. 对需要的层的weight和bias进行量化(conv2d, dense)
-
-    // 6. 将s, z, m0, n存入量化计算图的各个算子之中
-
-    // 7. 返回量化计算图
+    // 8. 返回量化计算图
 
     return nullptr;
 }

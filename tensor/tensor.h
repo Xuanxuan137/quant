@@ -138,6 +138,7 @@ public:
     Tensor<T> broadcast_to(const std::vector<int> &size);   // broadcast_to
     Tensor<T> deep_copy();                                  // deep copy
     Tensor<T> concat(Tensor<T> array, int dim = 0);         // concat
+    Tensor<T> expand_dim(int axis);                         // expand_dim
 
     // 数据处理
     T to_num();                                             // 返回数值
@@ -148,6 +149,9 @@ public:
     Tensor<uint8> astype_uint8();                           // astype("uint8");
     Tensor<int32> astype_int32();                           // astype("int32")
     Tensor<float32> astype_float32();                       // astype("float32")
+    T max();                                                // max
+    T min();                                                // min
+    void clip(T min, T max);                                // clip
 
     // 数学运算
     Tensor<T> add(T adder);                                 // 加法

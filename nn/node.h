@@ -29,7 +29,7 @@
 class Node {
 public:
     int number;                     // 算子编号
-    std::string name;               // 算子名称
+    int name;                       // 算子名称
     void * op;                      // 算子
     std::string dtype;              // 数据类型
     std::vector<int> output_shape;  // output shape
@@ -51,7 +51,7 @@ public:
 };
 
 int get_number(const std::string &graph_line);
-std::string get_name(const std::string &graph_line);
+int get_name(const std::string &graph_line);
 std::vector<std::string> get_parameters(const std::string &graph_line);
 
 #endif //QUANT_NODE_H
