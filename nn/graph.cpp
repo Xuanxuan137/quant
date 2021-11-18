@@ -375,7 +375,7 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
      *      2.2 使用r, q计算并累加s, z
      * 3. 单独计算有权重层的权重的max min参数。不需要使用图片进行前向传播
      * 4. 求各层平均的s, z
-     * 5. 为需要的算子计算coe, rshift。并将zero, coe, rshift存入对应的算子中
+     * 5. 为需要的算子计算coe, rshift。并将需要的qmin, qmax, scale, zero, coe, rshift存入对应的算子中
      * 6. 对需要的层的weight和bias进行量化
      * 7. 返回量化计算图
      */
@@ -481,11 +481,26 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
         }
     }
     // 4. 求各层平均的s, z
+    // 注意：部分层应直接使用其输入层的scale和zero
     for(int i = 0; i<node_number; i++) {
-        scale[i] /= (float)img_number;
-        zero[i] /= img_number;
+        if(node_list[i]->name == OPN_NN_RELU) {
+            scale[i] = scale[((Relu*)node_list[i]->op)->input_node];
+            zero[i] = zero[((Relu*)node_list[i]->op)->input_node];
+        }
+        else if(node_list[i]->name == OPN_NN_MAXPOOL2D) {
+            scale[i] = scale[((Maxpool2d*)node_list[i]->op)->input_node];
+            zero[i] = zero[((Maxpool2d*)node_list[i]->op)->input_node];
+        }
+        else if(node_list[i]->name == OPN_NN_FLATTEN) {
+            scale[i] = scale[((Flatten*)node_list[i]->op)->input_node];
+            zero[i] = zero[((Flatten*)node_list[i]->op)->input_node];
+        }
+        else {
+            scale[i] /= (float) img_number;
+            zero[i] /= img_number;
+        }
     }
-    // 5. 为需要的算子计算coe, rshift。并将zero, coe, rshift存入对应的算子中
+    // 5. 为需要的算子计算coe, rshift。并将需要的qmin, qmax, scale, zero, coe, rshift存入对应的算子中
     for(int i = 0; i<node_number; i++) {
         if(node_list[i]->name == OPN_NN_CONV2D) {
             calc_m0_n_input_weight(((QConv2d*)qgraph->node_list[i]->op)->coe,
@@ -496,9 +511,15 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
             ((QConv2d*)qgraph->node_list[i]->op)->zero_w = zero_weight[i];
             ((QConv2d*)qgraph->node_list[i]->op)->zero_b = zero_bias[i];
             ((QConv2d*)qgraph->node_list[i]->op)->zero_y = zero[i];
+            ((QConv2d*)qgraph->node_list[i]->op)->qmin = qmin[i];
+            ((QConv2d*)qgraph->node_list[i]->op)->qmax = qmax[i];
         }
         else if(node_list[i]->name == OPN_NN_RELU) {
             ((QRelu*)qgraph->node_list[i]->op)->zero = zero[i];
+            ((QRelu*)qgraph->node_list[i]->op)->qmax = qmax[i];
+        }
+        else if(node_list[i]->name == OPN_NN_MAXPOOL2D) {
+            ((QMaxpool2d*)qgraph->node_list[i]->op)->zero = zero[i];
         }
         else if(node_list[i]->name == OPN_NN_DENSE) {
             calc_m0_n_input_weight(((QDense*)qgraph->node_list[i]->op)->coe,
@@ -509,6 +530,8 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
             ((QDense*)qgraph->node_list[i]->op)->zero_w = zero_weight[i];
             ((QDense*)qgraph->node_list[i]->op)->zero_b = zero_bias[i];
             ((QDense*)qgraph->node_list[i]->op)->zero_y = zero[i];
+            ((QDense*)qgraph->node_list[i]->op)->qmin = qmin[i];
+            ((QDense*)qgraph->node_list[i]->op)->qmax = qmax[i];
         }
         else if(node_list[i]->name == OPN_ADD) {
             calc_m0_n_input_input(((QAdd*)qgraph->node_list[i]->op)->coe1,
@@ -521,6 +544,8 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
             ((QAdd*)qgraph->node_list[i]->op)->zero_x1 = zero[((QAdd*)qgraph->node_list[i]->op)->input_node1];
             ((QAdd*)qgraph->node_list[i]->op)->zero_x2 = zero[((QAdd*)qgraph->node_list[i]->op)->input_node2];
             ((QAdd*)qgraph->node_list[i]->op)->zero_y = zero[i];
+            ((QAdd*)qgraph->node_list[i]->op)->qmin = qmin[i];
+            ((QAdd*)qgraph->node_list[i]->op)->qmax = qmax[i];
         }
         else if(node_list[i]->name == OPN_CONCAT) {
             calc_m0_n_input_input(((QConcat*)qgraph->node_list[i]->op)->coe1,

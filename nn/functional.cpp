@@ -416,13 +416,121 @@ functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, 
 }
 
 Tensor<uint8>
-functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y, Fixed_point coe, int rshift,
+functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y,
+                    Fixed_point coe, int rshift, int qmin, int qmax,
                     Tensor<uint8> *weight, Tensor<uint8> *bias, const std::vector<int> &stride,
-                    const std::vector<int> &padding, const std::vector<int> &dilation) {
+                    const std::vector<int> &padding_size, const std::vector<int> &dilation) {
     /*
      * qconv2d
      */
-
+    // 对输入尺寸进行校验
+    if(input->size.size() != 4) {
+        fprintf(stderr, "only 4 dimension input is allowed in conv2d\n");
+        exit(-1);
+    }
+    if(weight->size.size() != 4) {
+        fprintf(stderr, "only 4 dimension weight is allowed in conv2d\n");
+        exit(-1);
+    }
+    if(input->size[1] != weight->size[1]) {
+        fprintf(stderr, "channel of input should equal to input channel of weight\n");
+        exit(-1);
+    }
+    if(bias->size.size() != 1) {
+        fprintf(stderr, "only 1 dimension bias is allowed in conv2d\n");
+        exit(-1);
+    }
+    if(bias->size[0] != weight->size[0]) {
+        fprintf(stderr, "dim 1 of bias should equal to dim 1 of weight\n");
+    }
+    if(stride.size() != 2) {
+        fprintf(stderr, "stride should be a vector of 2 int\n");
+        exit(-1);
+    }
+    if(padding_size.size() != 2) {
+        fprintf(stderr, "padding should be a vector of 2 int\n");
+        exit(-1);
+    }
+    if(dilation.size() != 2) {
+        fprintf(stderr, "dilation should be a vector of 2 int\n");
+        exit(-1);
+    }
+    // padding
+    Tensor<uint8> padded = qpadding(input, padding_size, zero_x);
+    // qconv2d
+    // 计算输出尺寸以及其他尺寸
+    std::vector<int> kernel_size{weight->size[2], weight->size[3]};
+    int batch_size = padded.size[0];
+    int output_channel = weight->size[0];
+    int height = (padded.size[2] - (dilation[0] * (kernel_size[0]-1) + 1)) / stride[0] + 1;
+    int width = (padded.size[3] - (dilation[1] * (kernel_size[1]-1) + 1)) / stride[1] + 1;
+    int input_channel = input->size[1];
+    int kernel_height = kernel_size[0];
+    int kernel_width = kernel_size[1];
+    // 创建中间结果
+    Tensor<int32> result{std::vector<int>{batch_size, output_channel, height, width}};
+    // 计算
+    Fixed_point fp_temp{0};
+    for(int n = 0; n<batch_size; n++) {
+        // 每次处理一张图片
+        for(int o = 0; o<output_channel; o++) {
+            for(int h = 0; h<height; h+=stride[0]) {
+                for(int w = 0; w<width; w+=stride[1]) {
+                    int temp = 0;
+                    temp += input_channel * kernel_height * kernel_width * zero_x * zero_w;
+                    for(int i = 0; i<input_channel; i++) {
+                        for(int kh = 0; kh < kernel_height; kh++) {
+                            for(int kw = 0; kw < kernel_width; kw++) {
+//                                temp += padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]] * weight[o][i][kh][kw];
+                                temp += padded.data[
+                                        n * padded.size[1] * padded.size[2] * padded.size[3] +
+                                        i * padded.size[2] * padded.size[3] +
+                                        (h+kh*dilation[0]) * padded.size[3] +
+                                        (w+kw*dilation[1])]
+                                                *
+                                        weight->data[
+                                        o * weight->size[1] * weight->size[2] * weight->size[3] +
+                                        i * weight->size[2] * weight->size[3] +
+                                        kh * weight->size[3] +
+                                        kw];
+                            }
+                        }
+                    }
+                    for(int i = 0; i<input_channel; i++) {
+                        for(int kh = 0; kh < kernel_height; kh++) {
+                            for(int kw = 0; kw < kernel_width; kw++) {
+//                                temp -= zero_x * weight[o][i][kh][kw];
+//                                temp -= zero_w * padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]];
+                                temp -= zero_x * weight->data[
+                                        o * weight->size[1] * weight->size[2] * weight->size[3] +
+                                        i * weight->size[2] * weight->size[3] +
+                                        kh * weight->size[3] +
+                                        kw];
+                                temp -= zero_w * padded.data[
+                                        n * padded.size[1] * padded.size[2] * padded.size[3] +
+                                        i * padded.size[2] * padded.size[3] +
+                                        (h+kh*dilation[0]) * padded.size[3] +
+                                        (w+kw*dilation[1])];
+                            }
+                        }
+                    }
+                    temp += bias->data[o] - zero_b;
+                    fp_temp.assign(temp);
+                    fp_temp *= coe;
+                    int t = fp_temp.to_int();
+                    result.data[
+                            n * result.size[1] * result.size[2] * result.size[3] +
+                            o * result.size[2] * result.size[3] +
+                            h * result.size[3] +
+                            w] = (t >> rshift) + zero_y;
+                }
+            }
+        }
+    }
+    // 将中间结果clip后转为uint8并返回
+    result.clip(qmin, qmax);
+    Tensor<uint8> ret = result.astype_uint8();
+    return ret;
 }
 
 Tensor<uint8> functional::qpadding(Tensor<uint8> *input, const std::vector<int> &padding_size, int zero) {
@@ -471,5 +579,196 @@ Tensor<uint8> functional::qpadding(Tensor<uint8> *input, const std::vector<int> 
         }
     }
     return padded;
+}
+
+Tensor<uint8> functional::qrelu(Tensor<uint8> *input, int zero, int qmax) {
+    /*
+     * qrelu
+     */
+    Tensor<uint8> res{input->size};
+    int len = res.len();
+    for(int i = 0; i<len; i++) {
+        res.data[i] = clip(input->data[i], zero, qmax);
+    }
+    return res;
+}
+
+Tensor<uint8> functional::qmaxpool2d(Tensor<uint8> *input, int zero, const std::vector<int> &kernel_size,
+                                     std::vector<int> stride, const std::vector<int> &padding_size,
+                                     const std::vector<int> &dilation)
+{
+    /*
+     * qmaxpool2d
+     */
+    // 校验参数
+    if(input->size.size() != 4) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of input must be 4\n", __LINE__);
+        exit(-1);
+    }
+    if(kernel_size.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of kernel_size must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(stride.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of stride must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(padding_size.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of padding_size must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(dilation.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of dilation must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(stride[0] == -1 && stride[1] == -1) {
+        stride[0] = kernel_size[0];
+        stride[1] = kernel_size[1];
+    }
+    // padding
+    Tensor<uint8> padded;
+    if(padding_size[0] == 0 && padding_size[1] == 0) {
+        padded = *input;
+    }
+    else {
+        padded = qpadding(input, padding_size, zero);
+    }
+    // 计算pool后尺寸
+    int batch_size = input->size[0];
+    int channel = input->size[1];
+    int height = (padded.size[2] - (dilation[0]*(kernel_size[0]-1)+1)) / stride[0] + 1;
+    int width = (padded.size[3] - (dilation[1]*(kernel_size[1]-1)+1)) / stride[1] + 1;
+    // 创建返回对象
+    Tensor<uint8> result{std::vector<int>{batch_size, channel, height, width}};
+    // pool
+    for(int n = 0; n<batch_size; n++) {
+        for(int c = 0; c<channel; c++) {
+            for(int h = 0; h<height; h++) {
+                for(int w = 0; w<width; w++) {
+                    // 从padded的每块中找到最大值
+                    // 1. 计算起始位置
+                    int start_h = h * stride[0];    // 相对于整张图片的偏移
+                    int start_w = w * stride[1];
+                    int start_kh = 0;               // 相对于kernel的偏移
+                    int start_kw = 0;
+                    // max = padded[n][c][start_h+start_kh][start_w+start_kw]
+                    uint8 max = padded.data[
+                            n * channel * padded.size[2] * padded.size[3] +
+                            c * padded.size[2] * padded.size[3] +
+                            start_h * padded.size[3] +
+                            start_w];
+                    for(int kh = 0; kh < kernel_size[0]; kh++, start_kh += dilation[0]) {
+                        start_kw = 0;
+                        for(int kw = 0; kw < kernel_size[1]; kw++, start_kw += dilation[1]) {
+                            if(padded.data[
+                                       n * channel * padded.size[2] * padded.size[3] +
+                                       c * padded.size[2] * padded.size[3] +
+                                       (start_h + start_kh) * padded.size[3] +
+                                       (start_w + start_kw)] > max) {
+                                max = padded.data[
+                                        n * channel * padded.size[2] * padded.size[3] +
+                                        c * padded.size[2] * padded.size[3] +
+                                        (start_h + start_kh) * padded.size[3] +
+                                        (start_w + start_kw)];
+                            }
+                        }
+                    }
+                    // result[n][c][h][w] = max
+                    result.data[
+                            n * channel * height * width +
+                            c * height * width +
+                            h * width +
+                            w] = max;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+Tensor<uint8> functional::qflatten(Tensor<uint8> *input) {
+    /*
+     * qflatten
+     */
+    Tensor<uint8> result = input->reshape(std::vector<int>{input->size[0], -1});
+    return result;
+}
+
+Tensor<uint8>
+functional::qdense(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y, Fixed_point coe, int rshift,
+                   int qmin, int qmax, Tensor<uint8> *weight, Tensor<uint8> *bias) {
+    /*
+     * qdense
+     */
+    // 检查参数
+    if(input->size.size() != 2) {
+        fprintf(stderr, "File functional.cpp, line %d. Only 2 dimension input is allowed in dense\n", __LINE__);
+        exit(-1);
+    }
+    if(weight->size.size() != 2) {
+        fprintf(stderr, "File functional.cpp, line %d. Only 2 dimension weight is allowed in dense\n", __LINE__);
+        exit(-1);
+    }
+    if(bias->size.size() != 1) {
+        fprintf(stderr, "File functional.cpp, line %d. Only 1 dimension bias is allowed in dense\n", __LINE__);
+        exit(-1);
+    }
+    // 矩阵乘法
+    Tensor<uint8> result{std::vector<int>{input->size[0], weight->size[1]}};
+    int batch_size = input->size[0];
+    int output_channel = weight->size[1];
+    int input_channel = input->size[1];
+    Fixed_point fp_temp{0};
+    for(int n = 0; n<batch_size; n++) {
+        for (int o = 0; o < output_channel; o++) {
+            int temp = 0;
+            temp += input_channel * zero_x * zero_w;
+            for(int i = 0; i<input_channel; i++) {
+                temp += input->data[n * input_channel + i] * weight->data[i * output_channel + o];
+            }
+            for(int i = 0; i<input_channel; i++) {
+                temp -= zero_x * weight->data[i * output_channel + o];
+                temp -= zero_w * input->data[n * input_channel + i];
+            }
+            temp += bias->data[o] - zero_b;
+            fp_temp.assign(temp);
+            fp_temp *= coe;
+            int t = fp_temp.to_int();
+            result.data[n * output_channel + o] = (t >> rshift) + zero_y;
+        }
+    }
+    return result;
+}
+
+Tensor<uint8>
+functional::qadd(Tensor<uint8> *input1, Tensor<uint8> *input2, int zero_x1, int zero_x2, int zero_y,
+                 Fixed_point coe1, Fixed_point coe2, int rshift1, int rshift2, int qmin, int qmax) {
+    /*
+     * qadd
+     */
+    Tensor<int32> temp_x1 = input1->astype_int32();
+    Tensor<int32> temp_x2 = input2->astype_int32();
+    Fixed_point fp_temp1{0};
+    Fixed_point fp_temp2{0};
+    int len1 = input1->len();
+    for(int i = 0; i<len1; i++) {
+        int temp1 = temp_x1.data[i] - zero_x1;
+        fp_temp1.assign(temp1);
+        fp_temp1 *= coe1;
+        int t1 = fp_temp1.to_int();
+        temp_x1.data[i] = t1 >> rshift1;
+    }
+    int len2 = input2->len();
+    for(int i = 0; i<len2; i++) {
+        int temp2 = temp_x2.data[i] - zero_x2;
+        fp_temp2.assign(temp2);
+        fp_temp2 *= coe2;
+        int t2 = fp_temp2.to_int();
+        temp_x2.data[i] = t2 >> rshift2;
+    }
+    Tensor<int32> result = temp_x1 + temp_x2 + zero_y;
+    result.clip(qmin, qmax);
+    Tensor<uint8> ret = result.astype_uint8();
+    return ret;
 }
 

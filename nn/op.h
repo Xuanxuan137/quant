@@ -46,7 +46,7 @@
  * 5. Graph::fuse_op()      2处
  * 6. Node::print()
  * 7. Node::to_qnode()
- * 8. Graph::quantization()     4处
+ * 8. Graph::quantization()     5处
  * 9. Graph::forward()
  */
 
@@ -143,6 +143,8 @@ public:
     int zero_y;
     Fixed_point coe;
     int rshift;
+    int qmin;
+    int qmax;
     explicit QConv2d(Conv2d* op);
     ~QConv2d();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
@@ -172,6 +174,7 @@ public:
     std::vector<int> padding;
     std::vector<int> dilation;
     std::vector<int> output_shape;
+    int zero;
     explicit QMaxpool2d(Maxpool2d * op);
     ~QMaxpool2d();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
@@ -194,6 +197,7 @@ public:
     int input_node;
     std::vector<int> output_shape;
     int zero;
+    int qmax;
     explicit QRelu(Relu * op);
     ~QRelu();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
@@ -252,6 +256,8 @@ public:
     int zero_y;
     Fixed_point coe;
     int rshift;
+    int qmin;
+    int qmax;
     explicit QDense(Dense *op);
     ~QDense();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
@@ -303,6 +309,8 @@ public:
     Fixed_point coe2;
     int rshift1;
     int rshift2;
+    int qmin;
+    int qmax;
     explicit QAdd(Add * op);
     ~QAdd();
     void forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *output);

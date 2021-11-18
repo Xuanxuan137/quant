@@ -720,6 +720,8 @@ QConv2d::QConv2d(Conv2d *op) {
     zero_y = 0;
     coe = 0;
     rshift = 0;
+    qmin = 0;
+    qmax = 0;
 }
 
 void QConv2d::print() {
@@ -740,7 +742,7 @@ void QConv2d::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
     /*
      * QConv2d前向传播函数
      */
-    *output = F::qconv2d(input, zero_x, zero_w, zero_b, zero_y, coe, rshift,
+    *output = F::qconv2d(input, zero_x, zero_w, zero_b, zero_y, coe, rshift, qmin, qmax,
                          &weight, &bias, stride, padding, dilation);
 }
 
@@ -800,6 +802,7 @@ QMaxpool2d::QMaxpool2d(Maxpool2d *op) {
     padding = op->padding;
     dilation = op->dilation;
     output_shape = op->output_shape;
+    zero = 0;
 }
 
 void QMaxpool2d::print() {
@@ -819,6 +822,7 @@ void QMaxpool2d::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
     /*
      * QMaxpool2d前向传播韩函数
      */
+    *output = F::qmaxpool2d(input, zero, kernel_size, stride, padding, dilation);
 }
 
 QMaxpool2d::~QMaxpool2d() = default;
@@ -830,6 +834,7 @@ QRelu::QRelu(Relu *op) {
     input_node = op->input_node;
     output_shape = op->output_shape;
     zero = 0;
+    qmax = 0;
 }
 
 void QRelu::print() {
@@ -853,6 +858,7 @@ void QRelu::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
     /*
      * QRelu前向传播函数
      */
+    *output = F::qrelu(input, zero, qmax);
 }
 
 QRelu::~QRelu() = default;
@@ -879,6 +885,7 @@ void QFlatten::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
     /*
      * QFlatten前向传播函数
      */
+    *output = F::qflatten(input);
 }
 
 QFlatten::~QFlatten() = default;
@@ -899,6 +906,8 @@ QDense::QDense(Dense *op) {
     zero_y = 0;
     coe = 0;
     rshift = 0;
+    qmin = 0;
+    qmax = 0;
 }
 
 void QDense::print() {
@@ -916,6 +925,8 @@ void QDense::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
     /*
      * QDense前向传播函数
      */
+    *output = F::qdense(input, zero_x, zero_w, zero_b, zero_y, coe, rshift, qmin, qmax,
+                        &weight, &bias);
 }
 
 QDense::~QDense() = default;
@@ -989,6 +1000,7 @@ void QAdd::forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *
     /*
      * QAdd前向传播函数
      */
+    *output = F::qadd(input1, input2, zero_x1, zero_x2, zero_y, coe1, coe2, rshift1, rshift1, qmin, qmax);
 }
 
 
