@@ -289,6 +289,9 @@ std::vector<void*> Graph::forward(void *input) {
         if(node->name == OPN_OUTPUT) {
             ret.push_back(intermediate_results[node->number]);
         }
+        if(node->name == OPN_QOUTPUT) {
+            ret.push_back((intermediate_results[node->number]));
+        }
     }
 
     return ret;
@@ -374,8 +377,7 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
      * 4. 求各层平均的s, z
      * 5. 为需要的算子计算coe, rshift。并将zero, coe, rshift存入对应的算子中
      * 6. 对需要的层的weight和bias进行量化
-     * 7. 将s, z, coe, rshift存入量化计算图的各个算子之中
-     * 8. 返回量化计算图
+     * 7. 返回量化计算图
      */
     // 0. 根据当前计算图，创建量化计算图
     Graph * qgraph = new Graph();
@@ -503,7 +505,6 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
                                    ((QDense*)qgraph->node_list[i]->op)->rshift,
                                    scale[((QDense*)node_list[i]->op)->input_node],
                                    scale_weight[i], scale[i]);
-            printf("node number: %d\n", ((QDense*)qgraph->node_list[i]->op)->input_node);
             ((QDense*)qgraph->node_list[i]->op)->zero_x = zero[((QDense*)qgraph->node_list[i]->op)->input_node];
             ((QDense*)qgraph->node_list[i]->op)->zero_w = zero_weight[i];
             ((QDense*)qgraph->node_list[i]->op)->zero_b = zero_bias[i];
@@ -534,17 +535,23 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
             ((QConcat*)qgraph->node_list[i]->op)->zero_y = zero[i];
         }
     }
-    printf("5 finished\n");
     // 6. 对需要的层的weight和bias进行量化
     for(int i = 0; i<node_number; i++) {
-        printf("Hello world\n");
-        printf("world hello\n");
+        if(node_list[i]->name == OPN_NN_CONV2D) {
+            quant(((QConv2d*)qgraph->node_list[i]->op)->weight, ((Conv2d*)node_list[i]->op)->weight,
+                  scale_weight[i], zero_weight[i], qmin_weight[i], qmax_weight[i]);
+            quant(((QConv2d*)qgraph->node_list[i]->op)->bias, ((Conv2d*)node_list[i]->op)->bias,
+                  scale_bias[i], zero_bias[i], qmin_bias[i], qmax_bias[i]);
+        }
+        else if(node_list[i]->name == OPN_NN_DENSE) {
+            quant(((QDense*)qgraph->node_list[i]->op)->weight, ((Dense*)node_list[i]->op)->weight,
+                  scale_weight[i], zero_weight[i], qmin_weight[i], qmax_weight[i]);
+            quant(((QDense*)qgraph->node_list[i]->op)->bias, ((Dense*)node_list[i]->op)->bias,
+                  scale_bias[i], zero_bias[i], qmin_bias[i], qmax_bias[i]);
+        }
     }
-    // 7. 将s, z, m0, n存入量化计算图的各个算子之中
-
-    // 8. 返回量化计算图
-
-    return nullptr;
+    // 7. 返回量化计算图
+    return qgraph;
 }
 
 Graph::Graph() {

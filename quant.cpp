@@ -12,6 +12,7 @@
 #include "preprocess.h"
 
 void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_shape);
+void test_quant_accuracy(const std::string &val_set_path, Graph *graph, int *infer_shape);
 
 System_info * sys_info;
 
@@ -94,6 +95,8 @@ int main(int argc, char *argv[]) {
     // TODO: quantization
     Graph * q_graph = graph->quantization(calib_set, processed_calib_set);
 
+    int infer_shape[4] = {1,1,28,28};
+    test_quant_accuracy("../val_set.txt", q_graph, infer_shape);
     // TODO: save quantized model
 
 
@@ -176,6 +179,80 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_sha
         else {
             delete((Tensor<float32>*)processed_input);
         }
+        int result = ((Tensor<float32>*)(result_vector[0]))->argmax();
+        if(result == answer) {
+            correct ++;
+        }
+        total ++;
+        printf("\rProcessing: %d. Correct: %d, accuracy: %f", total, correct, (float)correct/(float)total);
+        fflush(stdout);
+    }
+    printf("\n");
+    printf("Correct: %d, Total: %d, accuracy: %f\n", correct, total, (float)correct/(float)total);
+    graph->free_intermediate_results();
+}
+
+void test_quant_accuracy(const std::string &val_set_path, Graph *graph, int *infer_shape) {
+/*
+     * 测试计算图准确率
+     * 只用于分类任务
+     */
+    printf("Test accuracy:\n");
+    // 打开val set数据集文件
+    std::ifstream file;
+    file.open(val_set_path, std::ios::in);
+    if(!file.is_open()) {
+        std::cerr << "calib set txt file not found\n";
+        exit(-1);
+    }
+    // 遍历文件里的每一行
+    int correct = 0;
+    int total = 0;
+    std::string line;
+    graph->alloc_intermediate_results();    // 为中间结果分配内存
+    while(std::getline(file, line)) {
+        // 将行分为图片路径和分类标签
+        std::vector<std::string> line_split = split(line, " ");
+        std::string img_path = line_split[0];
+        int answer = (int)strtol(line_split[1].c_str(), nullptr, 10);
+        // 将img读入Tensor
+        cv::Mat img;
+        cv::Mat dst;
+        if(infer_shape[1] == 1) {
+            img = cv::imread(img_path, cv::IMREAD_GRAYSCALE);;
+        }
+        else if(infer_shape[1] == 3) {
+            img = cv::imread(img_path, cv::IMREAD_COLOR);;
+        }
+        // Resize
+        cv::resize(img, dst, cv::Size(infer_shape[3], infer_shape[2]), 0, 0, cv::INTER_LINEAR);
+        // 存储resized图片到Tensor
+        Tensor<uint8> bgr_hwc_img(std::vector<int>{infer_shape[2], infer_shape[3], infer_shape[1]});
+        memcpy(bgr_hwc_img.data, dst.data, sizeof(unsigned char)*infer_shape[2]*infer_shape[3]*infer_shape[1]);
+        // hwc to chw
+        Tensor<uint8> bgr_chw_img = bgr_hwc_img.transpose(std::vector<int>{2, 0, 1});
+        // bgr to rgb
+        Tensor<uint8> rgb_chw_img(bgr_chw_img.shape());
+        if(infer_shape[1] == 3) {
+            rgb_chw_img[0] = bgr_chw_img[2];
+            rgb_chw_img[1] = bgr_chw_img[1];
+            rgb_chw_img[2] = bgr_chw_img[0];
+        }
+        else {
+            rgb_chw_img[0] = bgr_chw_img[0];
+        }
+        rgb_chw_img = rgb_chw_img.reshape(std::vector<int>{1, rgb_chw_img.size[0], rgb_chw_img.size[1], rgb_chw_img.size[2]});
+        // 根据graph类型进行数据预处理
+        void * processed_input = nullptr;
+        if(graph->node_list[0]->dtype == "uint8") {
+            processed_input = &rgb_chw_img;
+        }
+        else {
+            processed_input = preprocess(&rgb_chw_img);
+        }
+        // 调用graph->forward
+        // 不需要释放result_vector中的结果, 应为它们是指向graph中intermediate_results里空间的指针，在forward返回时不会分配新空间
+        std::vector<void*> result_vector = graph->forward(processed_input);
         int result = ((Tensor<float32>*)(result_vector[0]))->argmax();
         if(result == answer) {
             correct ++;

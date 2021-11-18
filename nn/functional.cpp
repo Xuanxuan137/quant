@@ -414,3 +414,62 @@ functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, 
             + (bias->reshape(std::vector<int>{1,-1,1,1}));
     return y;
 }
+
+Tensor<uint8>
+functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y, Fixed_point coe, int rshift,
+                    Tensor<uint8> *weight, Tensor<uint8> *bias, const std::vector<int> &stride,
+                    const std::vector<int> &padding, const std::vector<int> &dilation) {
+    /*
+     * qconv2d
+     */
+
+}
+
+Tensor<uint8> functional::qpadding(Tensor<uint8> *input, const std::vector<int> &padding_size, int zero) {
+    /*
+     * qpadding
+     */
+    // 计算padding后尺寸
+    int batch_size = input->size[0];
+    int channel = input->size[1];
+    int height = input->size[2];
+    int width = input->size[3];
+    int padded_height = height + padding_size[0] * 2;
+    int padded_width = width + padding_size[1] * 2;
+    // 创建padding后对象
+    Tensor<uint8> padded{std::vector<int>{batch_size, channel, padded_height, padded_width}};
+    // padding
+    for(int n = 0; n<batch_size; n++) {
+        for(int c = 0; c<channel; c++) {
+            for(int h = 0; h<padded_height; h++) {
+                for(int w = 0; w<padded_width; w++) {
+                    if((h < padding_size[0]) || (h >= height + padding_size[0]) ||
+                       (w < padding_size[1]) || (w >= width + padding_size[1])) {
+                        // padded[n][c][h][w] = 0
+                        padded.data[
+                                n * channel * padded_height * padded_width +
+                                c * padded_height * padded_width +
+                                h * padded_width +
+                                w] = zero;
+                    }
+                    else {
+                        // padded[n][c][h][w] = input[n][c][h-ph][w-pw]
+                        padded.data[
+                                n * channel * padded_height * padded_width +
+                                c * padded_height * padded_width +
+                                h * padded_width +
+                                w]
+                                =
+                                input->data[
+                                        n * channel * height * width +
+                                        c * height * width +
+                                        (h-padding_size[0]) * width +
+                                        (w-padding_size[1])];
+                    }
+                }
+            }
+        }
+    }
+    return padded;
+}
+

@@ -66,3 +66,30 @@ void calc_m0_n_input_input(Fixed_point &coe1, Fixed_point &coe2, int &rshift1, i
     }
     coe2 = fm02;
 }
+
+void quant(Tensor<uint8> &dst, Tensor<float32> &src, float scale, int zero, int qmin, int qmax) {
+    /*
+     * 对输入的src进行量化，量化后的数据存入dst中
+     */
+    if(dst.size != src.size) {
+        fprintf(stderr, "File quant_tools.cpp, line %d. Size of dst and src should be the same\n", __LINE__);
+        exit(-1);
+    }
+    int len = src.len();
+    for(int i = 0; i<len; i++) {
+        dst.data[i] = clip((int)std::round(src.data[i] / scale + (float)zero), qmin, qmax);
+    }
+}
+
+int clip(int x, int min, int max) {
+    /*
+     * clip
+     */
+    if(x < min) {
+        return min;
+    }
+    if(x > max) {
+        return max;
+    }
+    return x;
+}

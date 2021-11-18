@@ -736,6 +736,14 @@ void QConv2d::print() {
     printf("%s", temp);
 }
 
+void QConv2d::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
+    /*
+     * QConv2d前向传播函数
+     */
+    *output = F::qconv2d(input, zero_x, zero_w, zero_b, zero_y, coe, rshift,
+                         &weight, &bias, stride, padding, dilation);
+}
+
 QConv2d::~QConv2d() = default;
 
 QInput::QInput(Input *op) {
@@ -759,6 +767,25 @@ void QInput::print() {
     str.pop_back();
     str += "),dtype=\"float32\");";
     std::cout << str<< std::endl;
+}
+
+void QInput::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
+    /*
+     * QInput前向传播函数
+     */
+    if(input->size != output_shape) {
+        fprintf(stderr, "File: op.cpp, line: %d. Cannot input data with shape (", __LINE__);
+        for(const int &i: input->size) {
+            fprintf(stderr, "%d, ", i);
+        }
+        fprintf(stderr, ") into Input Node with shape (");
+        for(const int &i: output_shape) {
+            fprintf(stderr, "%d, ", i);
+        }
+        fprintf(stderr, ")\n");
+        exit(-1);
+    }
+    *output = *input;
 }
 
 QInput::~QInput() = default;
@@ -786,6 +813,12 @@ void QMaxpool2d::print() {
             padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
             output_shape[2], output_shape[3]);
     printf("%s", temp);
+}
+
+void QMaxpool2d::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
+    /*
+     * QMaxpool2d前向传播韩函数
+     */
 }
 
 QMaxpool2d::~QMaxpool2d() = default;
@@ -816,6 +849,12 @@ void QRelu::print() {
     std::cout << str;
 }
 
+void QRelu::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
+    /*
+     * QRelu前向传播函数
+     */
+}
+
 QRelu::~QRelu() = default;
 
 QFlatten::QFlatten(Flatten *op) {
@@ -834,6 +873,12 @@ void QFlatten::print() {
     sprintf(temp, "nn.qflatten(input=%%%d, output_shape=(%d,%d));\n",
             input_node, output_shape[0], output_shape[1]);
     printf("%s", temp);
+}
+
+void QFlatten::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
+    /*
+     * QFlatten前向传播函数
+     */
 }
 
 QFlatten::~QFlatten() = default;
@@ -867,6 +912,12 @@ void QDense::print() {
     printf("%s", temp);
 }
 
+void QDense::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
+    /*
+     * QDense前向传播函数
+     */
+}
+
 QDense::~QDense() = default;
 
 QOutput::QOutput(Output *op) {
@@ -892,6 +943,12 @@ void QOutput::print() {
     str.pop_back();
     str += "));\n";
     std::cout << str;
+}
+
+void QOutput::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
+    /*
+     * QOutput前向传播函数
+     */
 }
 
 QOutput::~QOutput() = default;
@@ -928,6 +985,12 @@ void QAdd::print() {
     std::cout << str;
 }
 
+void QAdd::forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *output) {
+    /*
+     * QAdd前向传播函数
+     */
+}
+
 
 QAdd::~QAdd() = default;
 
@@ -962,6 +1025,12 @@ void QConcat::print() {
     str.pop_back();
     str += "));\n";
     std::cout << str;
+}
+
+void QConcat::forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *output) {
+    /*
+     * QConcat前向传播函数
+     */
 }
 
 QConcat::~QConcat() = default;

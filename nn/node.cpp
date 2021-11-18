@@ -119,6 +119,7 @@ void Node::forward(const std::vector<void *> &intermediate_results, void *input)
      * 传入存储所有中间结果指针的vector，和graph的input的指针
      * 根据算子名称分类处理：调用算子的forward，传入input和output指针
      */
+    // 普通算子
     if(this->name == OPN_NN_CONV2D) {
         ((Conv2d*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Conv2d*)op)->input_node],
@@ -170,6 +171,54 @@ void Node::forward(const std::vector<void *> &intermediate_results, void *input)
         ((Batch_Norm2d*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Batch_Norm2d*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
+    }
+    // 量化算子
+    else if(this->name == OPN_NN_QCONV2D) {
+        ((QConv2d*)op)->forward(
+                (Tensor<uint8>*)intermediate_results[((QConv2d*)op)->input_node],
+                (Tensor<uint8>*)intermediate_results[this->number]);
+    }
+    else if(this->name == OPN_QINPUT) {
+        ((QInput*)op)->forward(
+                (Tensor<uint8>*)input,
+                (Tensor<uint8>*)intermediate_results[this->number]);
+    }
+    else if(this->name == OPN_NN_QMAXPOOL2D) {
+        ((QMaxpool2d*)op)->forward(
+                (Tensor<uint8>*)intermediate_results[((QMaxpool2d*)op)->input_node],
+                (Tensor<uint8>*)intermediate_results[this->number]);
+    }
+    else if(this->name == OPN_NN_QRELU) {
+        ((QRelu*)op)->forward(
+                (Tensor<uint8>*)intermediate_results[((QRelu*)op)->input_node],
+                (Tensor<uint8>*)intermediate_results[this->number]);
+    }
+    else if(this->name == OPN_NN_QFLATTEN) {
+        ((QFlatten*)op)->forward(
+                (Tensor<uint8>*)intermediate_results[((QFlatten*)op)->input_node],
+                (Tensor<uint8>*)intermediate_results[this->number]);
+    }
+    else if(this->name == OPN_NN_QDENSE) {
+        ((QDense*)op)->forward(
+                (Tensor<uint8>*)intermediate_results[((QDense*)op)->input_node],
+                (Tensor<uint8>*)intermediate_results[this->number]);
+    }
+    else if(this->name == OPN_QOUTPUT) {
+        ((QOutput*)op)->forward(
+                (Tensor<uint8>*)intermediate_results[((QOutput*)op)->input_node],
+                (Tensor<uint8>*)intermediate_results[this->number]);
+    }
+    else if(this->name == OPN_QADD) {
+        ((QAdd*)op)->forward(
+                (Tensor<uint8>*)intermediate_results[((QAdd*)op)->input_node1],
+                (Tensor<uint8>*)intermediate_results[((QAdd*)op)->input_node2],
+                (Tensor<uint8>*)intermediate_results[this->number]);
+    }
+    else if(this->name == OPN_QCONCAT) {
+        ((QConcat*)op)->forward(
+                (Tensor<uint8>*)intermediate_results[((QConcat*)op)->input_node1],
+                (Tensor<uint8>*)intermediate_results[((QConcat*)op)->input_node2],
+                (Tensor<uint8>*)intermediate_results[this->number]);
     }
 }
 

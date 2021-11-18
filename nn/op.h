@@ -46,7 +46,8 @@
  * 5. Graph::fuse_op()      2处
  * 6. Node::print()
  * 7. Node::to_qnode()
- * 8. Graph::quantization()     2处
+ * 8. Graph::quantization()     4处
+ * 9. Graph::forward()
  */
 
 #define OPN_INPUT                   1
@@ -99,7 +100,7 @@ public:
     std::vector<int> output_shape;
     explicit QInput(Input * op);
     ~QInput();
-//    void forward();
+    void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
 };
 
@@ -144,7 +145,7 @@ public:
     int rshift;
     explicit QConv2d(Conv2d* op);
     ~QConv2d();
-//    void forward();
+    void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
 };
 
@@ -173,7 +174,7 @@ public:
     std::vector<int> output_shape;
     explicit QMaxpool2d(Maxpool2d * op);
     ~QMaxpool2d();
-//    void forward();
+    void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
 };
 
@@ -195,7 +196,7 @@ public:
     int zero;
     explicit QRelu(Relu * op);
     ~QRelu();
-//    void forward();
+    void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
 };
 
@@ -216,7 +217,7 @@ public:
     std::vector<int> output_shape;
     explicit QFlatten(Flatten * op);
     ~QFlatten();
-//    void forward();
+    void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
 };
 
@@ -253,7 +254,7 @@ public:
     int rshift;
     explicit QDense(Dense *op);
     ~QDense();
-//    void forward();
+    void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
 };
 
@@ -274,7 +275,7 @@ public:
     std::vector<int> output_shape;
     explicit QOutput(Output * op);
     ~QOutput();
-//    void forward();
+    void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
 };
 
@@ -304,7 +305,7 @@ public:
     int rshift2;
     explicit QAdd(Add * op);
     ~QAdd();
-//    void forward();
+    void forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *output);
     void print();
 };
 
@@ -336,7 +337,7 @@ public:
     int rshift2;
     explicit QConcat(Concat * op);
     ~QConcat();
-//    void forward();
+    void forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *output);
     void print();
 };
 
