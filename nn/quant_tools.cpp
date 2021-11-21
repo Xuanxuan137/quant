@@ -93,3 +93,17 @@ int clip(int x, int min, int max) {
     }
     return x;
 }
+
+void quant(Tensor<int32> &dst, Tensor<float32> &src, float scale, int zero, int qmin, int qmax) {
+    /*
+     * 对输入的src进行量化，量化后的数据存入dst中
+     */
+    if(dst.size != src.size) {
+        fprintf(stderr, "File quant_tools.cpp, line %d. Size of dst and src should be the same\n", __LINE__);
+        exit(-1);
+    }
+    int len = src.len();
+    for(int i = 0; i<len; i++) {
+        dst.data[i] = clip((int)std::round(src.data[i] / scale + (float)zero), qmin, qmax);
+    }
+}

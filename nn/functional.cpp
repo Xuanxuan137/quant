@@ -418,7 +418,7 @@ functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, 
 Tensor<uint8>
 functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y,
                     Fixed_point coe, int rshift, int qmin, int qmax,
-                    Tensor<uint8> *weight, Tensor<uint8> *bias, const std::vector<int> &stride,
+                    Tensor<uint8> *weight, Tensor<int32> *bias, const std::vector<int> &stride,
                     const std::vector<int> &padding_size, const std::vector<int> &dilation) {
     /*
      * qconv2d
@@ -696,7 +696,7 @@ Tensor<uint8> functional::qflatten(Tensor<uint8> *input) {
 
 Tensor<uint8>
 functional::qdense(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y, Fixed_point coe, int rshift,
-                   int qmin, int qmax, Tensor<uint8> *weight, Tensor<uint8> *bias) {
+                   int qmin, int qmax, Tensor<uint8> *weight, Tensor<int32> *bias) {
     /*
      * qdense
      */
@@ -771,4 +771,39 @@ functional::qadd(Tensor<uint8> *input1, Tensor<uint8> *input2, int zero_x1, int 
     Tensor<uint8> ret = result.astype_uint8();
     return ret;
 }
+
+Tensor<uint8> functional::qconcat(Tensor<uint8> *input1, Tensor<uint8> *input2, int zero_x1, int zero_x2,
+                                  int zero_y, Fixed_point coe1, Fixed_point coe2, int rshift1, int rshift2,
+                                  int qmin, int qmax, int dim)
+{
+    /*
+     * qconcat
+     */
+    Tensor<int32> temp_x1 = input1->astype_int32();
+    Tensor<int32> temp_x2 = input2->astype_int32();
+    Fixed_point fp_temp1{0};
+    Fixed_point fp_temp2{0};
+    int len1 = input1->len();
+    for(int i = 0; i<len1; i++) {
+        int temp1 = temp_x1.data[i] - zero_x1;
+        fp_temp1.assign(temp1);
+        fp_temp1 *= coe1;
+        int t1 = fp_temp1.to_int();
+        temp_x1.data[i] = (t1 >> rshift1) + zero_y;
+    }
+    int len2 = input2->len();
+    for(int i = 0; i<len2; i++) {
+        int temp2 = temp_x2.data[i] - zero_x2;
+        fp_temp2.assign(temp2);
+        fp_temp2 *= coe2;
+        int t2 = fp_temp2.to_int();
+        temp_x2.data[i] = (t2 >> rshift2) + zero_y;
+    }
+    Tensor<int32> result = temp_x1.concat(temp_x2, dim);
+    result.clip(qmin, qmax);
+    Tensor<uint8> ret = result.astype_uint8();
+    return ret;
+}
+
+
 

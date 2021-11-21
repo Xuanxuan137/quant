@@ -37,7 +37,7 @@ namespace functional {
     Tensor<uint8> qconv2d(Tensor<uint8> *input,
                           int zero_x, int zero_w, int zero_b, int zero_y,
                           Fixed_point coe, int rshift, int qmin, int qmax,
-                          Tensor<uint8> *weight, Tensor<uint8> *bias= nullptr,
+                          Tensor<uint8> *weight, Tensor<int32> *bias= nullptr,
                           const std::vector<int>& stride=std::vector<int>{1,1},
                           const std::vector<int>& padding=std::vector<int>{0,0},
                           const std::vector<int>& dilation=std::vector<int>{1,1});
@@ -50,10 +50,13 @@ namespace functional {
     Tensor<uint8> qflatten(Tensor<uint8> *input);
     Tensor<uint8> qdense(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y,
                          Fixed_point coe, int rshift, int qmin, int qmax,
-                         Tensor<uint8> *weight, Tensor<uint8> *bias= nullptr);
+                         Tensor<uint8> *weight, Tensor<int32> *bias= nullptr);
     Tensor<uint8> qadd(Tensor<uint8> *input1, Tensor<uint8> *input2, int zero_x1, int zero_x2,
                        int zero_y, Fixed_point coe1, Fixed_point coe2, int rshift1, int rshift2,
                        int qmin, int qmax);
+    Tensor<uint8> qconcat(Tensor<uint8> *input1, Tensor<uint8> *input2, int zero_x1, int zero_x2,
+                          int zero_y, Fixed_point coe1, Fixed_point coe2, int rshift1, int rshift2,
+                          int qmin, int qmax, int dim=0);
 }
 
 

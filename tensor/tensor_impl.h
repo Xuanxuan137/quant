@@ -415,7 +415,7 @@ void Tensor<T>::print() {
                 printf("%d ", data[i]);
             }
             else if(std::is_same<T, uint8>::value) {
-                printf("%d ", data[i]);
+                printf("%4d", data[i]);
             }
         } printf("\n");
     }

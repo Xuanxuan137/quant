@@ -373,8 +373,8 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
      * 2. 使用processed_calib_set进行前向传播计算
      *      2.1 计算各层的r, q
      *      2.2 使用r, q计算并累加s, z
-     * 3. 单独计算有权重层的权重的max min参数。不需要使用图片进行前向传播
-     * 4. 求各层平均的s, z
+     * 3. 求各层平均的s, z
+     * 4. 单独计算有权重层的权重的max min参数。不需要使用图片进行前向传播
      * 5. 为需要的算子计算coe, rshift。并将需要的qmin, qmax, scale, zero, coe, rshift存入对应的算子中
      * 6. 对需要的层的weight和bias进行量化
      * 7. 返回量化计算图
@@ -421,7 +421,27 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
     }
     printf("\rCalibrate finished\n");
     this->free_intermediate_results();
-    // 3. 计算有权重层的权重的rmin rmax qmin qmax scale zero
+    // 3. 求各层平均的s, z
+    // 注意：部分层应直接使用其输入层的scale和zero
+    for(int i = 0; i<node_number; i++) {
+        if(node_list[i]->name == OPN_NN_RELU) {
+            scale[i] = scale[((Relu*)node_list[i]->op)->input_node];
+            zero[i] = zero[((Relu*)node_list[i]->op)->input_node];
+        }
+        else if(node_list[i]->name == OPN_NN_MAXPOOL2D) {
+            scale[i] = scale[((Maxpool2d*)node_list[i]->op)->input_node];
+            zero[i] = zero[((Maxpool2d*)node_list[i]->op)->input_node];
+        }
+        else if(node_list[i]->name == OPN_NN_FLATTEN) {
+            scale[i] = scale[((Flatten*)node_list[i]->op)->input_node];
+            zero[i] = zero[((Flatten*)node_list[i]->op)->input_node];
+        }
+        else {
+            scale[i] /= (float) img_number;
+            zero[i] /= img_number;
+        }
+    }
+    // 4. 计算有权重层的权重的rmin rmax qmin qmax scale zero
     /*
      * 为每一层都分配weight和bias的min max空间。虽然不是每一层都有weight和bias，但这样可以直接通过下标访问
      * 比较方便。用不到的就空着。计算方式为
@@ -478,26 +498,6 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
             zero_weight[i] = (int)std::round((float)qmax_weight[i] - rmax_weight[i]/scale_weight[i]);
             scale_bias[i] = scale_weight[i] * scale[((Dense*)node_list[i]->op)->input_node];
             zero_bias[i] = 0;
-        }
-    }
-    // 4. 求各层平均的s, z
-    // 注意：部分层应直接使用其输入层的scale和zero
-    for(int i = 0; i<node_number; i++) {
-        if(node_list[i]->name == OPN_NN_RELU) {
-            scale[i] = scale[((Relu*)node_list[i]->op)->input_node];
-            zero[i] = zero[((Relu*)node_list[i]->op)->input_node];
-        }
-        else if(node_list[i]->name == OPN_NN_MAXPOOL2D) {
-            scale[i] = scale[((Maxpool2d*)node_list[i]->op)->input_node];
-            zero[i] = zero[((Maxpool2d*)node_list[i]->op)->input_node];
-        }
-        else if(node_list[i]->name == OPN_NN_FLATTEN) {
-            scale[i] = scale[((Flatten*)node_list[i]->op)->input_node];
-            zero[i] = zero[((Flatten*)node_list[i]->op)->input_node];
-        }
-        else {
-            scale[i] /= (float) img_number;
-            zero[i] /= img_number;
         }
     }
     // 5. 为需要的算子计算coe, rshift。并将需要的qmin, qmax, scale, zero, coe, rshift存入对应的算子中
@@ -558,6 +558,8 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
             ((QConcat*)qgraph->node_list[i]->op)->zero_x1 = zero[((QConcat*)qgraph->node_list[i]->op)->input_node1];
             ((QConcat*)qgraph->node_list[i]->op)->zero_x2 = zero[((QConcat*)qgraph->node_list[i]->op)->input_node2];
             ((QConcat*)qgraph->node_list[i]->op)->zero_y = zero[i];
+            ((QConcat*)qgraph->node_list[i]->op)->qmin = qmin[i];
+            ((QConcat*)qgraph->node_list[i]->op)->qmax = qmax[i];
         }
     }
     // 6. 对需要的层的weight和bias进行量化

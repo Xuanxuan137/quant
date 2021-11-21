@@ -260,6 +260,9 @@ void test_quant_accuracy(const std::string &val_set_path, Graph *graph, int *inf
         total ++;
         printf("\rProcessing: %d. Correct: %d, accuracy: %f", total, correct, (float)correct/(float)total);
         fflush(stdout);
+        printf("\n");
+        ((Tensor<uint8>*)graph->intermediate_results[1])->print();
+        exit(0);
     }
     printf("\n");
     printf("Correct: %d, Total: %d, accuracy: %f\n", correct, total, (float)correct/(float)total);

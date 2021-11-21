@@ -129,7 +129,7 @@ class QConv2d {
 public:
     int input_node;
     Tensor<uint8> weight;
-    Tensor<uint8> bias;
+    Tensor<int32> bias;
     int output_channel;
     int input_channel;
     std::vector<int> kernel_size;
@@ -246,7 +246,7 @@ class QDense {
 public:
     int input_node;
     Tensor<uint8> weight;
-    Tensor<uint8> bias;
+    Tensor<int32> bias;
     int output_channel;
     int input_channel;
     std::vector<int> output_shape;
@@ -343,6 +343,8 @@ public:
     Fixed_point coe2;
     int rshift1;
     int rshift2;
+    int qmin;
+    int qmax;
     explicit QConcat(Concat * op);
     ~QConcat();
     void forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *output);

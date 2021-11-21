@@ -24,6 +24,7 @@ Node::Node(const std::string& read_graph_line,
     // 提取算子参数. 分割参数, 每个存为一个string, 并存在一个vector里
     std::vector<std::string> parameters = get_parameters(graph_line);
     // 根据算子名称创建对象
+    printf("%d\n", this->name);
     if(this->name == OPN_NN_CONV2D) {
         this->dtype = "float32";
         op = new Conv2d(parameters, output_shape_list);
@@ -80,6 +81,7 @@ Node::~Node() {
     /*
      * destructor: 释放op
      */
+    // 算子
     if(this->name == OPN_NN_CONV2D) {
         delete((Conv2d*)op);
     }
@@ -109,6 +111,34 @@ Node::~Node() {
     }
     else if(this->name == OPN_NN_BATCH_NORM2D) {
         delete((Batch_Norm2d*)op);
+    }
+    // 量化算子
+    else if(this->name == OPN_NN_QCONV2D) {
+        delete((QConv2d*)op);
+    }
+    else if(this->name == OPN_NN_QRELU) {
+        delete((QRelu*)op);
+    }
+    else if(this->name == OPN_QINPUT) {
+        delete((QInput*)op);
+    }
+    else if(this->name == OPN_NN_QMAXPOOL2D) {
+        delete((QMaxpool2d*)op);
+    }
+    else if(this->name == OPN_NN_QFLATTEN) {
+        delete((QFlatten*)op);
+    }
+    else if(this->name == OPN_NN_QDENSE) {
+        delete((QDense*)op);
+    }
+    else if(this->name == OPN_QOUTPUT) {
+        delete((QOutput*)op);
+    }
+    else if(this->name == OPN_QADD) {
+        delete((QAdd*)op);
+    }
+    else if(this->name == OPN_QCONCAT) {
+        delete((QConcat*)op);
     }
 }
 
@@ -227,6 +257,7 @@ void Node::print() {
      * 打印节点参数
      */
     printf("%%%d=", number);
+    // 算子
     if(this->name == OPN_NN_CONV2D) {
         ((Conv2d*)op)->print();
     }
@@ -256,6 +287,34 @@ void Node::print() {
     }
     else if(this->name == OPN_NN_BATCH_NORM2D) {
         ((Batch_Norm2d*)op)->print();
+    }
+    // 量化算子
+    else if(this->name == OPN_NN_QCONV2D) {
+        ((QConv2d*)op)->print();
+    }
+    else if(this->name == OPN_NN_QRELU) {
+        ((QRelu*)op)->print();
+    }
+    else if(this->name == OPN_QINPUT) {
+        ((QInput*)op)->print();
+    }
+    else if(this->name == OPN_NN_QMAXPOOL2D) {
+        ((QMaxpool2d*)op)->print();
+    }
+    else if(this->name == OPN_NN_QFLATTEN) {
+        ((QFlatten*)op)->print();
+    }
+    else if(this->name == OPN_NN_QDENSE) {
+        ((QDense*)op)->print();
+    }
+    else if(this->name == OPN_QOUTPUT) {
+        ((QOutput*)op)->print();
+    }
+    else if(this->name == OPN_QADD) {
+        ((QAdd*)op)->print();
+    }
+    else if(this->name == OPN_QCONCAT) {
+        ((QConcat*)op)->print();
     }
 }
 

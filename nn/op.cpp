@@ -115,7 +115,7 @@ Relu::~Relu() = default;
 
 
 Conv2d::Conv2d(const std::vector<std::string> &parameters,
-               const std::vector<std::vector<int>> &output_shape_list)
+               const std::vector<std::vector<int> > &output_shape_list)
 {
     /*
      * 分析参数为算子设置属性。可能的参数对包括：
@@ -706,7 +706,7 @@ QConv2d::QConv2d(Conv2d *op) {
      */
     input_node = op->input_node;
     weight = Tensor<uint8>{op->weight.size};
-    bias = Tensor<uint8>{op->bias.size};
+    bias = Tensor<int32>{op->bias.size};
     output_channel = op->output_channel;
     input_channel = op->input_channel;
     kernel_size = op->kernel_size;
@@ -767,7 +767,7 @@ void QInput::print() {
         str += temp;
     }
     str.pop_back();
-    str += "),dtype=\"float32\");";
+    str += "),dtype=\"uint8\");";
     std::cout << str<< std::endl;
 }
 
@@ -896,7 +896,7 @@ QDense::QDense(Dense *op) {
      */
     input_node = op->input_node;
     weight = Tensor<uint8>{op->weight.size};
-    bias = Tensor<uint8>{op->bias.size};
+    bias = Tensor<int32>{op->bias.size};
     output_channel = op->output_channel;
     input_channel = op->input_channel;
     output_shape = op->output_shape;
@@ -960,6 +960,7 @@ void QOutput::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
     /*
      * QOutput前向传播函数
      */
+    *output = (*input).deep_copy();
 }
 
 QOutput::~QOutput() = default;
@@ -1021,6 +1022,8 @@ QConcat::QConcat(Concat *op) {
     coe2 = 0;
     rshift1 = 0;
     rshift2 = 0;
+    qmin = 0;
+    qmax = 0;
 }
 
 void QConcat::print() {
@@ -1043,6 +1046,7 @@ void QConcat::forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8
     /*
      * QConcat前向传播函数
      */
+    *output = F::qconcat(input1, input2, zero_x1, zero_x2, zero_y, coe1, coe2, rshift1, rshift2, qmin, qmax, dim);
 }
 
 QConcat::~QConcat() = default;
