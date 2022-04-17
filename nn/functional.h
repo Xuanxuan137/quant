@@ -23,7 +23,7 @@ namespace functional {
     Tensor<float32> padding(Tensor<float32> *input, const std::vector<int>& padding_size);
     Tensor<float32> maxpool2d(Tensor<float32> *input, const std::vector<int>& kernel_size,
                               std::vector<int> stride=std::vector<int>{-1,-1},
-                              const std::vector<int>& padding=std::vector<int>{0,0},
+                              const std::vector<int>& padding_size=std::vector<int>{0,0},
                               const std::vector<int>& dilation=std::vector<int>{1,1});
     Tensor<float32> flatten(Tensor<float32> *input);
     Tensor<float32> dense(Tensor<float32> *input, Tensor<float32> *weight, Tensor<float32> *bias= nullptr);
@@ -32,6 +32,10 @@ namespace functional {
     Tensor<float32> batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean,
                                Tensor<float32> *running_var, Tensor<float32> *weight,
                                Tensor<float32> *bias, float eps, float momentum);
+    Tensor<float32> avgpool2d(Tensor<float32> *input, const std::vector<int>& kernel_size,
+                              std::vector<int> stride=std::vector<int>{-1,-1},
+                              const std::vector<int>& padding_size=std::vector<int>{0,0},
+                              const std::vector<int>& dilation=std::vector<int>{1,1});
 
     // uint8算子
     Tensor<uint8> qconv2d(Tensor<uint8> *input,
@@ -45,7 +49,7 @@ namespace functional {
     Tensor<uint8> qpadding(Tensor<uint8> *input, const std::vector<int>& padding_size, int zero);
     Tensor<uint8> qmaxpool2d(Tensor<uint8> *input, int zero, const std::vector<int>& kernel_size,
                              std::vector<int> stride=std::vector<int>{-1,-1},
-                             const std::vector<int>& padding=std::vector<int>{0,0},
+                             const std::vector<int>& padding_size=std::vector<int>{0,0},
                              const std::vector<int>& dilation=std::vector<int>{1,1});
     Tensor<uint8> qflatten(Tensor<uint8> *input);
     Tensor<uint8> qdense(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y,
@@ -57,6 +61,10 @@ namespace functional {
     Tensor<uint8> qconcat(Tensor<uint8> *input1, Tensor<uint8> *input2, int zero_x1, int zero_x2,
                           int zero_y, Fixed_point coe1, Fixed_point coe2, int rshift1, int rshift2,
                           int qmin, int qmax, int dim=0);
+    Tensor<uint8> qavgpool2d(Tensor<uint8> *input, int zero, const std::vector<int>& kernel_size,
+                             std::vector<int> stride=std::vector<int>{-1,-1},
+                             const std::vector<int>& padding_size=std::vector<int>{0,0},
+                             const std::vector<int>& dilation=std::vector<int>{1,1});
 }
 
 

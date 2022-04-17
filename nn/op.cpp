@@ -900,6 +900,124 @@ void Conv2d::save(const std::string &path, int number) {
     fclose(bf);
 }
 
+Avgpool2d::Avgpool2d(const std::vector<std::string> &parameters,
+                     const std::vector<std::vector<int>> &output_shape_list) {
+    /*
+     * 分析参数为算子设置属性，可能的参数对包括：
+     * input=%2
+     * kernel_size=(2,2)
+     * stride=None or stride=(2,2)
+     * padding=(0,0)
+     * dilation=(1,1)
+     */
+    // 遍历参数对
+    for(const std::string &s: parameters) {
+        std::vector<std::string> para_pair = split(s, "=");
+        if(para_pair[0] == "input") {
+            std::string temp = replace(para_pair[1], "%", "");
+            this->input_node = (int)strtol(temp.c_str(), nullptr, 10);
+        }
+        else if(para_pair[0] == "kernel_size") {
+            std::string temp = replace(para_pair[1], "(", "");
+            temp = replace(temp, ")", "");
+            std::vector<std::string> shape_str = split(temp, ",");
+            for(const std::string &shape: shape_str) {
+                kernel_size.push_back((int)strtol(shape.c_str(), nullptr, 10));
+            }
+        }
+        else if(para_pair[0] == "stride") {
+            if(para_pair[1] == "None") {
+                stride = kernel_size;
+            }
+            else {
+                std::string temp = replace(para_pair[1], "(", "");
+                temp = replace(temp, ")", "");
+                std::vector<std::string> shape_str = split(temp, ",");
+                for(const std::string & shape: shape_str) {
+                    stride.push_back((int)strtol(shape.c_str(), nullptr, 10));
+                }
+            }
+        }
+        else if(para_pair[0] == "padding") {
+            std::string temp = replace(para_pair[1], "(", "");
+            temp = replace(temp, ")", "");
+            std::vector<std::string> shape_str = split(temp, ",");
+            for(const std::string & shape: shape_str) {
+                padding.push_back((int)strtol(shape.c_str(), nullptr, 10));
+            }
+        }
+        else if(para_pair[0] == "dilation") {
+            std::string temp = replace(para_pair[1], "(", "");
+            temp = replace(temp, ")", "");
+            std::vector<std::string> shape_str = split(temp, ",");
+            for(const std::string &shape: shape_str) {
+                dilation.push_back((int)strtol(shape.c_str(), nullptr, 10));
+            }
+        }
+    }
+    // 设置output_shape
+    /*
+     * 0. NCHW中, N不变, C=output_channel，HW如下
+     * 1. 根据padding，对上下左右进行扩展
+     *      nh=h+ph*2, nw=w+ph*2
+     * 2. 根据kernel_size和dilation计算池化过程中，kernel覆盖的大小
+     *      nkh=dh*(kh-1)+1, nkw=dw*(kw-1)+1
+     * 3. 根据stride计算池化过程中，kernel截取图片的次数
+     *      nh=(nh-nkh)/sh+1, nw=(nw-nkw)/sw+1
+     */
+    std::vector<int> input_shape = output_shape_list[input_node];
+    this->output_shape.push_back(input_shape[0]);
+    this->output_shape.push_back(input_shape[1]);
+    int h = input_shape[2];
+    int w = input_shape[3];
+    int nh = h + padding[0] * 2;
+    int nw = w + padding[1] * 2;
+    int nkh = dilation[0] * (kernel_size[0]-1) + 1;
+    int nkw = dilation[1] * (kernel_size[1]-1) + 1;
+    nh = (nh-nkh)/stride[0] + 1;
+    nw = (nw-nkw)/stride[1] + 1;
+    this->output_shape.push_back(nh);
+    this->output_shape.push_back(nw);
+}
+
+void Avgpool2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
+    /*
+     * Avgpool2d的forward
+     */
+    *output = F::avgpool2d(input, kernel_size, stride, padding, dilation);
+}
+
+void Avgpool2d::print() {
+    /*
+     * 打印avgpool2d算子信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.avgpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
+                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
+            input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
+            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            output_shape[2], output_shape[3]);
+    printf("%s", temp);
+}
+
+void Avgpool2d::save(const std::string &path, int number) {
+    /*
+     * 存储avgpool2d算子信息
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=nn.avgpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
+                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
+            number, input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
+            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            output_shape[2], output_shape[3]);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
+}
+
+Avgpool2d::~Avgpool2d() = default;
+
 QConv2d::QConv2d(Conv2d *op) {
     /*
      * QConv2d构造函数。由于量化算子是由普通算子量化得到的，而非直接从计算图中读取到的，
@@ -968,8 +1086,6 @@ void QConv2d::save(const std::string &path, int number) {
     FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
     fprintf(file, "%s", temp);
     fclose(file);
-
-    bias.print();
 
     // 存储weight bias
     FILE * wf = fopen(save_weight_path, "wb");
@@ -1450,3 +1566,54 @@ void QConcat::save(const std::string &path, int number) {
 }
 
 QConcat::~QConcat() = default;
+
+QAvgpool2d::QAvgpool2d(Avgpool2d *op) {
+    /*
+     * 创建QAvgpool2d算子
+     */
+    input_node = op->input_node;
+    kernel_size = op->kernel_size;
+    stride = op->stride;
+    padding = op->padding;
+    dilation = op->dilation;
+    output_shape = op->output_shape;
+    zero = 0;
+}
+
+void QAvgpool2d::print() {
+    /*
+     * 打印avgpool2d算子信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.qavgpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
+                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
+            input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
+            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            output_shape[2], output_shape[3]);
+    printf("%s", temp);
+}
+
+void QAvgpool2d::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
+    /*
+     * QAvgpool2d前向传播韩函数
+     */
+    *output = F::qavgpool2d(input, zero, kernel_size, stride, padding, dilation);
+}
+
+void QAvgpool2d::save(const std::string &path, int number) {
+    /*
+     * 存储QAvgpool2d算子信息
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=nn.qavgpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
+                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d), zero=%d);\n",
+            number, input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
+            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            output_shape[2], output_shape[3], zero);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
+}
+
+QAvgpool2d::~QAvgpool2d() = default;

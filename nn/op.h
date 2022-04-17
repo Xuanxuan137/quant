@@ -19,6 +19,7 @@
  * Conv2d: nn.conv2d
  * Relu: nn.relu
  * Maxpool2d: nn.maxpool2d
+ * Avgpool2d: nn.avgpool2d
  * Input: input
  * Flatten: nn.flatten
  * Dense: nn.dense
@@ -30,6 +31,7 @@
  * QConv2d: nn.qconv2d
  * QRelu: nn.qrelu
  * QMaxpool2d: nn.qmaxpool2d
+ * QAvgpool2d: nn.qavgpool2d
  * QInput: qinput
  * QFlatten: qflatten
  * QDense: nn.qdense
@@ -386,6 +388,38 @@ public:
                         const std::vector<std::vector<int> > &output_shape_list);       // constructor
     ~Batch_Norm2d();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
+    void save(const std::string &path, int number);
+};
+
+class Avgpool2d{
+public:
+    int input_node;                     // 输入节点编号
+    std::vector<int> kernel_size;
+    std::vector<int> stride;
+    std::vector<int> padding;
+    std::vector<int> dilation;
+    std::vector<int> output_shape;
+    Avgpool2d(const std::vector<std::string> &parameters,
+              const std::vector<std::vector<int> > &output_shape_list);    // constructor
+    ~Avgpool2d();
+    void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
+    void save(const std::string &path, int number);
+};
+
+class QAvgpool2d {
+public:
+    int input_node;
+    std::vector<int> kernel_size;
+    std::vector<int> stride;
+    std::vector<int> padding;
+    std::vector<int> dilation;
+    std::vector<int> output_shape;
+    int zero;
+    explicit QAvgpool2d(Avgpool2d * op);
+    ~QAvgpool2d();
+    void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
     void save(const std::string &path, int number);
 };

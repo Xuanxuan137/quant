@@ -18,11 +18,7 @@ System_info * sys_info;
 
 int main(int argc, char *argv[]) {
     /////////////// test
-    Tensor<int> a{std::vector<int>{2,3,4}};
-    Tensor<int> b{std::vector<int>{2,2,4}};
-    Tensor<int> c = a + b;
-    c.print();
-    exit(0);
+
     ///////////////////////////
 
     sys_info = new System_info();       // 读取一些系统信息

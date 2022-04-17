@@ -460,6 +460,88 @@ functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, 
     return y;
 }
 
+Tensor<float32> functional::avgpool2d(Tensor<float32> *input, const std::vector<int> &kernel_size,
+                                      std::vector<int> stride, const std::vector<int> &padding_size,
+                                      const std::vector<int> &dilation) {
+    /*
+     * avgpool2d
+     */
+    // 校验参数
+    if(input->size.size() != 4) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of input must be 4\n", __LINE__);
+        exit(-1);
+    }
+    if(kernel_size.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of kernel_size must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(stride.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of stride must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(padding_size.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of padding_size must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(dilation.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of dilation must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(stride[0] == -1 && stride[1] == -1) {
+        stride[0] = kernel_size[0];
+        stride[1] = kernel_size[1];
+    }
+    // padding
+    Tensor<float32> padded;
+    if(padding_size[0] == 0 && padding_size[1] == 0) {
+        padded = *input;
+    }
+    else {
+        padded = padding(input, padding_size);
+    }
+    // 计算pool后尺寸
+    int batch_size = input->size[0];
+    int channel = input->size[1];
+    int height = (padded.size[2] - (dilation[0]*(kernel_size[0]-1)+1)) / stride[0] + 1;
+    int width = (padded.size[3] - (dilation[1]*(kernel_size[1]-1)+1)) / stride[1] + 1;
+    // 创建返回对象
+    Tensor<float32> result{std::vector<int>{batch_size, channel, height, width}};
+    // pool
+    for(int n = 0; n<batch_size; n++) {
+        for(int c = 0; c<channel; c++) {
+            for(int h = 0; h<height; h++) {
+                for(int w = 0; w<width; w++) {
+                    // 从padded的每块中找到最大值
+                    // 1. 计算起始位置
+                    int start_h = h * stride[0];    // 相对于整张图片的偏移
+                    int start_w = w * stride[1];
+                    int start_kh = 0;               // 相对于kernel的偏移
+                    int start_kw = 0;
+                    // item = padded[n][c][start_h+start_kh][start_w+start_kw]
+                    float32 sum = 0;
+                    for(int kh = 0; kh < kernel_size[0]; kh++, start_kh += dilation[0]) {
+                        start_kw = 0;
+                        for(int kw = 0; kw < kernel_size[1]; kw++, start_kw += dilation[1]) {
+                            sum += padded.data[
+                                        n * channel * padded.size[2] * padded.size[3] +
+                                        c * padded.size[2] * padded.size[3] +
+                                        (start_h + start_kh) * padded.size[3] +
+                                        (start_w + start_kw)];
+                        }
+                    }
+                    // result[n][c][h][w] = sum / (kernel_size[0] * kernel_size[1])
+                    result.data[
+                            n * channel * height * width +
+                            c * height * width +
+                            h * width +
+                            w] = sum / (float32)(kernel_size[0] * kernel_size[1]);
+                }
+            }
+        }
+    }
+    return result;
+}
+
 Tensor<uint8>
 functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y,
                     Fixed_point coe, int rshift, int qmin, int qmax,
@@ -897,5 +979,84 @@ Tensor<uint8> functional::qconcat(Tensor<uint8> *input1, Tensor<uint8> *input2, 
     return ret;
 }
 
-
-
+Tensor<uint8> functional::qavgpool2d(Tensor<uint8> *input, int zero, const std::vector<int> &kernel_size,
+                                     std::vector<int> stride, const std::vector<int> &padding_size,
+                                     const std::vector<int> &dilation) {
+    /*
+     * qavgpool2d
+     */
+    // 校验参数
+    if(input->size.size() != 4) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of input must be 4\n", __LINE__);
+        exit(-1);
+    }
+    if(kernel_size.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of kernel_size must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(stride.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of stride must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(padding_size.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of padding_size must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(dilation.size() != 2) {
+        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of dilation must be 2\n", __LINE__);
+        exit(-1);
+    }
+    if(stride[0] == -1 && stride[1] == -1) {
+        stride[0] = kernel_size[0];
+        stride[1] = kernel_size[1];
+    }
+    // padding
+    Tensor<uint8> padded;
+    if(padding_size[0] == 0 && padding_size[1] == 0) {
+        padded = *input;
+    }
+    else {
+        padded = qpadding(input, padding_size, zero);
+    }
+    // 计算pool后尺寸
+    int batch_size = input->size[0];
+    int channel = input->size[1];
+    int height = (padded.size[2] - (dilation[0]*(kernel_size[0]-1)+1)) / stride[0] + 1;
+    int width = (padded.size[3] - (dilation[1]*(kernel_size[1]-1)+1)) / stride[1] + 1;
+    // 创建返回对象
+    Tensor<uint8> result{std::vector<int>{batch_size, channel, height, width}};
+    // pool
+    for(int n = 0; n<batch_size; n++) {
+        for(int c = 0; c<channel; c++) {
+            for(int h = 0; h<height; h++) {
+                for(int w = 0; w<width; w++) {
+                    // 从padded的每块中找到最大值
+                    // 1. 计算起始位置
+                    int start_h = h * stride[0];    // 相对于整张图片的偏移
+                    int start_w = w * stride[1];
+                    int start_kh = 0;               // 相对于kernel的偏移
+                    int start_kw = 0;
+                    // item = padded[n][c][start_h+start_kh][start_w+start_kw]
+                    int sum = 0;
+                    for(int kh = 0; kh < kernel_size[0]; kh++, start_kh += dilation[0]) {
+                        start_kw = 0;
+                        for(int kw = 0; kw < kernel_size[1]; kw++, start_kw += dilation[1]) {
+                            sum += padded.data[
+                                        n * channel * padded.size[2] * padded.size[3] +
+                                        c * padded.size[2] * padded.size[3] +
+                                        (start_h + start_kh) * padded.size[3] +
+                                        (start_w + start_kw)];
+                        }
+                    }
+                    // result[n][c][h][w] = sum / (kernel_size[0] * kernel_size[1])
+                    result.data[
+                            n * channel * height * width +
+                            c * height * width +
+                            h * width +
+                            w] = (uint8)(sum / (kernel_size[0] * kernel_size[1]));
+                }
+            }
+        }
+    }
+    return result;
+}
