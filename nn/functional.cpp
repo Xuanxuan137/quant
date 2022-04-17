@@ -461,8 +461,7 @@ functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, 
 }
 
 Tensor<float32> functional::avgpool2d(Tensor<float32> *input, const std::vector<int> &kernel_size,
-                                      std::vector<int> stride, const std::vector<int> &padding_size,
-                                      const std::vector<int> &dilation) {
+                                      std::vector<int> stride, const std::vector<int> &padding_size) {
     /*
      * avgpool2d
      */
@@ -483,10 +482,6 @@ Tensor<float32> functional::avgpool2d(Tensor<float32> *input, const std::vector<
         fprintf(stderr, "File: functional.cpp, line: %d. Dimension of padding_size must be 2\n", __LINE__);
         exit(-1);
     }
-    if(dilation.size() != 2) {
-        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of dilation must be 2\n", __LINE__);
-        exit(-1);
-    }
     if(stride[0] == -1 && stride[1] == -1) {
         stride[0] = kernel_size[0];
         stride[1] = kernel_size[1];
@@ -502,8 +497,8 @@ Tensor<float32> functional::avgpool2d(Tensor<float32> *input, const std::vector<
     // 计算pool后尺寸
     int batch_size = input->size[0];
     int channel = input->size[1];
-    int height = (padded.size[2] - (dilation[0]*(kernel_size[0]-1)+1)) / stride[0] + 1;
-    int width = (padded.size[3] - (dilation[1]*(kernel_size[1]-1)+1)) / stride[1] + 1;
+    int height = (padded.size[2] - kernel_size[0]) / stride[0] + 1;
+    int width = (padded.size[3] - kernel_size[1]) / stride[1] + 1;
     // 创建返回对象
     Tensor<float32> result{std::vector<int>{batch_size, channel, height, width}};
     // pool
@@ -519,9 +514,9 @@ Tensor<float32> functional::avgpool2d(Tensor<float32> *input, const std::vector<
                     int start_kw = 0;
                     // item = padded[n][c][start_h+start_kh][start_w+start_kw]
                     float32 sum = 0;
-                    for(int kh = 0; kh < kernel_size[0]; kh++, start_kh += dilation[0]) {
+                    for(int kh = 0; kh < kernel_size[0]; kh++, start_kh ++) {
                         start_kw = 0;
-                        for(int kw = 0; kw < kernel_size[1]; kw++, start_kw += dilation[1]) {
+                        for(int kw = 0; kw < kernel_size[1]; kw++, start_kw ++) {
                             sum += padded.data[
                                         n * channel * padded.size[2] * padded.size[3] +
                                         c * padded.size[2] * padded.size[3] +
@@ -980,8 +975,7 @@ Tensor<uint8> functional::qconcat(Tensor<uint8> *input1, Tensor<uint8> *input2, 
 }
 
 Tensor<uint8> functional::qavgpool2d(Tensor<uint8> *input, int zero, const std::vector<int> &kernel_size,
-                                     std::vector<int> stride, const std::vector<int> &padding_size,
-                                     const std::vector<int> &dilation) {
+                                     std::vector<int> stride, const std::vector<int> &padding_size) {
     /*
      * qavgpool2d
      */
@@ -1002,10 +996,6 @@ Tensor<uint8> functional::qavgpool2d(Tensor<uint8> *input, int zero, const std::
         fprintf(stderr, "File: functional.cpp, line: %d. Dimension of padding_size must be 2\n", __LINE__);
         exit(-1);
     }
-    if(dilation.size() != 2) {
-        fprintf(stderr, "File: functional.cpp, line: %d. Dimension of dilation must be 2\n", __LINE__);
-        exit(-1);
-    }
     if(stride[0] == -1 && stride[1] == -1) {
         stride[0] = kernel_size[0];
         stride[1] = kernel_size[1];
@@ -1021,8 +1011,8 @@ Tensor<uint8> functional::qavgpool2d(Tensor<uint8> *input, int zero, const std::
     // 计算pool后尺寸
     int batch_size = input->size[0];
     int channel = input->size[1];
-    int height = (padded.size[2] - (dilation[0]*(kernel_size[0]-1)+1)) / stride[0] + 1;
-    int width = (padded.size[3] - (dilation[1]*(kernel_size[1]-1)+1)) / stride[1] + 1;
+    int height = (padded.size[2] - kernel_size[0]) / stride[0] + 1;
+    int width = (padded.size[3] - kernel_size[1]) / stride[1] + 1;
     // 创建返回对象
     Tensor<uint8> result{std::vector<int>{batch_size, channel, height, width}};
     // pool
@@ -1038,9 +1028,9 @@ Tensor<uint8> functional::qavgpool2d(Tensor<uint8> *input, int zero, const std::
                     int start_kw = 0;
                     // item = padded[n][c][start_h+start_kh][start_w+start_kw]
                     int sum = 0;
-                    for(int kh = 0; kh < kernel_size[0]; kh++, start_kh += dilation[0]) {
+                    for(int kh = 0; kh < kernel_size[0]; kh++, start_kh ++) {
                         start_kw = 0;
-                        for(int kw = 0; kw < kernel_size[1]; kw++, start_kw += dilation[1]) {
+                        for(int kw = 0; kw < kernel_size[1]; kw++, start_kw ++) {
                             sum += padded.data[
                                         n * channel * padded.size[2] * padded.size[3] +
                                         c * padded.size[2] * padded.size[3] +

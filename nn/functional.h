@@ -34,8 +34,7 @@ namespace functional {
                                Tensor<float32> *bias, float eps, float momentum);
     Tensor<float32> avgpool2d(Tensor<float32> *input, const std::vector<int>& kernel_size,
                               std::vector<int> stride=std::vector<int>{-1,-1},
-                              const std::vector<int>& padding_size=std::vector<int>{0,0},
-                              const std::vector<int>& dilation=std::vector<int>{1,1});
+                              const std::vector<int>& padding_size=std::vector<int>{0,0});
 
     // uint8算子
     Tensor<uint8> qconv2d(Tensor<uint8> *input,
@@ -63,8 +62,7 @@ namespace functional {
                           int qmin, int qmax, int dim=0);
     Tensor<uint8> qavgpool2d(Tensor<uint8> *input, int zero, const std::vector<int>& kernel_size,
                              std::vector<int> stride=std::vector<int>{-1,-1},
-                             const std::vector<int>& padding_size=std::vector<int>{0,0},
-                             const std::vector<int>& dilation=std::vector<int>{1,1});
+                             const std::vector<int>& padding_size=std::vector<int>{0,0});
 }
 
 

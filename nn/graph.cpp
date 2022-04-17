@@ -187,6 +187,9 @@ void Graph::fuse_op(Tensor<float32> *calc_running_img)
         else if(i->name == OPN_NN_MAXPOOL2D) {
             input_node1 = new_graph.node_list[((Maxpool2d*)i->op)->input_node];
         }
+        else if(i->name == OPN_NN_AVGPOOL2D) {
+            input_node1 = new_graph.node_list[((Avgpool2d*)i->op)->input_node];
+        }
         else if(i->name == OPN_NN_FLATTEN) {
             input_node1 = new_graph.node_list[((Flatten*)i->op)->input_node];
         }
@@ -240,6 +243,9 @@ void Graph::fuse_op(Tensor<float32> *calc_running_img)
         }
         else if(i->name == OPN_NN_MAXPOOL2D) {
             ((Maxpool2d*)i->op)->input_node = input_node1->number - count1;
+        }
+        else if(i->name == OPN_NN_AVGPOOL2D) {
+            ((Avgpool2d*)i->op)->input_node = input_node1->number - count1;
         }
         else if(i->name == OPN_NN_FLATTEN) {
             ((Flatten*)i->op)->input_node = input_node1->number - count1;
@@ -432,6 +438,10 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
             scale[i] = scale[((Maxpool2d*)node_list[i]->op)->input_node];
             zero[i] = zero[((Maxpool2d*)node_list[i]->op)->input_node];
         }
+        else if(node_list[i]->name == OPN_NN_AVGPOOL2D) {
+            scale[i] = scale[((Avgpool2d*)node_list[i]->op)->input_node];
+            zero[i] = zero[((Avgpool2d*)node_list[i]->op)->input_node];
+        }
         else if(node_list[i]->name == OPN_NN_FLATTEN) {
             scale[i] = scale[((Flatten*)node_list[i]->op)->input_node];
             zero[i] = zero[((Flatten*)node_list[i]->op)->input_node];
@@ -520,6 +530,9 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
         }
         else if(node_list[i]->name == OPN_NN_MAXPOOL2D) {
             ((QMaxpool2d*)qgraph->node_list[i]->op)->zero = zero[i];
+        }
+        else if(node_list[i]->name == OPN_NN_AVGPOOL2D) {
+            ((QAvgpool2d*)qgraph->node_list[i]->op)->zero = zero[i];
         }
         else if(node_list[i]->name == OPN_NN_DENSE) {
             calc_m0_n_input_weight(((QDense*)qgraph->node_list[i]->op)->coe,

@@ -41,7 +41,7 @@
  *
  * 如果要添加新的算子，你需要修改：
  * 0. 算子名称宏定义列表
- * 1. Node::Node() 
+ * 1. Node::Node()
  * 2. Node::~Node()
  * 3. Node::forward()
  * 4. node.cpp  get_name()
@@ -62,6 +62,7 @@
 #define OPN_CONCAT                  8
 #define OPN_OUTPUT                  9
 #define OPN_NN_BATCH_NORM2D         10
+#define OPN_NN_AVGPOOL2D            11
 
 #define OPN_QINPUT                  1001
 #define OPN_NN_QCONV2D              1002
@@ -72,6 +73,7 @@
 #define OPN_QADD                    1007
 #define OPN_QCONCAT                 1008
 #define OPN_QOUTPUT                 1009
+#define OPN_NN_QAVGPOOL2D           1010
 
 #define GRAPH_FILE_NAME             "graph.txt"
 
@@ -398,7 +400,6 @@ public:
     std::vector<int> kernel_size;
     std::vector<int> stride;
     std::vector<int> padding;
-    std::vector<int> dilation;
     std::vector<int> output_shape;
     Avgpool2d(const std::vector<std::string> &parameters,
               const std::vector<std::vector<int> > &output_shape_list);    // constructor
@@ -414,7 +415,6 @@ public:
     std::vector<int> kernel_size;
     std::vector<int> stride;
     std::vector<int> padding;
-    std::vector<int> dilation;
     std::vector<int> output_shape;
     int zero;
     explicit QAvgpool2d(Avgpool2d * op);

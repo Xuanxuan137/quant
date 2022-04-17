@@ -946,14 +946,6 @@ Avgpool2d::Avgpool2d(const std::vector<std::string> &parameters,
                 padding.push_back((int)strtol(shape.c_str(), nullptr, 10));
             }
         }
-        else if(para_pair[0] == "dilation") {
-            std::string temp = replace(para_pair[1], "(", "");
-            temp = replace(temp, ")", "");
-            std::vector<std::string> shape_str = split(temp, ",");
-            for(const std::string &shape: shape_str) {
-                dilation.push_back((int)strtol(shape.c_str(), nullptr, 10));
-            }
-        }
     }
     // 设置output_shape
     /*
@@ -972,8 +964,8 @@ Avgpool2d::Avgpool2d(const std::vector<std::string> &parameters,
     int w = input_shape[3];
     int nh = h + padding[0] * 2;
     int nw = w + padding[1] * 2;
-    int nkh = dilation[0] * (kernel_size[0]-1) + 1;
-    int nkw = dilation[1] * (kernel_size[1]-1) + 1;
+    int nkh = kernel_size[0];
+    int nkw = kernel_size[1];
     nh = (nh-nkh)/stride[0] + 1;
     nw = (nw-nkw)/stride[1] + 1;
     this->output_shape.push_back(nh);
@@ -984,7 +976,7 @@ void Avgpool2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
     /*
      * Avgpool2d的forward
      */
-    *output = F::avgpool2d(input, kernel_size, stride, padding, dilation);
+    *output = F::avgpool2d(input, kernel_size, stride, padding);
 }
 
 void Avgpool2d::print() {
@@ -993,9 +985,9 @@ void Avgpool2d::print() {
      */
     char temp[500];
     sprintf(temp, "nn.avgpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
-                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
+                  "padding=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
             input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
-            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            padding[1], output_shape[0], output_shape[1],
             output_shape[2], output_shape[3]);
     printf("%s", temp);
 }
@@ -1006,9 +998,9 @@ void Avgpool2d::save(const std::string &path, int number) {
      */
     char temp[500];
     sprintf(temp, "%%%d=nn.avgpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
-                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
+                  "padding=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
             number, input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
-            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            padding[1], output_shape[0], output_shape[1],
             output_shape[2], output_shape[3]);
 
     FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
@@ -1575,7 +1567,6 @@ QAvgpool2d::QAvgpool2d(Avgpool2d *op) {
     kernel_size = op->kernel_size;
     stride = op->stride;
     padding = op->padding;
-    dilation = op->dilation;
     output_shape = op->output_shape;
     zero = 0;
 }
@@ -1586,9 +1577,9 @@ void QAvgpool2d::print() {
      */
     char temp[500];
     sprintf(temp, "nn.qavgpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
-                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
+                  "padding=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
             input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
-            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            padding[1], output_shape[0], output_shape[1],
             output_shape[2], output_shape[3]);
     printf("%s", temp);
 }
@@ -1597,7 +1588,7 @@ void QAvgpool2d::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
     /*
      * QAvgpool2d前向传播韩函数
      */
-    *output = F::qavgpool2d(input, zero, kernel_size, stride, padding, dilation);
+    *output = F::qavgpool2d(input, zero, kernel_size, stride, padding);
 }
 
 void QAvgpool2d::save(const std::string &path, int number) {
@@ -1606,9 +1597,9 @@ void QAvgpool2d::save(const std::string &path, int number) {
      */
     char temp[500];
     sprintf(temp, "%%%d=nn.qavgpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
-                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d), zero=%d);\n",
+                  "padding=(%d,%d), output_shape=(%d,%d,%d,%d), zero=%d);\n",
             number, input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
-            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            padding[1], output_shape[0], output_shape[1],
             output_shape[2], output_shape[3], zero);
 
     FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");

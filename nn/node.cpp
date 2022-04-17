@@ -16,7 +16,6 @@ Node::Node(const std::string& read_graph_line,
      * 5. 根据算子的output_shape属性，设置node的output_shape属性
      */
     std::string graph_line = replace(read_graph_line, " ", "");
-
     // 提取编号
     this->number = get_number(graph_line);
     // 提取算子名称
@@ -38,6 +37,11 @@ Node::Node(const std::string& read_graph_line,
         this->dtype = "float32";
         op = new Maxpool2d(parameters, output_shape_list);
         this->output_shape = ((Maxpool2d*)op)->output_shape;
+    }
+    else if(this->name == OPN_NN_AVGPOOL2D) {
+        this->dtype = "float32";
+        op = new Avgpool2d(parameters, output_shape_list);
+        this->output_shape = ((Avgpool2d*)op)->output_shape;
     }
     else if(this->name == OPN_INPUT) {
         this->dtype = "float32";
@@ -92,6 +96,9 @@ Node::~Node() {
     }
     else if(this->name == OPN_NN_MAXPOOL2D) {
         delete((Maxpool2d*)op);
+    }
+    else if(this->name == OPN_NN_AVGPOOL2D) {
+        delete((Avgpool2d*)op);
     }
     else if(this->name == OPN_NN_FLATTEN) {
         delete((Flatten*)op);
@@ -169,6 +176,11 @@ void Node::forward(const std::vector<void *> &intermediate_results, void *input)
                 (Tensor<float32>*)intermediate_results[((Maxpool2d*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
+    else if(this->name == OPN_NN_AVGPOOL2D) {
+        ((Avgpool2d*)op)->forward(
+                (Tensor<float32>*)intermediate_results[((Avgpool2d*)op)->input_node],
+                (Tensor<float32>*)intermediate_results[this->number]);
+    }
     else if(this->name == OPN_NN_FLATTEN) {
         ((Flatten*)op)->forward(
                 (Tensor<float32>*)intermediate_results[((Flatten*)op)->input_node],
@@ -215,6 +227,11 @@ void Node::forward(const std::vector<void *> &intermediate_results, void *input)
     else if(this->name == OPN_NN_QMAXPOOL2D) {
         ((QMaxpool2d*)op)->forward(
                 (Tensor<uint8>*)intermediate_results[((QMaxpool2d*)op)->input_node],
+                (Tensor<uint8>*)intermediate_results[this->number]);
+    }
+    else if(this->name == OPN_NN_QAVGPOOL2D) {
+        ((QAvgpool2d*)op)->forward(
+                (Tensor<uint8>*)intermediate_results[((QAvgpool2d*)op)->input_node],
                 (Tensor<uint8>*)intermediate_results[this->number]);
     }
     else if(this->name == OPN_NN_QRELU) {
@@ -269,6 +286,9 @@ void Node::print() {
     else if(this->name == OPN_NN_MAXPOOL2D) {
         ((Maxpool2d*)op)->print();
     }
+    else if(this->name == OPN_NN_AVGPOOL2D) {
+        ((Avgpool2d*)op)->print();
+    }
     else if(this->name == OPN_NN_FLATTEN) {
         ((Flatten*)op)->print();
     }
@@ -299,6 +319,9 @@ void Node::print() {
     }
     else if(this->name == OPN_NN_QMAXPOOL2D) {
         ((QMaxpool2d*)op)->print();
+    }
+    else if(this->name == OPN_NN_QAVGPOOL2D) {
+        ((QAvgpool2d*)op)->print();
     }
     else if(this->name == OPN_NN_QFLATTEN) {
         ((QFlatten*)op)->print();
@@ -346,6 +369,10 @@ Node *Node::to_qnode() {
     else if(this->name == OPN_NN_MAXPOOL2D) {
         qnode->name = OPN_NN_QMAXPOOL2D;
         qnode->op = new QMaxpool2d((Maxpool2d*)op);
+    }
+    else if(this->name == OPN_NN_AVGPOOL2D) {
+        qnode->name = OPN_NN_QAVGPOOL2D;
+        qnode->op = new QAvgpool2d((Avgpool2d*)op);
     }
     else if(this->name == OPN_NN_FLATTEN) {
         qnode->name = OPN_NN_QFLATTEN;
@@ -475,6 +502,9 @@ int get_name(const std::string &graph_line) {
     }
     else if(name == "nn.maxpool2d") {
         return OPN_NN_MAXPOOL2D;
+    }
+    else if(name == "nn.avgpool2d") {
+        return OPN_NN_AVGPOOL2D;
     }
     else if(name == "nn.relu") {
         return OPN_NN_RELU;
