@@ -71,6 +71,8 @@
 #define OPN_QCONCAT                 1008
 #define OPN_QOUTPUT                 1009
 
+#define GRAPH_FILE_NAME             "graph.txt"
+
 
 
 #include <iostream>
@@ -93,6 +95,7 @@ public:
     ~Input();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class QInput {
@@ -102,6 +105,7 @@ public:
     ~QInput();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class Conv2d {
@@ -123,6 +127,7 @@ public:
     ~Conv2d();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class QConv2d {
@@ -149,6 +154,7 @@ public:
     ~QConv2d();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class Maxpool2d {
@@ -164,6 +170,7 @@ public:
     ~Maxpool2d();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class QMaxpool2d {
@@ -179,6 +186,7 @@ public:
     ~QMaxpool2d();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class Relu {
@@ -190,6 +198,7 @@ public:
     ~Relu();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class QRelu {
@@ -202,6 +211,7 @@ public:
     ~QRelu();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class Flatten {
@@ -213,6 +223,7 @@ public:
     ~Flatten();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class QFlatten {
@@ -223,6 +234,7 @@ public:
     ~QFlatten();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class Dense {
@@ -240,6 +252,7 @@ public:
     ~Dense();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class QDense {
@@ -262,6 +275,7 @@ public:
     ~QDense();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class Output {
@@ -273,6 +287,7 @@ public:
     ~Output();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class QOutput {
@@ -283,6 +298,7 @@ public:
     ~QOutput();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class Add {
@@ -295,6 +311,7 @@ public:
     ~Add();
     void forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class QAdd {
@@ -315,6 +332,7 @@ public:
     ~QAdd();
     void forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class Concat {
@@ -328,6 +346,7 @@ public:
     ~Concat();
     void forward(Tensor<float32> *input1, Tensor<float32> *input2, Tensor<float32> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class QConcat {
@@ -349,6 +368,7 @@ public:
     ~QConcat();
     void forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 class Batch_Norm2d {
@@ -367,6 +387,7 @@ public:
     ~Batch_Norm2d();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();
+    void save(const std::string &path, int number);
 };
 
 #endif //QUANT_OP_H

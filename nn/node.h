@@ -48,6 +48,8 @@ public:
     Node* to_qnode();               // 创建量化节点
 
     void print();                   // 打印节点参数
+
+    void save(const std::string &path);     // 存储计算图中的节点
 };
 
 int get_number(const std::string &graph_line);

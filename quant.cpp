@@ -18,6 +18,11 @@ System_info * sys_info;
 
 int main(int argc, char *argv[]) {
     /////////////// test
+    Tensor<int> a{std::vector<int>{2,3,4}};
+    Tensor<int> b{std::vector<int>{2,2,4}};
+    Tensor<int> c = a + b;
+    c.print();
+    exit(0);
     ///////////////////////////
 
     sys_info = new System_info();       // 读取一些系统信息
@@ -27,6 +32,7 @@ int main(int argc, char *argv[]) {
     int calib_size[4];                                          // calibration尺寸
     Tensor<uint8>* calib_set = nullptr;                        // calibration set
     Tensor<uint8>* calc_running_img = nullptr;                 // 计算running数据集
+    std::string output_dir;                                     // 输出路径
 
     for(int i = 1; i<argc; i++) {
         std::string option(argv[i]);    // 从argv读取选项
@@ -72,6 +78,9 @@ int main(int argc, char *argv[]) {
         else if(option == "--calc_running_img_list") {  // 读取计算running数据集
             calc_running_img = get_calc_running_img(value, calib_size);
         }
+        else if(option == "--output_dir") {     // 读取输出路径
+            output_dir = value;
+        }
         else {
             std::cerr << "option " << option << " not allowed\n";
         }
@@ -91,14 +100,15 @@ int main(int argc, char *argv[]) {
 
     // fuse operator
     graph->fuse_op(processed_bn_set);   // 如果计算图中不包含bn，会自动跳过此步骤
-
-    // TODO: quantization
-    Graph * q_graph = graph->quantization(calib_set, processed_calib_set);
-
     int infer_shape[4] = {1,1,28,28};
-    test_quant_accuracy("../val_set.txt", q_graph, infer_shape);
-    // TODO: save quantized model
+    test_accuracy("../val_set.txt", graph, infer_shape);
 
+    // quantization
+    Graph * q_graph = graph->quantization(calib_set, processed_calib_set);
+    test_quant_accuracy("../val_set.txt", q_graph, infer_shape);
+
+    // save quantized model
+    q_graph->save(output_dir);
 
 
     delete(graph);
@@ -106,6 +116,7 @@ int main(int argc, char *argv[]) {
     delete(calc_running_img);
     delete(processed_calib_set);
     delete(processed_bn_set);
+    delete(q_graph);
 
     return 0;
 }
@@ -192,6 +203,36 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_sha
     graph->free_intermediate_results();
 }
 
+
+uint8 image[784] = { 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,  84, 185, 159, 151,  60,  36,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0, 222, 254, 254, 254, 254, 241, 198, 198, 198, 198, 198, 198, 198, 198, 170,  52,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,  67, 114,  72, 114, 163, 227, 254, 225, 254, 254, 254, 250, 229, 254, 254, 140,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  17,  66,  14,  67,  67,  67,  59,  21, 236, 254, 106,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  83, 253, 209,  18,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  22, 233, 255,  83,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 129, 254, 238,  44,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  59, 249, 254,  62,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 133, 254, 187,   5,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   9, 205, 248,  58,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 126, 254, 182,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  75, 251, 240,  57,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  19, 221, 254, 166,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   3, 203, 254, 219,  35,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  38, 254, 254,  77,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  31, 224, 254, 115,   1,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 133, 254, 254,  52,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  61, 242, 254, 254,  52,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 121, 254, 254, 219,  40,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 121, 254, 207,  18,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
+
 void test_quant_accuracy(const std::string &val_set_path, Graph *graph, int *infer_shape) {
 /*
      * 测试计算图准确率
@@ -252,17 +293,15 @@ void test_quant_accuracy(const std::string &val_set_path, Graph *graph, int *inf
         }
         // 调用graph->forward
         // 不需要释放result_vector中的结果, 应为它们是指向graph中intermediate_results里空间的指针，在forward返回时不会分配新空间
+//        memcpy(((Tensor<uint8>*)processed_input)->data, image, sizeof(uint8)*784);
         std::vector<void*> result_vector = graph->forward(processed_input);
-        int result = ((Tensor<float32>*)(result_vector[0]))->argmax();
+        int result = ((Tensor<uint8>*)(result_vector[0]))->argmax();
         if(result == answer) {
             correct ++;
         }
         total ++;
         printf("\rProcessing: %d. Correct: %d, accuracy: %f", total, correct, (float)correct/(float)total);
         fflush(stdout);
-        printf("\n");
-        ((Tensor<uint8>*)graph->intermediate_results[1])->print();
-        exit(0);
     }
     printf("\n");
     printf("Correct: %d, Total: %d, accuracy: %f\n", correct, total, (float)correct/(float)total);

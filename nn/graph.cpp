@@ -588,5 +588,26 @@ Graph::Graph() {
     // donothing
 }
 
+void Graph::save(std::string path) {
+    /*
+     * 保存计算图
+     */
+    // 检查输出文件夹是否存在，不存在就创建一个
+    if(access(path.c_str(), 0) < 0) {
+        std::string cmd = "mkdir " + path;
+        system(cmd.c_str());
+    }
+    // 创建或清空计算图文件
+    if(path[path.size()-1] != '/') {
+        path += "/";
+    }
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "w");
+    fclose(file);
+    // 存储计算图
+    for(Node * node: node_list) {
+        node->save(path);
+    }
+}
+
 
 

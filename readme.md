@@ -7,7 +7,7 @@
 --calc_running_img_list     现场计算running mean和running var所需的图片列表。(仅--calc_running为true时需要此参数)
                             将要用到的所有图片的路径存在一个文本文件中，每行一个图片路径，
                             并将该文本文件路径传递给此参数。默认将所有图片用于计算running mean和running var
-
+--output_dir        量化后计算图保存的位置
 
 
 Graph从导出模型读取，本身就是静态图，无法修改

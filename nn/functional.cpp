@@ -178,53 +178,98 @@ functional::relu(Tensor<float32> *input) {
     return result;
 }
 
-Tensor<float32> functional::padding(Tensor<float32> *input, const std::vector<int> &padding_size) {
+Tensor<float32> functional::padding(Tensor<float32> *input, const std::vector<int> &padding_size)
+{
     /*
      * padding
      */
+    int ph = padding_size[0];
+    int pw = padding_size[1];
     // 计算padding后尺寸
     int batch_size = input->size[0];
     int channel = input->size[1];
     int height = input->size[2];
     int width = input->size[3];
-    int padded_height = height + padding_size[0] * 2;
-    int padded_width = width + padding_size[1] * 2;
+    int padded_height = height + ph * 2;
+    int padded_width = width + pw * 2;
     // 创建padding后对象
     Tensor<float32> padded{std::vector<int>{batch_size, channel, padded_height, padded_width}};
     // padding
+    float32 * y_ptr = padded.data;
+    float32 * x_ptr = input->data;
     for(int n = 0; n<batch_size; n++) {
         for(int c = 0; c<channel; c++) {
-            for(int h = 0; h<padded_height; h++) {
-                for(int w = 0; w<padded_width; w++) {
-                    if((h < padding_size[0]) || (h >= height + padding_size[0]) ||
-                       (w < padding_size[1]) || (w >= width + padding_size[1])) {
-                        // padded[n][c][h][w] = 0
-                        padded.data[
-                                n * channel * padded_height * padded_width +
-                                c * padded_height * padded_width +
-                                h * padded_width +
-                                w] = 0;
-                    }
-                    else {
-                        // padded[n][c][h][w] = input[n][c][h-ph][w-pw]
-                        padded.data[
-                                n * channel * padded_height * padded_width +
-                                c * padded_height * padded_width +
-                                h * padded_width +
-                                w]
-                                =
-                        input->data[
-                                n * channel * height * width +
-                                c * height * width +
-                                (h-padding_size[0]) * width +
-                                (w-padding_size[1])];
-                    }
-                }
+            // 对于前padding_height行，直接memset0
+            for(int h = 0; h<ph; h++) {
+                memset(y_ptr, 0, sizeof(float32)*padded_width);
+                y_ptr += padded_width;
+            }
+            // 对于之后的xh行，先在y中memset长度为pw的0，然后memcpy x的一行，然后再mamset长度为pw的0
+            for(int h = 0; h<height; h++) {
+                memset(y_ptr, 0, sizeof(float32)*pw);
+                y_ptr += pw;
+                memcpy(y_ptr, x_ptr, sizeof(float32)*width);
+                y_ptr += width;
+                x_ptr += width;
+                memset(y_ptr, 0, sizeof(float32)*pw);
+                y_ptr += pw;
+            }
+            // 对于最后的ph行，直接在y中memset0
+            for(int h = 0; h<ph; h++) {
+                memset(y_ptr, 0, sizeof(float)*padded_width);
+                y_ptr += padded_width;
             }
         }
     }
     return padded;
 }
+//Tensor<float32> functional::padding(Tensor<float32> *input, const std::vector<int> &padding_size) {
+//    /*
+//     * padding
+//     */
+//    // 计算padding后尺寸
+//    int batch_size = input->size[0];
+//    int channel = input->size[1];
+//    int height = input->size[2];
+//    int width = input->size[3];
+//    int padded_height = height + padding_size[0] * 2;
+//    int padded_width = width + padding_size[1] * 2;
+//    // 创建padding后对象
+//    Tensor<float32> padded{std::vector<int>{batch_size, channel, padded_height, padded_width}};
+//    // padding
+//    for(int n = 0; n<batch_size; n++) {
+//        for(int c = 0; c<channel; c++) {
+//            for(int h = 0; h<padded_height; h++) {
+//                for(int w = 0; w<padded_width; w++) {
+//                    if((h < padding_size[0]) || (h >= height + padding_size[0]) ||
+//                       (w < padding_size[1]) || (w >= width + padding_size[1])) {
+//                        // padded[n][c][h][w] = 0
+//                        padded.data[
+//                                n * channel * padded_height * padded_width +
+//                                c * padded_height * padded_width +
+//                                h * padded_width +
+//                                w] = 0;
+//                    }
+//                    else {
+//                        // padded[n][c][h][w] = input[n][c][h-ph][w-pw]
+//                        padded.data[
+//                                n * channel * padded_height * padded_width +
+//                                c * padded_height * padded_width +
+//                                h * padded_width +
+//                                w]
+//                                =
+//                        input->data[
+//                                n * channel * height * width +
+//                                c * height * width +
+//                                (h-padding_size[0]) * width +
+//                                (w-padding_size[1])];
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    return padded;
+//}
 
 Tensor<float32>
 functional::maxpool2d(Tensor<float32> *input, const std::vector<int>& kernel_size,
@@ -533,53 +578,98 @@ functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, in
     return ret;
 }
 
-Tensor<uint8> functional::qpadding(Tensor<uint8> *input, const std::vector<int> &padding_size, int zero) {
+Tensor<uint8> functional::qpadding(Tensor<uint8> *input, const std::vector<int> &padding_size, int zero)
+{
     /*
      * qpadding
      */
+    int ph = padding_size[0];
+    int pw = padding_size[1];
     // 计算padding后尺寸
     int batch_size = input->size[0];
     int channel = input->size[1];
     int height = input->size[2];
     int width = input->size[3];
-    int padded_height = height + padding_size[0] * 2;
-    int padded_width = width + padding_size[1] * 2;
+    int padded_height = height + ph * 2;
+    int padded_width = width + pw * 2;
     // 创建padding后对象
     Tensor<uint8> padded{std::vector<int>{batch_size, channel, padded_height, padded_width}};
     // padding
+    uint8 * y_ptr = padded.data;
+    uint8 * x_ptr = input->data;
     for(int n = 0; n<batch_size; n++) {
         for(int c = 0; c<channel; c++) {
-            for(int h = 0; h<padded_height; h++) {
-                for(int w = 0; w<padded_width; w++) {
-                    if((h < padding_size[0]) || (h >= height + padding_size[0]) ||
-                       (w < padding_size[1]) || (w >= width + padding_size[1])) {
-                        // padded[n][c][h][w] = 0
-                        padded.data[
-                                n * channel * padded_height * padded_width +
-                                c * padded_height * padded_width +
-                                h * padded_width +
-                                w] = zero;
-                    }
-                    else {
-                        // padded[n][c][h][w] = input[n][c][h-ph][w-pw]
-                        padded.data[
-                                n * channel * padded_height * padded_width +
-                                c * padded_height * padded_width +
-                                h * padded_width +
-                                w]
-                                =
-                                input->data[
-                                        n * channel * height * width +
-                                        c * height * width +
-                                        (h-padding_size[0]) * width +
-                                        (w-padding_size[1])];
-                    }
-                }
+            // 对于前ph行，直接在y中memset zero
+            for(int h = 0; h<ph; h++) {
+                memset(y_ptr, zero, sizeof(uint8)*padded_width);
+                y_ptr += padded_width;
+            }
+            // 对于之后的xh行，先在y中memset长度为pw的0，然后memcpy x的一行，然后再mamset长度为pw的0
+            for(int h = 0; h<height; h++) {
+                memset(y_ptr, zero, sizeof(uint8)*pw);
+                y_ptr += pw;
+                memcpy(y_ptr, x_ptr, sizeof(uint8)*width);
+                y_ptr += width;
+                x_ptr += width;
+                memset(y_ptr, zero, sizeof(uint8)*pw);
+                y_ptr += pw;
+            }
+            // 对于最后的ph行，直接在y中memset zero
+            for(int h = 0; h<ph; h++) {
+                memset(y_ptr, zero, sizeof(uint8)*padded_width);
+                y_ptr += padded_width;
             }
         }
     }
     return padded;
 }
+//Tensor<uint8> functional::qpadding(Tensor<uint8> *input, const std::vector<int> &padding_size, int zero) {
+//    /*
+//     * qpadding
+//     */
+//    // 计算padding后尺寸
+//    int batch_size = input->size[0];
+//    int channel = input->size[1];
+//    int height = input->size[2];
+//    int width = input->size[3];
+//    int padded_height = height + padding_size[0] * 2;
+//    int padded_width = width + padding_size[1] * 2;
+//    // 创建padding后对象
+//    Tensor<uint8> padded{std::vector<int>{batch_size, channel, padded_height, padded_width}};
+//    // padding
+//    for(int n = 0; n<batch_size; n++) {
+//        for(int c = 0; c<channel; c++) {
+//            for(int h = 0; h<padded_height; h++) {
+//                for(int w = 0; w<padded_width; w++) {
+//                    if((h < padding_size[0]) || (h >= height + padding_size[0]) ||
+//                       (w < padding_size[1]) || (w >= width + padding_size[1])) {
+//                        // padded[n][c][h][w] = 0
+//                        padded.data[
+//                                n * channel * padded_height * padded_width +
+//                                c * padded_height * padded_width +
+//                                h * padded_width +
+//                                w] = zero;
+//                    }
+//                    else {
+//                        // padded[n][c][h][w] = input[n][c][h-ph][w-pw]
+//                        padded.data[
+//                                n * channel * padded_height * padded_width +
+//                                c * padded_height * padded_width +
+//                                h * padded_width +
+//                                w]
+//                                =
+//                                input->data[
+//                                        n * channel * height * width +
+//                                        c * height * width +
+//                                        (h-padding_size[0]) * width +
+//                                        (w-padding_size[1])];
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    return padded;
+//}
 
 Tensor<uint8> functional::qrelu(Tensor<uint8> *input, int zero, int qmax) {
     /*
@@ -714,7 +804,7 @@ functional::qdense(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int
         exit(-1);
     }
     // 矩阵乘法
-    Tensor<uint8> result{std::vector<int>{input->size[0], weight->size[1]}};
+    Tensor<int> result{std::vector<int>{input->size[0], weight->size[1]}};
     int batch_size = input->size[0];
     int output_channel = weight->size[1];
     int input_channel = input->size[1];
@@ -737,7 +827,9 @@ functional::qdense(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int
             result.data[n * output_channel + o] = (t >> rshift) + zero_y;
         }
     }
-    return result;
+    result.clip(qmin, qmax);
+    Tensor<uint8> ret = result.astype_uint8();
+    return ret;
 }
 
 Tensor<uint8>

@@ -31,6 +31,7 @@ public:
     Fixed_point add(const Fixed_point& f);              // 定点数相加
     Fixed_point mult(const Fixed_point& f);             // 定点数相乘
     int to_int();                                       // 转换为整数
+    float get_value();                                  // 获取值
     void print();                                       // 打印值
     ~Fixed_point();                                     // 析构函数
     Fixed_point& operator=(int value);                  // overload =

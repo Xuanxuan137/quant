@@ -63,7 +63,27 @@ void Input::print() {
     }
     str.pop_back();
     str += "),dtype=\"float32\");";
-    std::cout << str<< std::endl;
+    std::cout << str << std::endl;
+}
+
+void Input::save(const std::string &path, int number) {
+    /*
+     * 保存Input算子
+     */
+    char temp[20];
+    sprintf(temp, "%%%d=", number);
+    std::string str(temp);
+    str += "input(shape=(";
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "),dtype=\"float32\");\n";
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", str.c_str());
+    fclose(file);
 }
 
 Input::~Input() = default;
@@ -109,6 +129,26 @@ void Relu::print() {
     str.pop_back();
     str += "));\n";
     std::cout << str;
+}
+
+void Relu::save(const std::string &path, int number) {
+    /*
+     * 存储Relu算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "%%%d=nn.relu(input=%%%d, output_shape=(", number, input_node);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", str.c_str());
+    fclose(file);
 }
 
 Relu::~Relu() = default;
@@ -328,6 +368,22 @@ void Maxpool2d::print() {
     printf("%s", temp);
 }
 
+void Maxpool2d::save(const std::string &path, int number) {
+    /*
+     * 存储maxpool2d算子信息
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=nn.maxpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
+                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d));\n",
+            number, input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
+            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            output_shape[2], output_shape[3]);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
+}
+
 Maxpool2d::~Maxpool2d() = default;
 
 Flatten::Flatten(const std::vector<std::string> &parameters,
@@ -373,6 +429,19 @@ void Flatten::print() {
     sprintf(temp, "nn.flatten(input=%%%d, output_shape=(%d,%d));\n",
             input_node, output_shape[0], output_shape[1]);
     printf("%s", temp);
+}
+
+void Flatten::save(const std::string &path, int number) {
+    /*
+     * 存储Flatten算子
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=nn.flatten(input=%%%d, output_shape=(%d,%d));\n",
+            number, input_node, output_shape[0], output_shape[1]);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
 }
 
 Flatten::~Flatten() = default;
@@ -447,6 +516,33 @@ void Dense::print() {
     printf("%s", temp);
 }
 
+void Dense::save(const std::string &path, int number) {
+    /*
+     * 存储Dense算子信息
+     */
+    char temp[500];
+    char save_weight_path[200];
+    char save_bias_path[200];
+    sprintf(save_weight_path, "%sdense_%d_weight.bin", path.c_str(), number);
+    sprintf(save_bias_path, "%sdense_%d_bias.bin", path.c_str(), number);
+    sprintf(temp, "%%%d=nn.dense(input=%%%d, weight=%s, bias=%s, output_channel=%d, input_channel=%d, "
+                  "output_shape=(%d,%d));\n",
+            number, input_node, save_weight_path, save_bias_path, output_channel, input_channel,
+            output_shape[0], output_shape[1]);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
+
+    // 存储weight bias
+    FILE * wf = fopen(save_weight_path, "wb");
+    fwrite(weight.data, sizeof(float32), weight.len(), wf);
+    fclose(wf);
+    FILE * bf = fopen(save_bias_path, "wb");
+    fwrite(bias.data, sizeof(float32), bias.len(), bf);
+    fclose(bf);
+}
+
 Dense::~Dense() = default;
 
 Output::Output(const std::vector<std::string> &parameters,
@@ -492,6 +588,26 @@ void Output::print() {
     std::cout << str;
 }
 
+void Output::save(const std::string &path, int number) {
+    /*
+     * 存储Output算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "%%%d=output(input=%%%d, output_shape=(", number, input_node);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", str.c_str());
+    fclose(file);
+}
+
 Output::~Output() = default;
 
 
@@ -534,6 +650,7 @@ void Add::print() {
     std::string str;
     char temp[500];
     sprintf(temp, "add(input1=%%%d, input2=%%%d, output_shape=(", input_node1, input_node2);
+    str += temp;
     for(int i: output_shape) {
         sprintf(temp, "%d,", i);
         str += temp;
@@ -541,6 +658,25 @@ void Add::print() {
     str.pop_back();
     str += "));\n";
     std::cout << str;
+}
+
+void Add::save(const std::string &path, int number) {
+    /*
+     * 存储Add算子信息
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=add(input1=%%%d, input2=%%%d, output_shape=(", number, input_node1, input_node2);
+    std::string str(temp);
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", str.c_str());
+    fclose(file);
 }
 
 Add::~Add() = default;
@@ -600,6 +736,7 @@ void Concat::print() {
     std::string str;
     char temp[500];
     sprintf(temp, "concat(input1=%%%d, input2=%%%d, dim=%d, output_shape=(", input_node1, input_node2, dim);
+    str += temp;
     for(int i: output_shape) {
         sprintf(temp, "%d,", i);
         str += temp;
@@ -607,6 +744,26 @@ void Concat::print() {
     str.pop_back();
     str += "));\n";
     std::cout << str;
+}
+
+void Concat::save(const std::string &path, int number) {
+    /*
+     * 存储Concat算子信息
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=concat(input1=%%%d, input2=%%%d, dim=%d, output_shape=(",
+            number, input_node1, input_node2, dim);
+    std::string str(temp);
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", str.c_str());
+    fclose(file);
 }
 
 Concat::~Concat() = default;
@@ -683,6 +840,21 @@ void Batch_Norm2d::print() {
     printf("%s", temp);
 }
 
+void Batch_Norm2d::save(const std::string &path, int number) {
+    /*
+     * 存储Batch_Norm2d算子信息
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=nn.batch_nor2d(input=%%%d, num_features=%d, eps=%f, "
+                  "momentum=%f, output_shape=(%d,%d,%d,%d));\n",
+            number, input_node, num_features, eps, momentum, output_shape[0], output_shape[1],
+            output_shape[2], output_shape[3]);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
+}
+
 Batch_Norm2d::~Batch_Norm2d() = default;
 
 void Conv2d::print() {
@@ -697,6 +869,35 @@ void Conv2d::print() {
                   stride[0], stride[1], padding[0], padding[1], dilation[0], dilation[1],
                   output_shape[0], output_shape[1], output_shape[2], output_shape[3]);
     printf("%s", temp);
+}
+
+void Conv2d::save(const std::string &path, int number) {
+    /*
+     * 存储conv2d信息
+     */
+    char temp[1000];
+    char save_weight_path[200];
+    char save_bias_path[200];
+    sprintf(save_weight_path, "%sconv2d_%d_weight.bin", path.c_str(), number);
+    sprintf(save_bias_path, "%sconv2d_%d_bias.bin", path.c_str(), number);
+    sprintf(temp, "%%%d=nn.conv2d(input=%%%d, weight=%s, bias=%s, output_channel=%d, input_channel=%d,"
+                  "kernel_size=(%d,%d), stride=(%d,%d), padding=(%d,%d), dilation=(%d,%d), "
+                  "output_shape=(%d,%d,%d,%d));\n",
+            number, input_node, save_weight_path, save_bias_path, output_channel, input_channel,
+            kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0], padding[1],
+            dilation[0], dilation[1], output_shape[0], output_shape[1], output_shape[2], output_shape[3]);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
+
+    // 存储weight bias
+    FILE * wf = fopen(save_weight_path, "wb");
+    fwrite(weight.data, sizeof(float32), weight.len(), wf);
+    fclose(wf);
+    FILE * bf = fopen(save_bias_path, "wb");
+    fwrite(bias.data, sizeof(float32), bias.len(), bf);
+    fclose(bf);
 }
 
 QConv2d::QConv2d(Conv2d *op) {
@@ -746,6 +947,39 @@ void QConv2d::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
                          &weight, &bias, stride, padding, dilation);
 }
 
+void QConv2d::save(const std::string &path, int number) {
+    /*
+     * 存储QConv2d信息
+     */
+    char temp[2000];
+    char save_weight_path[200];
+    char save_bias_path[200];
+    sprintf(save_weight_path, "%sqconv2d_%d_weight.bin", path.c_str(), number);
+    sprintf(save_bias_path, "%sqconv2d_%d_bias.bin", path.c_str(), number);
+    sprintf(temp, "%%%d=nn.qconv2d(input=%%%d, weight=%s, bias=%s, output_channel=%d, input_channel=%d,"
+                  "kernel_size=(%d,%d), stride=(%d,%d), padding=(%d,%d), dilation=(%d,%d), "
+                  "output_shape=(%d,%d,%d,%d), zero_x=%d, zero_w=%d, zero_b=%d, zero_y=%d, "
+                  "coe=%f, rshift=%d, qmin=%d, qmax=%d);\n",
+            number, input_node, save_weight_path, save_bias_path, output_channel, input_channel,
+            kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0], padding[1],
+            dilation[0], dilation[1], output_shape[0], output_shape[1], output_shape[2], output_shape[3],
+            zero_x, zero_w, zero_b, zero_y, coe.get_value(), rshift, qmin, qmax);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
+
+    bias.print();
+
+    // 存储weight bias
+    FILE * wf = fopen(save_weight_path, "wb");
+    fwrite(weight.data, sizeof(uint8), weight.len(), wf);
+    fclose(wf);
+    FILE * bf = fopen(save_bias_path, "wb");
+    fwrite(bias.data, sizeof(int32), bias.len(), bf);
+    fclose(bf);
+}
+
 QConv2d::~QConv2d() = default;
 
 QInput::QInput(Input *op) {
@@ -790,6 +1024,26 @@ void QInput::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
     *output = *input;
 }
 
+void QInput::save(const std::string &path, int number) {
+    /*
+     * 保存QInput算子
+     */
+    char temp[100];
+    sprintf(temp, "%%%d=", number);
+    std::string str(temp);
+    str += "qinput(shape=(";
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "),dtype=\"uint8\");\n";
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", str.c_str());
+    fclose(file);
+}
+
 QInput::~QInput() = default;
 
 QMaxpool2d::QMaxpool2d(Maxpool2d *op) {
@@ -823,6 +1077,22 @@ void QMaxpool2d::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
      * QMaxpool2d前向传播韩函数
      */
     *output = F::qmaxpool2d(input, zero, kernel_size, stride, padding, dilation);
+}
+
+void QMaxpool2d::save(const std::string &path, int number) {
+    /*
+     * 存储QMaxpool2d算子信息
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=nn.qmaxpool2d(input=%%%d, kernel_size=(%d,%d), stride=(%d,%d), "
+                  "padding=(%d,%d), dilation=(%d,%d), output_shape=(%d,%d,%d,%d), zero=%d);\n",
+            number, input_node, kernel_size[0], kernel_size[1], stride[0], stride[1], padding[0],
+            padding[1], dilation[0], dilation[1], output_shape[0], output_shape[1],
+            output_shape[2], output_shape[3], zero);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
 }
 
 QMaxpool2d::~QMaxpool2d() = default;
@@ -861,6 +1131,26 @@ void QRelu::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
     *output = F::qrelu(input, zero, qmax);
 }
 
+void QRelu::save(const std::string &path, int number) {
+    /*
+     * 存储QRelu算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "%%%d=nn.qrelu(input=%%%d, output_shape=(", number, input_node);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    sprintf(temp, "%s), zero=%d, qmax=%d)\n", str.c_str(), zero, qmax);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
+}
+
 QRelu::~QRelu() = default;
 
 QFlatten::QFlatten(Flatten *op) {
@@ -886,6 +1176,19 @@ void QFlatten::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
      * QFlatten前向传播函数
      */
     *output = F::qflatten(input);
+}
+
+void QFlatten::save(const std::string &path, int number) {
+    /*
+     * 存储QFlatten算子信息
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=nn.qflatten(input=%%%d, output_shape=(%d,%d));\n",
+            number, input_node, output_shape[0], output_shape[1]);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
 }
 
 QFlatten::~QFlatten() = default;
@@ -929,6 +1232,35 @@ void QDense::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
                         &weight, &bias);
 }
 
+void QDense::save(const std::string &path, int number) {
+    /*
+     * 存储QDense算子信息
+     */
+    char temp[1000];
+    char save_weight_path[200];
+    char save_bias_path[200];
+    sprintf(save_weight_path, "%sqdense_%d_weight.bin", path.c_str(), number);
+    sprintf(save_bias_path, "%sqdense_%d_bias.bin", path.c_str(), number);
+    sprintf(temp, "%%%d=nn.qdense(input=%%%d, weight=%s, bias=%s, output_channel=%d, input_channel=%d, "
+                  "output_shape=(%d,%d), zero_x=%d, zero_w=%d, zero_b=%d, zero_y=%d, "
+                  "coe=%f, rshift=%d, qmin=%d, qmax=%d);\n",
+            number, input_node, save_weight_path, save_bias_path, output_channel, input_channel,
+            output_shape[0], output_shape[1], zero_x, zero_w, zero_b, zero_y,
+            coe.get_value(), rshift, qmin, qmax);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
+
+    // 存储weight bias
+    FILE * wf = fopen(save_weight_path, "wb");
+    fwrite(weight.data, sizeof(uint8), weight.len(), wf);
+    fclose(wf);
+    FILE * bf = fopen(save_bias_path, "wb");
+    fwrite(bias.data, sizeof(int32), bias.len(), bf);
+    fclose(bf);
+}
+
 QDense::~QDense() = default;
 
 QOutput::QOutput(Output *op) {
@@ -963,6 +1295,26 @@ void QOutput::forward(Tensor<uint8> *input, Tensor<uint8> *output) {
     *output = (*input).deep_copy();
 }
 
+void QOutput::save(const std::string &path, int number) {
+    /*
+     * 存储QOutput算子参数
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "%%%d=qoutput(input=%%%d, output_shape=(", number, input_node);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", str.c_str());
+    fclose(file);
+}
+
 QOutput::~QOutput() = default;
 
 QAdd::QAdd(Add *op) {
@@ -988,6 +1340,7 @@ void QAdd::print() {
     std::string str;
     char temp[500];
     sprintf(temp, "qadd(input1=%%%d, input2=%%%d, output_shape=(", input_node1, input_node2);
+    str += temp;
     for(int i: output_shape) {
         sprintf(temp, "%d,", i);
         str += temp;
@@ -1002,6 +1355,28 @@ void QAdd::forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *
      * QAdd前向传播函数
      */
     *output = F::qadd(input1, input2, zero_x1, zero_x2, zero_y, coe1, coe2, rshift1, rshift1, qmin, qmax);
+}
+
+void QAdd::save(const std::string &path, int number) {
+    /*
+     * 存储QAdd算子信息
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=qadd(input1=%%%d, input2=%%%d, output_shape=(", number, input_node1, input_node2);
+    std::string str(temp);
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    sprintf(temp, "), zero_x1=%d, zero_x2=%d, zero_y=%d, coe1=%f, coe2=%f, rshift1=%d, rshift2=%d, "
+                  "qmin=%d, qmax=%d);\n",
+                  zero_x1, zero_x2, zero_y, coe1.get_value(), coe2.get_value(), rshift1, rshift2, qmin, qmax);
+    str += temp;
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", str.c_str());
+    fclose(file);
 }
 
 
@@ -1033,6 +1408,7 @@ void QConcat::print() {
     std::string str;
     char temp[500];
     sprintf(temp, "qconcat(input1=%%%d, input2=%%%d, dim=%d, output_shape=(", input_node1, input_node2, dim);
+    str += temp;
     for(int i: output_shape) {
         sprintf(temp, "%d,", i);
         str += temp;
@@ -1047,6 +1423,30 @@ void QConcat::forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8
      * QConcat前向传播函数
      */
     *output = F::qconcat(input1, input2, zero_x1, zero_x2, zero_y, coe1, coe2, rshift1, rshift2, qmin, qmax, dim);
+}
+
+void QConcat::save(const std::string &path, int number) {
+    /*
+     * 存储QConcat算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "%%%d=qconcat(input1=%%%d, input2=%%%d, dim=%d, output_shape=(",
+            number, input_node1, input_node2, dim);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    sprintf(temp, "), zero_x1=%d, zero_x2=%d, zero_y=%d, coe1=%f, coe2=%f, rshif1=%d, rshif2=%d, "
+                  "qmin=%d, qmax=%d);\n",
+                  zero_x1, zero_x2, zero_y, coe1.get_value(), coe2.get_value(), rshift1, rshift2, qmin, qmax);
+    str += temp;
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", str.c_str());
+    fclose(file);
 }
 
 QConcat::~QConcat() = default;

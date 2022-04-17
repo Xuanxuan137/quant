@@ -154,7 +154,7 @@ Fixed_point Fixed_point::mult(const Fixed_point& f) {
 
     // 此时得到的结果保存在res中，其中64位整数，32位小数。只保留低32位整数和高16位小数
     Fixed_point result{0};
-    result.sign = this->sign * f.sign;
+    result.sign = this->sign ^ f.sign;
     result.ivalue = res[1];
     result.fvalue = (res[0] >> 16) & 0x0000ffff;
     return result;
@@ -298,6 +298,21 @@ Fixed_point::Fixed_point() {
     sign = 0;
     ivalue = 0;
     fvalue = 0;
+}
+
+float Fixed_point::get_value() {
+    /*
+     * 获取值
+     */
+    float fpart = 0;
+    float temp = 1.0;
+    for(int i = 15; i>=0; i--) {
+        temp /= 2;
+        if((fvalue >> i) & 0x00000001) {
+            fpart += temp;
+        }
+    }
+    return sign ? (-((float)ivalue + fpart)) : ((float)ivalue + fpart);
 }
 
 Fixed_point::~Fixed_point() = default;

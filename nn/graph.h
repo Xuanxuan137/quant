@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <unistd.h>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -87,6 +88,8 @@ public:
      Graph* quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_calib_set);
 
      void print();              // 打印计算图结构
+
+     void save(std::string path);               // 保存计算图
 
 };
 
