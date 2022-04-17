@@ -479,11 +479,12 @@ Dense::Dense(const std::vector<std::string> &parameters,
         }
     }
     // 读取 weight
-    weight = Tensor<float32>(std::vector<int>{output_channel, input_channel});
+    weight = Tensor<float32>(std::vector<int>{input_channel, output_channel});
     FILE * weight_file = fopen(weight_path.c_str(), "rb");
     fread(weight.data, sizeof(float), output_channel*input_channel, weight_file);
     fclose(weight_file);
-    weight = weight.transpose(std::vector<int>{1,0});
+//    weight = weight.transpose(std::vector<int>{1,0});
+//    print_size(weight.size);
     // 读取 bias
     bias = Tensor<float32>(std::vector<int>{output_channel});
     FILE * bias_file = fopen(bias_path.c_str(), "rb");
