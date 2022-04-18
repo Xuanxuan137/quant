@@ -10,6 +10,4 @@
 --output_dir        量化后计算图保存的位置
 
 
-Graph从导出模型读取，本身就是静态图，无法修改
-
-以后可以再新建一个Module类，作为动态图，允许用户调用接口。用户可以继承Module，然后重载构造函数和forward
+bias=None时，将bias设为全为0

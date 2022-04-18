@@ -239,20 +239,26 @@ Conv2d::Conv2d(const std::vector<std::string> &parameters,
     }
     fclose(weight_file);
     // 读取 bias
-    bias = Tensor<float32>(std::vector<int>{output_channel});
-    FILE * bias_file = fopen(bias_path.c_str(), "rb");
-    if(bias_file == nullptr) {
-        fprintf(stderr, "file op.cpp, line %d: Open file %s failed\n", 
-                __LINE__, bias_path.c_str());
-        exit(-1);
+    if(bias_path == "None") {
+        bias = Tensor<float32>(std::vector<int>{output_channel});
+        bias.set_zero();
     }
-    ret = fread(bias.data, sizeof(float), output_channel, bias_file);
-    if(ret != output_channel) {
-        fprintf(stderr, "file op.cpp line %d: Read length error when read file %s. Expected %d, Got %d\n",
-                __LINE__, bias_path.c_str(), output_channel, ret);
-        exit(-1);
+    else {
+        bias = Tensor<float32>(std::vector<int>{output_channel});
+        FILE * bias_file = fopen(bias_path.c_str(), "rb");
+        if(bias_file == nullptr) {
+            fprintf(stderr, "file op.cpp, line %d: Open file %s failed\n", 
+                    __LINE__, bias_path.c_str());
+            exit(-1);
+        }
+        ret = fread(bias.data, sizeof(float), output_channel, bias_file);
+        if(ret != output_channel) {
+            fprintf(stderr, "file op.cpp line %d: Read length error when read file %s. Expected %d, Got %d\n",
+                    __LINE__, bias_path.c_str(), output_channel, ret);
+            exit(-1);
+        }
+        fclose(bias_file);
     }
-    fclose(bias_file);
     // 设置output_shape
     /*
      * 按如下方式计算output_shape，但不确定对不对
@@ -519,20 +525,26 @@ Dense::Dense(const std::vector<std::string> &parameters,
 //    weight = weight.transpose(std::vector<int>{1,0});
 //    print_size(weight.size);
     // 读取 bias
-    bias = Tensor<float32>(std::vector<int>{output_channel});
-    FILE * bias_file = fopen(bias_path.c_str(), "rb");
-    if(bias_file == nullptr) {
-        fprintf(stderr, "file op.cpp line %d: Open file %s failed\n", 
-                __LINE__, bias_path.c_str());
-        exit(-1);
+    if(bias_path == "None") {
+        bias = Tensor<float32>(std::vector<int>{output_channel});
+        bias.set_zero();
     }
-    ret = fread(bias.data, sizeof(float), output_channel, bias_file);
-    if(ret != output_channel) {
-        fprintf(stderr, "file op.cpp line %d: Read length error when read file %s. Expected %d, Got %d\n", 
-                __LINE__, bias_path.c_str(), output_channel, ret);
-        exit(-1);
+    else {
+        bias = Tensor<float32>(std::vector<int>{output_channel});
+        FILE * bias_file = fopen(bias_path.c_str(), "rb");
+        if(bias_file == nullptr) {
+            fprintf(stderr, "file op.cpp line %d: Open file %s failed\n", 
+                    __LINE__, bias_path.c_str());
+            exit(-1);
+        }
+        ret = fread(bias.data, sizeof(float), output_channel, bias_file);
+        if(ret != output_channel) {
+            fprintf(stderr, "file op.cpp line %d: Read length error when read file %s. Expected %d, Got %d\n", 
+                    __LINE__, bias_path.c_str(), output_channel, ret);
+            exit(-1);
+        }
+        fclose(bias_file);
     }
-    fclose(bias_file);
     // 设置output_shape
     /*
      * 在NL中, N不变, L变为output_channel
@@ -863,19 +875,25 @@ Batch_Norm2d::Batch_Norm2d(const std::vector<std::string> &parameters,
     }
     fclose(weight_file);
     // 读取bias
-    bias = Tensor<float32>{std::vector<int>{num_features}};
-    FILE * bias_file = fopen(bias_path.c_str(), "rb");
-    if(bias_file == nullptr) {
-        fprintf(stderr, "file op.cpp line %d: Open file %s failed\n", __LINE__, bias_path.c_str());
-        exit(-1);
+    if(bias_path == "None") {
+        bias = Tensor<float32>{std::vector<int>{num_features}};
+        bias.set_zero();
     }
-    ret = fread(bias.data, sizeof(float), num_features, bias_file);
-    if(ret != num_features) {
-        fprintf(stderr, "file op.cpp line %d. Read length error when read %s. Expected %d, Got %d\n", 
-                __LINE__, bias_path.c_str(), num_features, ret);
-        exit(-1);
+    else {
+        bias = Tensor<float32>{std::vector<int>{num_features}};
+        FILE * bias_file = fopen(bias_path.c_str(), "rb");
+        if(bias_file == nullptr) {
+            fprintf(stderr, "file op.cpp line %d: Open file %s failed\n", __LINE__, bias_path.c_str());
+            exit(-1);
+        }
+        ret = fread(bias.data, sizeof(float), num_features, bias_file);
+        if(ret != num_features) {
+            fprintf(stderr, "file op.cpp line %d. Read length error when read %s. Expected %d, Got %d\n", 
+                    __LINE__, bias_path.c_str(), num_features, ret);
+            exit(-1);
+        }
+        fclose(bias_file);
     }
-    fclose(bias_file);
     // 设置output_shape
     this->output_shape = output_shape_list[input_node];
 }
