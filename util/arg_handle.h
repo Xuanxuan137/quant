@@ -5,6 +5,7 @@
 #ifndef QUANT_ARG_HANDLE_H
 #define QUANT_ARG_HANDLE_H
 
+
 #include <iostream>
 #include <string>
 #include <cassert>

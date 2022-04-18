@@ -5,6 +5,7 @@
 #ifndef QUANT_OP_H
 #define QUANT_OP_H
 
+
 /*
  * 每个类是一个具体的算子，不同算子使用不同的类
  *

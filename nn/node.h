@@ -5,6 +5,7 @@
 #ifndef QUANT_NODE_H
 #define QUANT_NODE_H
 
+
 #include <iostream>
 #include <cstdio>
 #include <string>

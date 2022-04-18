@@ -5,6 +5,7 @@
 #ifndef QUANT_QUANT_TOOLS_H
 #define QUANT_QUANT_TOOLS_H
 
+
 #include "fixed_point.h"
 #include "tensor.h"
 

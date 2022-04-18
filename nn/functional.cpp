@@ -417,7 +417,7 @@ Tensor<float32> functional::concat(Tensor<float32> *input1, Tensor<float32> *inp
 
 Tensor<float32>
 functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, Tensor<float32> *running_var,
-                       Tensor<float32> *weight, Tensor<float32> *bias, float eps, float momentum)
+                       Tensor<float32> *weight, Tensor<float32> *bias, float eps)
 {
     /*
      * batch normalization 2d

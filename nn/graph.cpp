@@ -5,6 +5,7 @@
 #include "graph.h"
 
 #include <cmath>
+#include <cstdio>
 
 
 Graph::Graph(const std::string& graph_content)
@@ -347,7 +348,7 @@ void Graph::print() {
     }
 }
 
-Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_calib_set) {
+Graph *Graph::quantization(Tensor<float32>* processed_calib_set) {
     /*
      * 模型量化:
      * 量化过程中需要的数据:
@@ -462,8 +463,8 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
      */
     float rmax_weight[node_number];
     float rmin_weight[node_number];
-    float rmax_bias[node_number];
-    float rmin_bias[node_number];
+    // float rmax_bias[node_number];    // 由于bias的scale是直接根据x和w得到的，因此不需要统计rmax, rmin
+    // float rmin_bias[node_number];
     int qmax_weight[node_number];
     int qmin_weight[node_number];
     int qmax_bias[node_number];
@@ -474,7 +475,7 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
     int zero_bias[node_number];
     for(int i = 0; i<node_number; i++) {
         rmax_weight[i] = 0; rmin_weight[i] = 0;
-        rmax_bias[i] = 0; rmin_bias[i] = 0;
+        // rmax_bias[i] = 0; rmin_bias[i] = 0;
         qmax_weight[i] = 0; qmin_weight[i] = 0;
         qmax_bias[i] = 0; qmin_bias[i] = 0;
         scale_weight[i] = 0; scale_bias[i] = 0;
@@ -484,8 +485,8 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
         if(node_list[i]->name == OPN_NN_CONV2D) {
             rmax_weight[i] = ((Conv2d*)node_list[i]->op)->weight.max();
             rmin_weight[i] = ((Conv2d*)node_list[i]->op)->weight.min();
-            rmax_bias[i] = ((Conv2d*)node_list[i]->op)->bias.max();
-            rmin_bias[i] = ((Conv2d*)node_list[i]->op)->bias.min();
+            // rmax_bias[i] = ((Conv2d*)node_list[i]->op)->bias.max();
+            // rmin_bias[i] = ((Conv2d*)node_list[i]->op)->bias.min();
             qmax_weight[i] = 255;
             qmin_weight[i] = 0;
             qmax_bias[i] = 65535;
@@ -498,8 +499,8 @@ Graph *Graph::quantization(Tensor<uint8>* calib_set, Tensor<float32>* processed_
         else if(node_list[i]->name == OPN_NN_DENSE) {
             rmax_weight[i] = ((Dense*)node_list[i]->op)->weight.max();
             rmin_weight[i] = ((Dense*)node_list[i]->op)->weight.min();
-            rmax_bias[i] = ((Dense*)node_list[i]->op)->bias.max();
-            rmin_bias[i] = ((Dense*)node_list[i]->op)->bias.min();
+            // rmax_bias[i] = ((Dense*)node_list[i]->op)->bias.max();
+            // rmin_bias[i] = ((Dense*)node_list[i]->op)->bias.min();
             qmax_weight[i] = 255;
             qmin_weight[i] = 0;
             qmax_bias[i] = 65535;
@@ -608,7 +609,10 @@ void Graph::save(std::string path) {
     // 检查输出文件夹是否存在，不存在就创建一个
     if(access(path.c_str(), 0) < 0) {
         std::string cmd = "mkdir " + path;
-        system(cmd.c_str());
+        int ret = system(cmd.c_str());
+        if(ret != 0) {
+            fprintf(stderr, "file graph.cpp line %d: Error return value %d\n", __LINE__, ret);
+        }
     }
     // 创建或清空计算图文件
     if(path[path.size()-1] != '/') {

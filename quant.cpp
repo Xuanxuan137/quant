@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
     test_accuracy("../val_set.txt", graph, infer_shape);
 
     // quantization
-    Graph * q_graph = graph->quantization(calib_set, processed_calib_set);
+    Graph * q_graph = graph->quantization(processed_calib_set);
     test_quant_accuracy("../val_set.txt", q_graph, infer_shape);
 
     // save quantized model

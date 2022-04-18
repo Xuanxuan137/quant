@@ -5,6 +5,7 @@
 #ifndef QUANT_FIXED_POINT_H
 #define QUANT_FIXED_POINT_H
 
+
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>

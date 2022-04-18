@@ -185,6 +185,10 @@ void get_running_mean_var_binary(Tensor<float>* &running_mean, Tensor<float>* &r
     running_mean = new Tensor<float>(std::vector<int>{size});
     running_var = new Tensor<float>(std::vector<int>{size});
     FILE * file = fopen(path.c_str(), "r");
+    if(file == nullptr) {
+        fprintf(stderr, "file arg_handle.cpp, line %d: Open file %s failed\n", __LINE__, path.c_str());
+        exit(-1);
+    }
     if((int)fread(running_mean->data, sizeof(float), size, file) != size) {
         std::cerr << "Read size error when reading running mean\n";
         exit(-1);

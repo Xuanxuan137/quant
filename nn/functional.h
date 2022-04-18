@@ -5,6 +5,7 @@
 #ifndef QUANT_FUNCTIONAL_H
 #define QUANT_FUNCTIONAL_H
 
+
 #include <thread>
 #include <cassert>
 #include "tensor.h"
@@ -31,7 +32,7 @@ namespace functional {
     Tensor<float32> concat(Tensor<float32> *input1, Tensor<float32> *input2, int dim=0);
     Tensor<float32> batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean,
                                Tensor<float32> *running_var, Tensor<float32> *weight,
-                               Tensor<float32> *bias, float eps, float momentum);
+                               Tensor<float32> *bias, float eps);
     Tensor<float32> avgpool2d(Tensor<float32> *input, const std::vector<int>& kernel_size,
                               std::vector<int> stride=std::vector<int>{-1,-1},
                               const std::vector<int>& padding_size=std::vector<int>{0,0});
