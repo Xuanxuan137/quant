@@ -386,6 +386,10 @@ public:
     Tensor<float32> weight;
     std::string bias_path;
     Tensor<float32> bias;
+    std::string running_mean_path;
+    Tensor<float32> running_mean;
+    std::string running_var_path;
+    Tensor<float32> running_var;
     std::vector<int> output_shape;
     Batch_Norm2d(const std::vector<std::string> &parameters,
                         const std::vector<std::vector<int> > &output_shape_list);       // constructor

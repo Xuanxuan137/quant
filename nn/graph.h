@@ -84,7 +84,7 @@ public:
      * 融合算子。将batch_norm2d融入conv2d
      * 只能在dtype=="float32"时使用此函数
      */
-     void fuse_op(Tensor<float32>* calc_running_img);
+     void fuse_op();
 
      Graph* quantization(Tensor<float32>* processed_calib_set);
 

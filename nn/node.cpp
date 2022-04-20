@@ -77,6 +77,7 @@ Node::Node(const std::string& read_graph_line,
         this->dtype = "float32";
         op = new Batch_Norm2d(parameters, output_shape_list);
         this->output_shape = ((Batch_Norm2d*)op)->output_shape;
+        
     }
 }
 

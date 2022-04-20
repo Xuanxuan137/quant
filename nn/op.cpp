@@ -858,6 +858,12 @@ Batch_Norm2d::Batch_Norm2d(const std::vector<std::string> &parameters,
         else if(para_pair[0] == "bias") {
             this->bias_path = (std::string)para_pair[1];
         }
+        else if(para_pair[0] == "running_mean") {
+            this->running_mean_path = (std::string)para_pair[1];
+        }
+        else if(para_pair[0] == "running_var") {
+            this->running_var_path = (std::string)para_pair[1];
+        }
     }
     // 读取weight
     int ret;
@@ -894,6 +900,34 @@ Batch_Norm2d::Batch_Norm2d(const std::vector<std::string> &parameters,
         }
         fclose(bias_file);
     }
+    // 读取running_mean
+    running_mean = Tensor<float32>{std::vector<int>{num_features}};
+    FILE * running_mean_file = fopen(running_mean_path.c_str(), "rb");
+    if(running_mean_file == nullptr) {
+        fprintf(stderr, "file op.cpp line %d: Open file %s failed\n", __LINE__, running_mean_path.c_str());
+        exit(-1);
+    }
+    ret = fread(running_mean.data, sizeof(float), num_features, running_mean_file);
+    if(ret != num_features) {
+        fprintf(stderr, "file op.cpp line %d. Read length error when read %s. Expected %d, Got %d\n", 
+                    __LINE__, running_mean_path.c_str(), num_features, ret);
+        exit(-1);
+    }
+    fclose(running_mean_file);
+    // 读取running_var
+    running_var = Tensor<float32>{std::vector<int>{num_features}};
+    FILE * running_var_file = fopen(running_var_path.c_str(), "rb");
+    if(running_var_file == nullptr) {
+        fprintf(stderr, "file op.cpp line %d: Open file %s failed\n", __LINE__, running_var_path.c_str());
+        exit(-1);
+    }
+    ret = fread(running_var.data, sizeof(float), num_features, running_var_file);
+    if(ret != num_features) {
+        fprintf(stderr, "file op.cpp line %d. Read length error when read %s. Expected %d, Got %d\n", 
+                    __LINE__, running_var_path.c_str(), num_features, ret);
+        exit(-1);
+    }
+    fclose(running_var_file);
     // 设置output_shape
     this->output_shape = output_shape_list[input_node];
 }
@@ -902,9 +936,6 @@ void Batch_Norm2d::forward(Tensor<float32> *input, Tensor<float32> *output) {
     /*
      * TODO: bn2d forward
      */
-    // 根据input计算running mean和running var
-    Tensor<float32> running_mean = input->mean(std::vector<int>{0,2,3});
-    Tensor<float32> running_var = input->var(std::vector<int>{0,2,3});
     // 调用Functional
     *output = F::batch_norm2d(input, &running_mean, &running_var, &weight, &bias, eps);
 }

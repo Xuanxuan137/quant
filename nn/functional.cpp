@@ -596,8 +596,10 @@ functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, in
     for(int n = 0; n<batch_size; n++) {
         // 每次处理一张图片
         for(int o = 0; o<output_channel; o++) {
-            for(int h = 0; h<height; h+=stride[0]) {
-                for(int w = 0; w<width; w+=stride[1]) {
+            int start_h = 0;
+            for(int h = 0; h<height; h++, start_h += stride[0]) {
+                int start_w = 0;
+                for(int w = 0; w<width; w++, start_w += stride[1]) {
                     int temp = 0;
                     temp += input_channel * kernel_height * kernel_width * zero_x * zero_w;
                     for(int i = 0; i<input_channel; i++) {
@@ -607,8 +609,8 @@ functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, in
                                 temp += padded.data[
                                         n * padded.size[1] * padded.size[2] * padded.size[3] +
                                         i * padded.size[2] * padded.size[3] +
-                                        (h+kh*dilation[0]) * padded.size[3] +
-                                        (w+kw*dilation[1])]
+                                        (start_h+kh*dilation[0]) * padded.size[3] +
+                                        (start_w+kw*dilation[1])]
                                                 *
                                         weight->data[
                                         o * weight->size[1] * weight->size[2] * weight->size[3] +
@@ -631,8 +633,8 @@ functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, in
                                 temp -= zero_w * padded.data[
                                         n * padded.size[1] * padded.size[2] * padded.size[3] +
                                         i * padded.size[2] * padded.size[3] +
-                                        (h+kh*dilation[0]) * padded.size[3] +
-                                        (w+kw*dilation[1])];
+                                        (start_h+kh*dilation[0]) * padded.size[3] +
+                                        (start_w+kw*dilation[1])];
                             }
                         }
                     }

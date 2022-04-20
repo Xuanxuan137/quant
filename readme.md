@@ -4,10 +4,8 @@
                     并将该文本文件路径传递给此参数。
 --calib_size        量化图片的尺寸。应为4个由逗号分隔的整数(batch_size, C, H, W)，如"1,3,224,224"
                     其中batch_size是指量化时一次输入的图片的数量，不是总数量
---calc_running_img_list     现场计算running mean和running var所需的图片列表。(仅--calc_running为true时需要此参数)
-                            将要用到的所有图片的路径存在一个文本文件中，每行一个图片路径，
-                            并将该文本文件路径传递给此参数。默认将所有图片用于计算running mean和running var
 --output_dir        量化后计算图保存的位置
 
 
 bias=None时，将bias设为全为0
+--calc_running_img_list     突然发现running mean和running var是能够直接从模型中提取出来的，所以不需要计算了

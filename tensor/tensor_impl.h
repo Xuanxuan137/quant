@@ -406,10 +406,10 @@ void Tensor<T>::print() {
                 printf("%llu ", data[i]);
             }
             else if(std::is_same<T, float32>::value) {
-                printf("%f ", data[i]);
+                printf("%.6g ", data[i]);
             }
             else if(std::is_same<T, float64>::value) {
-                printf("%lf ", data[i]);
+                printf("%.8g ", data[i]);
             }
             else if(std::is_same<T, int8>::value) {
                 printf("%d ", data[i]);

@@ -3,6 +3,8 @@
 //
 
 #include "graph.h"
+#include "op.h"
+#include "tensor.h"
 
 #include <cmath>
 #include <cstdio>
@@ -40,7 +42,7 @@ Graph::~Graph() {
     }
 }
 
-void Graph::fuse_op(Tensor<float32> *calc_running_img)
+void Graph::fuse_op()
 {
     // TODO: fill this function
     /*
@@ -65,51 +67,17 @@ void Graph::fuse_op(Tensor<float32> *calc_running_img)
     if(found == 0) {
         return;
     }
-    // 1. 创建新计算图，使其batch_size为输入数据集的batch_size
+    // 1. 创建新计算图，暂存原始计算图
     std::string new_graph_content;
     std::vector<std::string> graph_lines = split(graph_content, "\n");
     for(std::string graph_line: graph_lines) {
-        // 遍历旧计算图的每一行，如果是Input算子，则修改其batch_size
-        std::string new_graph_line;         // 要存入新计算图的算子行
-        graph_line = replace(graph_line, " ", "");
-        // 提取算子名称
-        int index = 0;
-        while(graph_line[index] != '=') {
-            index++;
-        }
-        index++;
-        std::string op_name;
-        while(graph_line[index] != '(') {
-            op_name.push_back(graph_line[index]);
-            index++;
-        }
-        if(op_name == "input") {
-            // 如果是input算子，首先找到shape，之后修改batch_size
-            index = (int)graph_line.find("shape");          // 找到shape
-            index += 7;                                     // 越过shape=(，指向batch_size的位置
-            for(int i = 0; i<index; i++) {
-                new_graph_line.push_back(graph_line[i]);    // 将shape的batch_size之前的内容存入new_graph_line
-            }
-            // 向new_graph_line写入合适的batch_size
-            new_graph_line += std::to_string(calc_running_img->size[0]);
-            while(graph_line[index] != ',') {               // 找到batch_size之后的逗号
-                index++;
-            }
-            for(; index < (int)graph_line.size(); index++) {
-                new_graph_line.push_back(graph_line[index]);
-            }
-        }
-        else {
-            new_graph_line = graph_line;
-        }
+        // 遍历旧计算图的每一行
+        std::string new_graph_line = graph_line;         // 要存入新计算图的算子行
         // 将修改后的行加入new_graph_content
         new_graph_content += new_graph_line;
         new_graph_content.push_back('\n');
     }
     Graph new_graph{new_graph_content};
-    // 2. 使用新计算图进行一次前向传播计算
-    new_graph.alloc_intermediate_results();
-    new_graph.forward(calc_running_img);
     // 此时前向传播中间结果已经存储在intermediate_results中了
     // 3. 对bn算子进行融合
     /*
@@ -132,10 +100,8 @@ void Graph::fuse_op(Tensor<float32> *calc_running_img)
         }
         // 此时layer指向bn层，bn_input_node指向conv2d层
         // 使用new_graph计算running_mean running_var
-        Tensor<float32> running_mean = ((Tensor<float32>*)new_graph.intermediate_results[bn_input_node])->
-                mean(std::vector<int>{0,2,3});
-        Tensor<float32> running_var = ((Tensor<float32>*)new_graph.intermediate_results[bn_input_node])->
-                var(std::vector<int>{0,2,3});
+        Tensor<float32> running_mean = ((Batch_Norm2d*)this->node_list[layer]->op)->running_mean;
+        Tensor<float32> running_var = ((Batch_Norm2d*)this->node_list[layer]->op)->running_var;
         // 提取weight和bias
         Tensor<float32> conv_weight = ((Conv2d*)this->node_list[bn_input_node]->op)->weight.deep_copy();
         Tensor<float32> conv_bias = ((Conv2d*)this->node_list[bn_input_node]->op)->bias.deep_copy();
@@ -268,8 +234,6 @@ void Graph::fuse_op(Tensor<float32> *calc_running_img)
         // 将修改后的节点加入节点列表
         node_list.push_back(i);
     }
-    // 释放new_graph的中间结果
-    new_graph.free_intermediate_results();
     printf("Fuse operators finished\n");
 }
 
@@ -286,9 +250,16 @@ std::vector<void*> Graph::forward(void *input) {
      * 3. 如果某个节点是output节点，那么将它对应的中间结果Tensor数组指针加入一个vector，并最终返回这个vector
      */
     // 使用各节点进行前向传播计算
+
+    
     for(Node *node: node_list) {
         node->forward(intermediate_results, input);
     }
+
+    // if(node_list[0]->dtype == "uint8") {
+    //     (Tensor<uint8>*)intermediate_results[30])->reshape(std::vector<int>{-1, 1}).print();
+    //     exit(0);
+    // }
 
     // 将output节点的输出push到ret里
     std::vector<void*> ret;
@@ -475,7 +446,6 @@ Graph *Graph::quantization(Tensor<float32>* processed_calib_set) {
     int zero_bias[node_number];
     for(int i = 0; i<node_number; i++) {
         rmax_weight[i] = 0; rmin_weight[i] = 0;
-        // rmax_bias[i] = 0; rmin_bias[i] = 0;
         qmax_weight[i] = 0; qmin_weight[i] = 0;
         qmax_bias[i] = 0; qmin_bias[i] = 0;
         scale_weight[i] = 0; scale_bias[i] = 0;
@@ -485,12 +455,12 @@ Graph *Graph::quantization(Tensor<float32>* processed_calib_set) {
         if(node_list[i]->name == OPN_NN_CONV2D) {
             rmax_weight[i] = ((Conv2d*)node_list[i]->op)->weight.max();
             rmin_weight[i] = ((Conv2d*)node_list[i]->op)->weight.min();
-            // rmax_bias[i] = ((Conv2d*)node_list[i]->op)->bias.max();
-            // rmin_bias[i] = ((Conv2d*)node_list[i]->op)->bias.min();
             qmax_weight[i] = 255;
             qmin_weight[i] = 0;
-            qmax_bias[i] = 65535;
-            qmin_bias[i] = 0;
+            // qmax_bias[i] = 65535;
+            // qmin_bias[i] = -65535;
+            qmax_bias[i] = 2147483647;
+            qmin_bias[i] = -2147483647;
             scale_weight[i] = (rmax_weight[i] - rmin_weight[i]) / (float)(qmax_weight[i] - qmin_weight[i]);
             zero_weight[i] = (int)std::round((float)qmax_weight[i] - rmax_weight[i]/scale_weight[i]);
             scale_bias[i] = scale_weight[i] * scale[((Conv2d*)node_list[i]->op)->input_node];
@@ -499,12 +469,12 @@ Graph *Graph::quantization(Tensor<float32>* processed_calib_set) {
         else if(node_list[i]->name == OPN_NN_DENSE) {
             rmax_weight[i] = ((Dense*)node_list[i]->op)->weight.max();
             rmin_weight[i] = ((Dense*)node_list[i]->op)->weight.min();
-            // rmax_bias[i] = ((Dense*)node_list[i]->op)->bias.max();
-            // rmin_bias[i] = ((Dense*)node_list[i]->op)->bias.min();
             qmax_weight[i] = 255;
             qmin_weight[i] = 0;
-            qmax_bias[i] = 65535;
-            qmin_bias[i] = 0;
+            // qmax_bias[i] = 65535;
+            // qmin_bias[i] = -65535;
+            qmax_bias[i] = 2147483647;
+            qmin_bias[i] = -2147483647;
             scale_weight[i] = (rmax_weight[i] - rmin_weight[i]) / (float)(qmax_weight[i] - qmin_weight[i]);
             zero_weight[i] = (int)std::round((float)qmax_weight[i] - rmax_weight[i]/scale_weight[i]);
             scale_bias[i] = scale_weight[i] * scale[((Dense*)node_list[i]->op)->input_node];
