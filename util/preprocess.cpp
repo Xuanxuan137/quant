@@ -22,6 +22,21 @@
 //     return dst;
 // }
 
+// Tensor<uint8>* qpreprocess(Tensor<uint8>* src)
+// {
+//     /*
+//      * 图像预处理函数
+//      * 此函数的预处理方法： imgRGB = (imgRGB - [123.15, 115.90, 103.06]) / (58.395, 57.12, 57.375)
+//      * 适用于imageNet
+//      */
+//     return src;
+// }
+
+
+
+
+
+
 Tensor<float32>* preprocess(Tensor<uint8>* src)
 {
     /*

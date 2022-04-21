@@ -6,6 +6,7 @@
 #define QUANT_QUANT_TOOLS_H
 
 
+#include <math.h>
 #include "fixed_point.h"
 #include "tensor.h"
 

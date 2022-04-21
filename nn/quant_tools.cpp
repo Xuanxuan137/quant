@@ -3,6 +3,7 @@
 //
 
 #include "quant_tools.h"
+#include <cmath>
 
 
 
@@ -22,6 +23,8 @@ void calc_m0_n_input_weight(Fixed_point &coe, int &rshift, float s_x, float s_w,
     coe = fm0;
     rshift = n;
 }
+
+
 
 
 void calc_m0_n_input_input(Fixed_point &coe1, Fixed_point &coe2, int &rshift1, int &rshift2,
