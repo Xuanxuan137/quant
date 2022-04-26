@@ -3,6 +3,8 @@
 //
 
 #include "functional.h"
+#include "cblas.h"
+#include "tensor.h"
 
 extern System_info * sys_info;
 
@@ -93,7 +95,15 @@ functional::conv2d(Tensor<float32> *input, Tensor<float32> *weight, Tensor<float
             }
         }
         // 2. 矩阵相乘
-        Tensor<float32> result_matrix = weight_matrix.dot(input_matrix);
+        // Tensor<float32> result_matrix = weight_matrix.dot(input_matrix);
+        // 改用openblas
+        Tensor<float32> result_matrix(std::vector<int>{weight_matrix.size[0], input_matrix.size[1]});
+        result_matrix.set_zero();
+        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+            weight_matrix.size[0], input_matrix.size[1], weight_matrix.size[1],
+            1.0f, weight_matrix.data, weight_matrix.size[1], 
+            input_matrix.data, input_matrix.size[1], 1.0f,
+            result_matrix.data, result_matrix.size[1]);
         // 3. +bias
         for(int c = 0; c<channel; c++) {
             result_matrix[c] += (*bias)[c].to_num();

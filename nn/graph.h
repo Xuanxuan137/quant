@@ -47,7 +47,9 @@
 class Graph {
 public:
     std::string graph_content;          // 计算图文件内容
+    std::string model_dir;              // 模型文件夹路径
     std::vector<Node*> node_list;        // 节点列表
+    std::vector<int> input_shape;       // 输入尺寸
 
     /*
      * 后面的节点在推断output_shape时需要用到前面节点的output shape，所以需要传入前面节点的output_shape。本想直接传入
@@ -62,7 +64,7 @@ public:
     std::vector<void*> intermediate_results;
 
     explicit Graph();
-    explicit Graph(const std::string& path);                // constructor
+    Graph(const std::string& path, const std::string& model_dir);                // constructor
     ~Graph();
 
     /*

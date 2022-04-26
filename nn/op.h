@@ -128,7 +128,8 @@ public:
     std::vector<int> dilation;
     std::vector<int> output_shape;      // 输出尺寸
     Conv2d(const std::vector<std::string>& parameters,
-           const std::vector<std::vector<int> > &output_shape_list);       // constructor
+           const std::vector<std::vector<int> > &output_shape_list,
+           const std::string& model_dir);       // constructor
     ~Conv2d();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();
@@ -253,7 +254,8 @@ public:
     int input_channel;
     std::vector<int> output_shape;      // 输出尺寸
     Dense(const std::vector<std::string> &parameters,
-          const std::vector<std::vector<int> > &output_shape_list);     // constructor
+          const std::vector<std::vector<int> > &output_shape_list,
+          const std::string& model_dir);     // constructor
     ~Dense();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();
@@ -392,7 +394,8 @@ public:
     Tensor<float32> running_var;
     std::vector<int> output_shape;
     Batch_Norm2d(const std::vector<std::string> &parameters,
-                        const std::vector<std::vector<int> > &output_shape_list);       // constructor
+                 const std::vector<std::vector<int> > &output_shape_list,
+                 const std::string& model_dir);       // constructor
     ~Batch_Norm2d();
     void forward(Tensor<float32> *input, Tensor<float32> *output);
     void print();

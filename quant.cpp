@@ -11,8 +11,8 @@
 #include "tensor.h"
 #include "preprocess.h"
 
-void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_shape);
-void test_quant_accuracy(const std::string &val_set_path, Graph *graph, int *infer_shape);
+void test_accuracy(const std::string &val_set_path, Graph *graph, std::vector<int> infer_shape);
+void test_quant_accuracy(const std::string &val_set_path, Graph *graph, std::vector<int> infer_shape);
 
 System_info * sys_info;
 
@@ -25,10 +25,11 @@ int main(int argc, char *argv[]) {
 
     Graph * graph = nullptr;                                    // 计算图
     std::string calib_set_path;                                 // calibration set 路径
-    int calib_size[4];                                          // calibration尺寸
+    std::string method;                                         // 量化方法
     Tensor<uint8>* calib_set = nullptr;                        // calibration set
     Tensor<uint8>* calc_running_img = nullptr;                 // 计算running数据集
     std::string output_dir;                                     // 输出路径
+    std::string val_set_path = "";                              // 测试数据集路径
 
     for(int i = 1; i<argc; i++) {
         std::string option(argv[i]);    // 从argv读取选项
@@ -40,14 +41,18 @@ int main(int argc, char *argv[]) {
         std::string value(argv[i]);     // 选项值
 
         // 处理选项
-        if(option == "--graph") {           // 创建计算图
+        if(option == "--model_dir") {           // 创建计算图
+            // 保证model_dir最后为'/'
+            if(value[value.size()-1] != '/') {
+                value += "/";
+            }
             printf("Reading calculation graph...\n");
             // 将计算图文件里的内容读取到字符串里
             // 打开计算图文件
             std::ifstream graph_file;
-            graph_file.open(value, std::ios::in);
+            graph_file.open(value+"graph.txt", std::ios::in);
             if(!graph_file.is_open()) {
-                std::cerr << "calib set txt file not found\n";
+                std::cerr << "graph txt file not found\n";
                 exit(-1);
             }
             // 将有信息的行加入graph_content
@@ -62,17 +67,20 @@ int main(int argc, char *argv[]) {
                 graph_content += graph_line;
                 graph_content.push_back('\n');
             }
-            graph = new Graph(graph_content);
+            graph = new Graph(graph_content, value);
             printf("Read calculation graph finished\n");
         }
         else if(option == "--calib_set") {  // 读取包含calib set路径的txt文件路径
             calib_set_path = value;
         }
-        else if(option == "--calib_size") { // 读取calib尺寸
-            get_calib_size(calib_size, value);
+        else if(option == "--method") { // 读取量化方法
+            method = value;
         }
         else if(option == "--output_dir") {     // 读取输出路径
             output_dir = value;
+        }
+        else if(option == "--val_set") {        // 读取测试数据集路径
+            val_set_path = value;
         }
         else {
             std::cerr << "option " << option << " not allowed\n";
@@ -83,29 +91,31 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    calib_set = get_calib_set(calib_set_path, calib_size);  // 读取 calibration set
+    calib_set = get_calib_set(calib_set_path, graph->input_shape);  // 读取 calibration set
     // 目前，计算图已经生成
     // calibration set，calibration尺寸 ，bn数据集(或bn数据)已经获得
 
     // 数据预处理
     Tensor<float32>* processed_calib_set = preprocess(calib_set);
 
-    // int infer_shape[4] = {1,1,28,28};                                   // mnist
-    // test_accuracy("../mnist_val_set.txt", graph, infer_shape);          // mnist
-    int infer_shape[4] = {1,3,224,224};                              // resnet18
-    // test_accuracy("../imgnet_val_set.txt", graph, infer_shape);      // resnet18
+    // test original accuracy
+    if(val_set_path != "") {
+        test_accuracy(val_set_path, graph, graph->input_shape);
+    }
 
     // fuse operator
     graph->fuse_op();   // 如果计算图中不包含bn，会自动跳过此步骤
 
-    // test_accuracy("../mnist_val_set.txt", graph, infer_shape);          // mnist
-    // test_accuracy("../imgnet_val_set.txt", graph, infer_shape);      // resnet18
+    // test fused accuracy
+    if(val_set_path != "") {
+        test_accuracy(val_set_path, graph, graph->input_shape);    
+    }
 
     // quantization
     Graph * q_graph = graph->quantization(processed_calib_set);
-
-    // test_quant_accuracy("../mnist_val_set.txt", q_graph, infer_shape);          // mnist
-    test_quant_accuracy("../imgnet_val_set.txt", q_graph, infer_shape);      // resnet18
+    if(val_set_path != "") {
+        test_quant_accuracy(val_set_path, q_graph, graph->input_shape);    
+    }
 
     // save quantized model
     q_graph->save(output_dir);
@@ -121,7 +131,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_shape) {
+void test_accuracy(const std::string &val_set_path, Graph *graph, std::vector<int> infer_shape) {
 /*
      * 测试计算图准确率
      * 只用于分类任务
@@ -202,7 +212,7 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, int *infer_sha
     graph->free_intermediate_results();
 }
 
-void test_quant_accuracy(const std::string &val_set_path, Graph *graph, int *infer_shape) {
+void test_quant_accuracy(const std::string &val_set_path, Graph *graph, std::vector<int> infer_shape) {
 /*
      * 测试计算图准确率
      * 只用于分类任务

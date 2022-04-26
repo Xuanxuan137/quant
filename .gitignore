@@ -18,3 +18,13 @@ output.txt
 output1.txt
 qgraph.txt
 .cache/
+imgnet/
+cifar10_jpg/
+mnist_jpg/
+.vscode/
+.DS_Store
+cifar_output/
+mnist_bn_output/
+mnist_conv3_output/
+resnet18_output/
+mnist_conv_deep_output/

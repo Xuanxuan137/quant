@@ -19,10 +19,12 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/tensor
         ${PROJECT_SOURCE_DIR}/util
         /usr/local/include/opencv4
+        /opt/OpenBLAS/include
 )
 
 link_directories(
         /usr/local/lib
+        /opt/OpenBLAS/lib
 )
 
 # Add block directories
@@ -35,12 +37,5 @@ add_executable(
         quant quant.cpp
 )
 target_link_libraries(
-        quant tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs m
-)
-
-add_executable(
-        test test.cpp
-)
-target_link_libraries(
-        test tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs m
+        quant tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs openblas m 
 )

@@ -34,10 +34,12 @@ public:
     void * op;                      // 算子
     std::string dtype;              // 数据类型
     std::vector<int> output_shape;  // output shape
+    std::string model_dir;          // 模型文件夹路径
 
     Node();
     explicit Node(const std::string& read_graph_line,
-                  const std::vector<std::vector<int> > &output_shape_list);  // constructor
+                  const std::vector<std::vector<int> > &output_shape_list,
+                  const std::string& model_dir);            // constructor
     ~Node();                                                // destructor
 
     /*

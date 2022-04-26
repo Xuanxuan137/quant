@@ -8,6 +8,7 @@
 
 #include <thread>
 #include <cassert>
+#include <cblas.h>
 #include "tensor.h"
 #include "util.h"
 #include "fixed_point.h"

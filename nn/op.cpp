@@ -156,7 +156,8 @@ Relu::~Relu() = default;
 
 
 Conv2d::Conv2d(const std::vector<std::string> &parameters,
-               const std::vector<std::vector<int> > &output_shape_list)
+               const std::vector<std::vector<int> > &output_shape_list,
+               const std::string& model_dir)
 {
     /*
      * 分析参数为算子设置属性。可能的参数对包括：
@@ -178,10 +179,15 @@ Conv2d::Conv2d(const std::vector<std::string> &parameters,
             this->input_node = (int)strtol(temp.c_str(), nullptr, 10);
         }
         else if(para_pair[0] == "weight") {
-            this->weight_path = (std::string)para_pair[1];  // 为什么加强制类型转换？我不知道，但不加Clion会标黄
+            this->weight_path = model_dir + (std::string)para_pair[1];  // 为什么加强制类型转换？我不知道，但不加Clion会标黄
         }
         else if(para_pair[0] == "bias") {
-            this->bias_path = (std::string)para_pair[1];
+            if((std::string)para_pair[1] == "None") {
+                this->bias_path = "None";
+            }
+            else {
+                this->bias_path = model_dir + (std::string)para_pair[1];
+            }
         }
         else if(para_pair[0] == "output_channel") {
             this->output_channel = (int)strtol(para_pair[1].c_str(), nullptr, 10);
@@ -476,7 +482,8 @@ Flatten::~Flatten() = default;
 
 
 Dense::Dense(const std::vector<std::string> &parameters,
-             const std::vector<std::vector<int>> &output_shape_list)
+             const std::vector<std::vector<int>> &output_shape_list,
+             const std::string& model_dir)
 {
     /*
      * 分析参数为算子设置属性。可能的参数对包括：
@@ -494,10 +501,15 @@ Dense::Dense(const std::vector<std::string> &parameters,
             this->input_node = (int)strtol(temp.c_str(), nullptr, 10);
         }
         else if(para_pair[0] == "weight") {
-            this->weight_path = (std::string)para_pair[1];
+            this->weight_path = model_dir + (std::string)para_pair[1];
         }
         else if(para_pair[0] == "bias") {
-            this->bias_path = (std::string)para_pair[1];
+            if(para_pair[1] == "None") {
+                this->bias_path = "None";
+            }
+            else {
+                this->bias_path = model_dir + (std::string)para_pair[1];
+            }
         }
         else if(para_pair[0] == "output_channel") {
             this->output_channel = (int)strtol(para_pair[1].c_str(), nullptr, 10);
@@ -825,7 +837,8 @@ void Concat::save(const std::string &path, int number) {
 Concat::~Concat() = default;
 
 Batch_Norm2d::Batch_Norm2d(const std::vector<std::string> &parameters,
-                                         const std::vector<std::vector<int>> &output_shape_list)
+                           const std::vector<std::vector<int>> &output_shape_list,
+                           const std::string& model_dir)
 {
     /*
      * 分析参数为算子设置属性
@@ -853,16 +866,21 @@ Batch_Norm2d::Batch_Norm2d(const std::vector<std::string> &parameters,
             this->momentum = (float)strtof(para_pair[1].c_str(), nullptr);
         }
         else if(para_pair[0] == "weight") {
-            this->weight_path = (std::string)para_pair[1];
+            this->weight_path = model_dir + (std::string)para_pair[1];
         }
         else if(para_pair[0] == "bias") {
-            this->bias_path = (std::string)para_pair[1];
+            if(para_pair[1] == "None") {
+                this->bias_path = "None";
+            }
+            else {
+                this->bias_path = model_dir + (std::string)para_pair[1];
+            }
         }
         else if(para_pair[0] == "running_mean") {
-            this->running_mean_path = (std::string)para_pair[1];
+            this->running_mean_path = model_dir + (std::string)para_pair[1];
         }
         else if(para_pair[0] == "running_var") {
-            this->running_var_path = (std::string)para_pair[1];
+            this->running_var_path = model_dir + (std::string)para_pair[1];
         }
     }
     // 读取weight

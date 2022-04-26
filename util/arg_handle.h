@@ -21,14 +21,9 @@
 #include "tensor.h"
 #include "util.h"
 
-void get_calib_size(int * calib_size, std::string value);
-int get_running_size(const std::string &value);
-Tensor<unsigned char>* get_calib_set(const std::string& calib_set_path, int calib_size[]);
-Tensor<unsigned char>* get_calc_running_img(const std::string& running_set_path, int calib_size[]);
-void get_running_mean_var_binary(Tensor<float>* &running_mean, Tensor<float>* &running_var,
-                                 const std::string& path, int size);
-void get_running_mean_var_txt(Tensor<float>* &running_mean, Tensor<float>* &running_var,
-                              const std::string& path, int size);
+
+Tensor<unsigned char>* get_calib_set(const std::string& calib_set_path, 
+                                     const std::vector<int>& calib_size);
 
 
 #endif //QUANT_ARG_HANDLE_H

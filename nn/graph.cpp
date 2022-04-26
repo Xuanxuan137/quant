@@ -10,13 +10,14 @@
 #include <cstdio>
 
 
-Graph::Graph(const std::string& graph_content)
+Graph::Graph(const std::string& graph_content, const std::string& model_dir)
 {
     /*
      * 读取path的文件，根据它创建计算图
      * 每读取一行，创建一个节点
      */
     this->graph_content = graph_content;        // 保存计算图文件内容
+    this->model_dir = model_dir;
 
     // 将计算图内容按\n切分
     std::vector<std::string> graph_lines = split(graph_content, "\n");
@@ -27,9 +28,13 @@ Graph::Graph(const std::string& graph_content)
         if(graph_line.empty()) {
             continue;
         }
-        Node * new_node = new Node(graph_line, output_shape_list);  // 不需要delete new_node，因为它后面还会用
+        Node * new_node = new Node(graph_line, output_shape_list, model_dir);  // 不需要delete new_node，因为它后面还会用
         node_list.push_back(new_node);
         output_shape_list.push_back(new_node->output_shape);
+
+        if(new_node->name == OPN_INPUT) {
+            this->input_shape = ((Input*)new_node->op)->output_shape;   // 对于input节点，记录input_shape
+        }
     }
 }
 
@@ -44,7 +49,6 @@ Graph::~Graph() {
 
 void Graph::fuse_op()
 {
-    // TODO: fill this function
     /*
      * 算子融合：将batch_norm2d融合进conv2d中
      * 步骤：考虑到计算图限定了batch_size，而算子融合提供的数据集的图片数量可能与计算图的batch_size不同
@@ -77,7 +81,7 @@ void Graph::fuse_op()
         new_graph_content += new_graph_line;
         new_graph_content.push_back('\n');
     }
-    Graph new_graph{new_graph_content};
+    Graph new_graph{new_graph_content, model_dir};
     // 此时前向传播中间结果已经存储在intermediate_results中了
     // 3. 对bn算子进行融合
     /*

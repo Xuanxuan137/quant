@@ -5,7 +5,8 @@
 #include "node.h"
 
 Node::Node(const std::string& read_graph_line,
-           const std::vector<std::vector<int> > &output_shape_list) {
+           const std::vector<std::vector<int> > &output_shape_list,
+           const std::string& model_dir) {
     /*
      * Constructor:
      * 根据输入的计算图的一行
@@ -16,6 +17,8 @@ Node::Node(const std::string& read_graph_line,
      * 5. 根据算子的output_shape属性，设置node的output_shape属性
      */
     std::string graph_line = replace(read_graph_line, " ", "");
+    // 存储模型文件夹路径
+    this->model_dir = model_dir;
     // 提取编号
     this->number = get_number(graph_line);
     // 提取算子名称
@@ -25,7 +28,7 @@ Node::Node(const std::string& read_graph_line,
     // 根据算子名称创建对象
     if(this->name == OPN_NN_CONV2D) {
         this->dtype = "float32";
-        op = new Conv2d(parameters, output_shape_list);
+        op = new Conv2d(parameters, output_shape_list, model_dir);
         this->output_shape = ((Conv2d*)op)->output_shape;
     }
     else if(this->name == OPN_NN_RELU) {
@@ -55,7 +58,7 @@ Node::Node(const std::string& read_graph_line,
     }
     else if(this->name == OPN_NN_DENSE) {
         this->dtype = "float32";
-        op = new Dense(parameters, output_shape_list);
+        op = new Dense(parameters, output_shape_list, model_dir);
         this->output_shape = ((Dense*)op)->output_shape;
     }
     else if(this->name == OPN_OUTPUT) {
@@ -75,7 +78,7 @@ Node::Node(const std::string& read_graph_line,
     }
     else if(this->name == OPN_NN_BATCH_NORM2D) {
         this->dtype = "float32";
-        op = new Batch_Norm2d(parameters, output_shape_list);
+        op = new Batch_Norm2d(parameters, output_shape_list, model_dir);
         this->output_shape = ((Batch_Norm2d*)op)->output_shape;
         
     }
