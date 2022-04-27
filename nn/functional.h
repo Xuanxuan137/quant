@@ -37,6 +37,7 @@ namespace functional {
     Tensor<float32> avgpool2d(Tensor<float32> *input, const std::vector<int>& kernel_size,
                               std::vector<int> stride=std::vector<int>{-1,-1},
                               const std::vector<int>& padding_size=std::vector<int>{0,0});
+    Tensor<float32> dropout(Tensor<float32> *input, const float p);
 
     // uint8算子
     Tensor<uint8> qconv2d(Tensor<uint8> *input,

@@ -4,7 +4,9 @@
 
 #include "functional.h"
 #include "cblas.h"
+#include "fixed_point.h"
 #include "tensor.h"
+#include <thread>
 
 extern System_info * sys_info;
 
@@ -547,6 +549,206 @@ Tensor<float32> functional::avgpool2d(Tensor<float32> *input, const std::vector<
     return result;
 }
 
+Tensor<float32> 
+functional::dropout(Tensor<float32> *input, const float p)
+{
+    /*
+     * dropout
+     */
+    Tensor<float32> ret;
+    ret = (*input) * (1-p);
+    return ret;
+}
+
+// Tensor<uint8>
+// functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y,
+//                     Fixed_point coe, int rshift, int qmin, int qmax,
+//                     Tensor<uint8> *weight, Tensor<int32> *bias, const std::vector<int> &stride,
+//                     const std::vector<int> &padding_size, const std::vector<int> &dilation) {
+//     /*
+//      * qconv2d
+//      */
+//     // 对输入尺寸进行校验
+//     if(input->size.size() != 4) {
+//         fprintf(stderr, "only 4 dimension input is allowed in conv2d\n");
+//         exit(-1);
+//     }
+//     if(weight->size.size() != 4) {
+//         fprintf(stderr, "only 4 dimension weight is allowed in conv2d\n");
+//         exit(-1);
+//     }
+//     if(input->size[1] != weight->size[1]) {
+//         fprintf(stderr, "channel of input should equal to input channel of weight\n");
+//         exit(-1);
+//     }
+//     if(bias->size.size() != 1) {
+//         fprintf(stderr, "only 1 dimension bias is allowed in conv2d\n");
+//         exit(-1);
+//     }
+//     if(bias->size[0] != weight->size[0]) {
+//         fprintf(stderr, "dim 1 of bias should equal to dim 1 of weight\n");
+//     }
+//     if(stride.size() != 2) {
+//         fprintf(stderr, "stride should be a vector of 2 int\n");
+//         exit(-1);
+//     }
+//     if(padding_size.size() != 2) {
+//         fprintf(stderr, "padding should be a vector of 2 int\n");
+//         exit(-1);
+//     }
+//     if(dilation.size() != 2) {
+//         fprintf(stderr, "dilation should be a vector of 2 int\n");
+//         exit(-1);
+//     }
+//     // padding
+//     Tensor<uint8> padded = qpadding(input, padding_size, zero_x);
+//     // qconv2d
+//     // 计算输出尺寸以及其他尺寸
+//     std::vector<int> kernel_size{weight->size[2], weight->size[3]};
+//     int batch_size = padded.size[0];
+//     int output_channel = weight->size[0];
+//     int height = (padded.size[2] - (dilation[0] * (kernel_size[0]-1) + 1)) / stride[0] + 1;
+//     int width = (padded.size[3] - (dilation[1] * (kernel_size[1]-1) + 1)) / stride[1] + 1;
+//     int input_channel = input->size[1];
+//     int kernel_height = kernel_size[0];
+//     int kernel_width = kernel_size[1];
+//     // 创建中间结果
+//     Tensor<int32> result{std::vector<int>{batch_size, output_channel, height, width}};
+//     // 计算
+//     Fixed_point fp_temp{0};
+//     for(int n = 0; n<batch_size; n++) {
+//         // 每次处理一张图片
+//         for(int o = 0; o<output_channel; o++) {
+//             int start_h = 0;
+//             for(int h = 0; h<height; h++, start_h += stride[0]) {
+//                 int start_w = 0;
+//                 for(int w = 0; w<width; w++, start_w += stride[1]) {
+//                     int temp = 0;
+//                     temp += input_channel * kernel_height * kernel_width * zero_x * zero_w;
+//                     for(int i = 0; i<input_channel; i++) {
+//                         for(int kh = 0; kh < kernel_height; kh++) {
+//                             for(int kw = 0; kw < kernel_width; kw++) {
+// //                                temp += padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]] * weight[o][i][kh][kw];
+//                                 temp += padded.data[
+//                                         n * padded.size[1] * padded.size[2] * padded.size[3] +
+//                                         i * padded.size[2] * padded.size[3] +
+//                                         (start_h+kh*dilation[0]) * padded.size[3] +
+//                                         (start_w+kw*dilation[1])]
+//                                                 *
+//                                         weight->data[
+//                                         o * weight->size[1] * weight->size[2] * weight->size[3] +
+//                                         i * weight->size[2] * weight->size[3] +
+//                                         kh * weight->size[3] +
+//                                         kw];
+//                             }
+//                         }
+//                     }
+//                     for(int i = 0; i<input_channel; i++) {
+//                         for(int kh = 0; kh < kernel_height; kh++) {
+//                             for(int kw = 0; kw < kernel_width; kw++) {
+// //                                temp -= zero_x * weight[o][i][kh][kw];
+// //                                temp -= zero_w * padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]];
+//                                 temp -= zero_x * weight->data[
+//                                         o * weight->size[1] * weight->size[2] * weight->size[3] +
+//                                         i * weight->size[2] * weight->size[3] +
+//                                         kh * weight->size[3] +
+//                                         kw];
+//                                 temp -= zero_w * padded.data[
+//                                         n * padded.size[1] * padded.size[2] * padded.size[3] +
+//                                         i * padded.size[2] * padded.size[3] +
+//                                         (start_h+kh*dilation[0]) * padded.size[3] +
+//                                         (start_w+kw*dilation[1])];
+//                             }
+//                         }
+//                     }
+//                     temp += bias->data[o] - zero_b;
+//                     fp_temp.assign(temp);
+//                     fp_temp *= coe;
+//                     int t = fp_temp.to_int();
+//                     result.data[
+//                             n * result.size[1] * result.size[2] * result.size[3] +
+//                             o * result.size[2] * result.size[3] +
+//                             h * result.size[3] +
+//                             w] = (t >> rshift) + zero_y;
+//                 }
+//             }
+//         }
+//     }
+//     // 将中间结果clip后转为uint8并返回
+//     result.clip(qmin, qmax);
+//     Tensor<uint8> ret = result.astype_uint8();
+//     return ret;
+// }
+
+void qconv2d_thread(int n, int start_o, int end_o, int height, int width, 
+                    std::vector<int> stride, std::vector<int> dilation, 
+                    int input_channel, int kernel_height, int kernel_width,
+                    int zero_x, int zero_w, int zero_b, int zero_y,
+                    uint8 * padded_data, std::vector<int> padded_size, 
+                    int32 * result_data, std::vector<int> result_size,
+                    uint8 * weight_data, std::vector<int> weight_size,
+                    int32 * bias_data,  
+                    Fixed_point coe, int rshift
+                    )
+{
+    Fixed_point fp_temp{0};
+    for(int o = start_o; o<end_o; o++) {
+        int start_h = 0;
+        for(int h = 0; h<height; h++, start_h += stride[0]) {
+            int start_w = 0;
+            for(int w = 0; w<width; w++, start_w += stride[1]) {
+                int temp = 0;
+                temp += input_channel * kernel_height * kernel_width * zero_x * zero_w;
+                for(int i = 0; i<input_channel; i++) {
+                    for(int kh = 0; kh < kernel_height; kh++) {
+                        for(int kw = 0; kw < kernel_width; kw++) {
+    //                                temp += padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]] * weight[o][i][kh][kw];
+                            temp += padded_data[
+                                    n * padded_size[1] * padded_size[2] * padded_size[3] +
+                                    i * padded_size[2] * padded_size[3] +
+                                    (start_h+kh*dilation[0]) * padded_size[3] +
+                                    (start_w+kw*dilation[1])]
+                                            *
+                                    weight_data[
+                                    o * weight_size[1] * weight_size[2] * weight_size[3] +
+                                    i * weight_size[2] * weight_size[3] +
+                                    kh * weight_size[3] +
+                                    kw];
+                        }
+                    }
+                }
+                for(int i = 0; i<input_channel; i++) {
+                    for(int kh = 0; kh < kernel_height; kh++) {
+                        for(int kw = 0; kw < kernel_width; kw++) {
+    //                                temp -= zero_x * weight[o][i][kh][kw];
+    //                                temp -= zero_w * padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]];
+                            temp -= zero_x * weight_data[
+                                    o * weight_size[1] * weight_size[2] * weight_size[3] +
+                                    i * weight_size[2] * weight_size[3] +
+                                    kh * weight_size[3] +
+                                    kw];
+                            temp -= zero_w * padded_data[
+                                    n * padded_size[1] * padded_size[2] * padded_size[3] +
+                                    i * padded_size[2] * padded_size[3] +
+                                    (start_h+kh*dilation[0]) * padded_size[3] +
+                                    (start_w+kw*dilation[1])];
+                        }
+                    }
+                }
+                temp += bias_data[o] - zero_b;
+                fp_temp.assign(temp);
+                fp_temp *= coe;
+                int t = fp_temp.to_int();
+                result_data[
+                        n * result_size[1] * result_size[2] * result_size[3] +
+                        o * result_size[2] * result_size[3] +
+                        h * result_size[3] +
+                        w] = (t >> rshift) + zero_y;
+            }
+        }
+    }
+}
+
 Tensor<uint8>
 functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y,
                     Fixed_point coe, int rshift, int qmin, int qmax,
@@ -602,63 +804,29 @@ functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, in
     // 创建中间结果
     Tensor<int32> result{std::vector<int>{batch_size, output_channel, height, width}};
     // 计算
-    Fixed_point fp_temp{0};
     for(int n = 0; n<batch_size; n++) {
         // 每次处理一张图片
-        for(int o = 0; o<output_channel; o++) {
-            int start_h = 0;
-            for(int h = 0; h<height; h++, start_h += stride[0]) {
-                int start_w = 0;
-                for(int w = 0; w<width; w++, start_w += stride[1]) {
-                    int temp = 0;
-                    temp += input_channel * kernel_height * kernel_width * zero_x * zero_w;
-                    for(int i = 0; i<input_channel; i++) {
-                        for(int kh = 0; kh < kernel_height; kh++) {
-                            for(int kw = 0; kw < kernel_width; kw++) {
-//                                temp += padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]] * weight[o][i][kh][kw];
-                                temp += padded.data[
-                                        n * padded.size[1] * padded.size[2] * padded.size[3] +
-                                        i * padded.size[2] * padded.size[3] +
-                                        (start_h+kh*dilation[0]) * padded.size[3] +
-                                        (start_w+kw*dilation[1])]
-                                                *
-                                        weight->data[
-                                        o * weight->size[1] * weight->size[2] * weight->size[3] +
-                                        i * weight->size[2] * weight->size[3] +
-                                        kh * weight->size[3] +
-                                        kw];
-                            }
-                        }
-                    }
-                    for(int i = 0; i<input_channel; i++) {
-                        for(int kh = 0; kh < kernel_height; kh++) {
-                            for(int kw = 0; kw < kernel_width; kw++) {
-//                                temp -= zero_x * weight[o][i][kh][kw];
-//                                temp -= zero_w * padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]];
-                                temp -= zero_x * weight->data[
-                                        o * weight->size[1] * weight->size[2] * weight->size[3] +
-                                        i * weight->size[2] * weight->size[3] +
-                                        kh * weight->size[3] +
-                                        kw];
-                                temp -= zero_w * padded.data[
-                                        n * padded.size[1] * padded.size[2] * padded.size[3] +
-                                        i * padded.size[2] * padded.size[3] +
-                                        (start_h+kh*dilation[0]) * padded.size[3] +
-                                        (start_w+kw*dilation[1])];
-                            }
-                        }
-                    }
-                    temp += bias->data[o] - zero_b;
-                    fp_temp.assign(temp);
-                    fp_temp *= coe;
-                    int t = fp_temp.to_int();
-                    result.data[
-                            n * result.size[1] * result.size[2] * result.size[3] +
-                            o * result.size[2] * result.size[3] +
-                            h * result.size[3] +
-                            w] = (t >> rshift) + zero_y;
-                }
+        int n_proc = sys_info->n_proc;
+        int channel_per_thread = output_channel / n_proc;   // 分给每个线程的通道数
+        int channel_left = output_channel % n_proc;         // 剩下的通道数，分给最后一个线程
+        std::thread t[n_proc];
+        for(int i = 0; i<n_proc; i++) {
+            int start_o = i * channel_per_thread;
+            int end_o = start_o + channel_per_thread;
+            if(i == n_proc-1) {
+                end_o += channel_left;
             }
+            t[i] = std::thread(
+                qconv2d_thread, n, start_o, end_o, height, width, 
+                stride, dilation, input_channel, kernel_height, kernel_width, 
+                zero_x, zero_w, zero_b, zero_y, 
+                padded.data, padded.size, 
+                result.data, result.size,
+                weight->data, weight->size, 
+                bias->data, coe, rshift);
+        }
+        for(int i = 0; i<n_proc; i++) {
+            t[i].join();
         }
     }
     // 将中间结果clip后转为uint8并返回

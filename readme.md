@@ -1,10 +1,13 @@
 参数说明:
---graph             前一步提取的计算图所在位置。绝对路径或相对路径
---calib_set         量化所需数据集。将所有图片路径存在一个文本文件中，一行一个。
-                    并将该文本文件路径传递给此参数。
---calib_size        量化图片的尺寸。应为4个由逗号分隔的整数(batch_size, C, H, W)，如"1,3,224,224"
-                    其中batch_size是指量化时一次输入的图片的数量，不是总数量
---output_dir        量化后计算图保存的位置
+--model_dir ../mnist_conv3_output               模型文件路径
+--calib_set ../mnist_calib_set.txt              calib_set路径
+--method per_tensor                             量化方案per_tensor或者per_channel(暂不支持)
+--output_dir ../mnist_quanted_output            输出路径
+--val_set ../mnist_val_set.txt                  测试文件路径(不是必须)
+--activation_dtype int8                         activation量化数据类型
+--activation_symmetry asymmetric                activation对称性
+--weight_dtype int8                             weight量化数据类型
+--weight_symmetry symmetric                     weight对称性
 
 
 bias=None时，将bias设为全为0

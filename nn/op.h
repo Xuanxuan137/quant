@@ -41,16 +41,17 @@
  * QConcat: qconcat
  *
  * 如果要添加新的算子，你需要修改：
- * 0. 算子名称宏定义列表
+ * 0. Node name #define list
  * 1. Node::Node()
  * 2. Node::~Node()
  * 3. Node::forward()
- * 4. node.cpp  get_name()
- * 5. Graph::fuse_op()      2处
- * 6. Node::print()
- * 7. Node::to_qnode()
- * 8. Graph::quantization()     5处
+ * 4. Node::print()
+ * 5. Node::to_qnode()
+ * 6. Node::save()
+ * 7. node.cpp  get_name()
+ * 8. Graph::fuse_op()      2处
  * 9. Graph::forward()
+ * 10. Graph::quantization()     5处
  */
 
 #define OPN_INPUT                   1
@@ -64,6 +65,7 @@
 #define OPN_OUTPUT                  9
 #define OPN_NN_BATCH_NORM2D         10
 #define OPN_NN_AVGPOOL2D            11
+#define OPN_NN_DROPOUT              12
 
 #define OPN_QINPUT                  1001
 #define OPN_NN_QCONV2D              1002
@@ -75,6 +77,7 @@
 #define OPN_QCONCAT                 1008
 #define OPN_QOUTPUT                 1009
 #define OPN_NN_QAVGPOOL2D           1010
+#define OPN_NN_QDROPOUT             1011
 
 #define GRAPH_FILE_NAME             "graph.txt"
 
@@ -280,6 +283,32 @@ public:
     int qmax;
     explicit QDense(Dense *op);
     ~QDense();
+    void forward(Tensor<uint8> *input, Tensor<uint8> *output);
+    void print();
+    void save(const std::string &path, int number);
+};
+
+class Dropout {
+public:
+    int input_node;                         // 输入节点编号
+    float p;                                // 丢弃比例
+    std::vector<int> output_shape;          // 输出尺寸
+    Dropout(const std::vector<std::string> &parameters,
+            const std::vector<std::vector<int> > &output_shape_list);       // constructor
+    ~Dropout();
+    void forward(Tensor<float32> *input, Tensor<float32> *output);
+    void print();
+    void save(const std::string &path, int number);
+};
+
+class QDropout {
+public:
+    int input_node;
+    float p;
+    int zero;
+    std::vector<int> output_shape;
+    QDropout(Dropout * op);
+    ~QDropout();
     void forward(Tensor<uint8> *input, Tensor<uint8> *output);
     void print();
     void save(const std::string &path, int number);

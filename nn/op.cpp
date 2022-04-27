@@ -4,6 +4,7 @@
 
 #include "op.h"
 #include <cstddef>
+#include <cstdlib>
 
 Input::Input(const std::vector <std::string>& parameters)
 {
@@ -1030,6 +1031,63 @@ void Conv2d::save(const std::string &path, int number) {
     fclose(bf);
 }
 
+Dropout::Dropout(const std::vector<std::string> &parameters,
+                 const std::vector<std::vector<int> > &output_shape_list)
+{
+    /*
+     * 分析参数为算子设置属性，可能的参数对包括：
+     * input=%2
+     * p=0.500000
+     */   
+    // 遍历参数对
+    for(const std::string &s: parameters) {
+        std::vector<std::string> para_pair = split(s, "=");
+        if(para_pair[0] == "input") {
+            std::string temp = replace(para_pair[1], "%", "");
+            this->input_node = (int)strtol(temp.c_str(), nullptr, 10);
+        }
+        else if(para_pair[0] == "p") {
+            this->p = strtof(para_pair[1].c_str(), nullptr);
+        }
+    }
+    // 设置output_shape
+    this->output_shape = output_shape_list[input_node];
+}
+
+void Dropout::forward(Tensor<float32> *input, Tensor<float32> *output) 
+{
+    /*
+     * Dropout的forward
+     */
+    *output = F::dropout(input, p);
+}
+
+void Dropout::print()
+{
+    /*
+     * 打印dropout算子信息
+     */
+    char temp[500];
+    sprintf(temp, "nn.dropout(input=%%%d, p=%f);\n",
+            input_node, p);
+    printf("%s", temp);
+}
+
+void Dropout::save(const std::string &path, int number) {
+    /*
+     * 存储dropout算子信息
+     */
+    char temp[500];
+    sprintf(temp, "%%%d=nn.dropout(input=%%%d, p=%f);\n",
+            number, input_node, p);
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", temp);
+    fclose(file);
+}
+
+Dropout::~Dropout() = default;
+
 Avgpool2d::Avgpool2d(const std::vector<std::string> &parameters,
                      const std::vector<std::vector<int>> &output_shape_list) {
     /*
@@ -1501,6 +1559,65 @@ void QDense::save(const std::string &path, int number) {
 
 QDense::~QDense() = default;
 
+QDropout::QDropout(Dropout *op) 
+{
+    /*
+     * 创建QDropout算子
+     */
+    input_node = op->input_node;
+    p = op->p;
+    output_shape = op->output_shape;
+}
+
+void QDropout::forward(Tensor<uint8> *input, Tensor<uint8> *output)
+{
+    /*
+     * QDropout forward
+     */
+    *output = *input;
+}
+
+void QDropout::print()
+{
+    /*
+     * 打印qdropout算子信息
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "nn.qdropout=(input=%%%d, p=%f, output_shape=(", input_node, p);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+    std::cout << str;
+}
+
+void QDropout::save(const std::string &path, int number)
+{
+    /*
+     * 存储QDropout算子参数
+     */
+    std::string str;
+    char temp[500];
+    sprintf(temp, "%%%d=qdropout(input=%%%d, p=%f, output_shape=(", number, input_node, p);
+    str += temp;
+    for(int i: output_shape) {
+        sprintf(temp, "%d,", i);
+        str += temp;
+    }
+    str.pop_back();
+    str += "));\n";
+
+    FILE * file = fopen((path+GRAPH_FILE_NAME).c_str(), "a");
+    fprintf(file, "%s", str.c_str());
+    fclose(file);
+}
+
+QDropout::~QDropout() = default;
+
 QOutput::QOutput(Output *op) {
     /*
      * 创建QOutput算子
@@ -1738,3 +1855,4 @@ void QAvgpool2d::save(const std::string &path, int number) {
 }
 
 QAvgpool2d::~QAvgpool2d() = default;
+

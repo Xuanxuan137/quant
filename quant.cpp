@@ -23,13 +23,13 @@ int main(int argc, char *argv[]) {
 
     sys_info = new System_info();       // 读取一些系统信息
 
-    Graph * graph = nullptr;                                    // 计算图
-    std::string calib_set_path;                                 // calibration set 路径
-    std::string method;                                         // 量化方法
-    Tensor<uint8>* calib_set = nullptr;                        // calibration set
-    Tensor<uint8>* calc_running_img = nullptr;                 // 计算running数据集
-    std::string output_dir;                                     // 输出路径
-    std::string val_set_path = "";                              // 测试数据集路径
+    Graph * graph = nullptr;                                        // 计算图
+    std::string calib_set_path = "";                                // calibration set 路径
+    std::string method = "per_tensor";                              // 量化方法
+    Tensor<uint8>* calib_set = nullptr;                             // calibration set
+    Tensor<uint8>* calc_running_img = nullptr;                      // 计算running数据集
+    std::string output_dir = "quanted_output";                      // 输出路径
+    std::string val_set_path = "";                                  // 测试数据集路径
 
     for(int i = 1; i<argc; i++) {
         std::string option(argv[i]);    // 从argv读取选项
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
 
     // test original accuracy
     if(val_set_path != "") {
-        test_accuracy(val_set_path, graph, graph->input_shape);
+        // test_accuracy(val_set_path, graph, graph->input_shape);
     }
 
     // fuse operator
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
 
     // test fused accuracy
     if(val_set_path != "") {
-        test_accuracy(val_set_path, graph, graph->input_shape);    
+        // test_accuracy(val_set_path, graph, graph->input_shape);    
     }
 
     // quantization

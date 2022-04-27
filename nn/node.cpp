@@ -3,6 +3,7 @@
 //
 
 #include "node.h"
+#include "op.h"
 
 Node::Node(const std::string& read_graph_line,
            const std::vector<std::vector<int> > &output_shape_list,
@@ -80,7 +81,11 @@ Node::Node(const std::string& read_graph_line,
         this->dtype = "float32";
         op = new Batch_Norm2d(parameters, output_shape_list, model_dir);
         this->output_shape = ((Batch_Norm2d*)op)->output_shape;
-        
+    }
+    else if(this->name == OPN_NN_DROPOUT) {
+        this->dtype = "float32";
+        op = new Dropout(parameters, output_shape_list);
+        this->output_shape = ((Dropout*)op)->output_shape;
     }
 }
 
@@ -122,6 +127,9 @@ Node::~Node() {
     else if(this->name == OPN_NN_BATCH_NORM2D) {
         delete((Batch_Norm2d*)op);
     }
+    else if(this->name == OPN_NN_DROPOUT) {
+        delete((Dropout*)op);
+    }
     // 量化算子
     else if(this->name == OPN_NN_QCONV2D) {
         delete((QConv2d*)op);
@@ -149,6 +157,9 @@ Node::~Node() {
     }
     else if(this->name == OPN_QCONCAT) {
         delete((QConcat*)op);
+    }
+    else if(this->name == OPN_NN_QDROPOUT) {
+        delete((QDropout*)op);
     }
 }
 
@@ -217,6 +228,11 @@ void Node::forward(const std::vector<void *> &intermediate_results, void *input)
                 (Tensor<float32>*)intermediate_results[((Batch_Norm2d*)op)->input_node],
                 (Tensor<float32>*)intermediate_results[this->number]);
     }
+    else if(this->name == OPN_NN_DROPOUT) {
+        ((Dropout*)op)->forward(
+                (Tensor<float32>*)intermediate_results[((Dropout*)op)->input_node],
+                (Tensor<float32>*)intermediate_results[this->number]);
+    }
     // 量化算子
     else if(this->name == OPN_NN_QCONV2D) {
         ((QConv2d*)op)->forward(
@@ -270,6 +286,11 @@ void Node::forward(const std::vector<void *> &intermediate_results, void *input)
                 (Tensor<uint8>*)intermediate_results[((QConcat*)op)->input_node2],
                 (Tensor<uint8>*)intermediate_results[this->number]);
     }
+    else if(this->name == OPN_NN_QDROPOUT) {
+        ((QDropout*)op)->forward(
+                (Tensor<uint8>*)intermediate_results[((QDropout*)op)->input_node],
+                (Tensor<uint8>*)intermediate_results[this->number]);
+    }
 }
 
 void Node::print() {
@@ -311,6 +332,9 @@ void Node::print() {
     else if(this->name == OPN_NN_BATCH_NORM2D) {
         ((Batch_Norm2d*)op)->print();
     }
+    else if(this->name == OPN_NN_DROPOUT) {
+        ((Dropout*)op)->print();
+    }
     // 量化算子
     else if(this->name == OPN_NN_QCONV2D) {
         ((QConv2d*)op)->print();
@@ -341,6 +365,9 @@ void Node::print() {
     }
     else if(this->name == OPN_QCONCAT) {
         ((QConcat*)op)->print();
+    }
+    else if(this->name == OPN_NN_QDROPOUT) {
+        ((QDropout*)op)->print();
     }
 }
 
@@ -398,6 +425,10 @@ Node *Node::to_qnode() {
         qnode->name = OPN_QCONCAT;
         qnode->op = new QConcat((Concat*)op);
     }
+    else if(this->name == OPN_NN_DROPOUT) {
+        qnode->name = OPN_NN_QDROPOUT;
+        qnode->op = new QDropout((Dropout*)op);
+    }
     else if(this->name == OPN_NN_BATCH_NORM2D) {
         fprintf(stderr, "File node.cpp, line %d. Found Batch_norm2d in fused graph\n", __LINE__);
         exit(-1);
@@ -422,6 +453,9 @@ void Node::save(const std::string &path) {
     else if(this->name == OPN_NN_MAXPOOL2D) {
         ((Maxpool2d*)op)->save(path, number);
     }
+    else if(this->name == OPN_NN_AVGPOOL2D) {
+        ((Avgpool2d*)op)->save(path, number);
+    }
     else if(this->name == OPN_NN_FLATTEN) {
         ((Flatten*)op)->save(path, number);
     }
@@ -440,6 +474,10 @@ void Node::save(const std::string &path) {
     else if(this->name == OPN_NN_BATCH_NORM2D) {
         ((Batch_Norm2d*)op)->save(path, number);
     }
+    else if(this->name == OPN_NN_DROPOUT) {
+        ((Dropout*)op)->save(path, number);
+    }
+
     // q算子
     else if(this->name == OPN_QINPUT) {
         ((QInput*)op)->save(path, number);
@@ -452,6 +490,9 @@ void Node::save(const std::string &path) {
     }
     else if(this->name == OPN_NN_QMAXPOOL2D) {
         ((QMaxpool2d*)op)->save(path, number);
+    }
+    else if(this->name == OPN_NN_QAVGPOOL2D) {
+        ((QAvgpool2d*)op)->save(path, number);
     }
     else if(this->name == OPN_NN_QFLATTEN) {
         ((QFlatten*)op)->save(path, number);
@@ -467,6 +508,9 @@ void Node::save(const std::string &path) {
     }
     else if(this->name == OPN_QCONCAT) {
         ((QConcat*)op)->save(path, number);
+    }
+    else if(this->name == OPN_NN_QDROPOUT) {
+        ((QDropout*)op)->save(path, number);
     }
 }
 
@@ -533,6 +577,9 @@ int get_name(const std::string &graph_line) {
     }
     else if(name == "nn.batch_norm2d") {
         return OPN_NN_BATCH_NORM2D;
+    }
+    else if(name == "nn.dropout") {
+        return OPN_NN_DROPOUT;
     }
 
     return -1;

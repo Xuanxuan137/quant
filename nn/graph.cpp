@@ -178,6 +178,9 @@ void Graph::fuse_op()
         else if(i->name == OPN_OUTPUT) {
             input_node1 = new_graph.node_list[((Output*)i->op)->input_node];
         }
+        else if(i->name == OPN_NN_DROPOUT) {
+            input_node1 = new_graph.node_list[((QDropout*)i->op)->input_node];
+        }
         // 如果是bn，则再向上查找一个输入节点
         if(input_node1 != nullptr && input_node1->name == OPN_NN_BATCH_NORM2D) {
             input_node1 = new_graph.node_list[((Batch_Norm2d*)input_node1->op)->input_node];
@@ -235,6 +238,9 @@ void Graph::fuse_op()
         else if(i->name == OPN_OUTPUT) {
             ((Output*)i->op)->input_node = input_node1->number - count1;
         }
+        else if(i->name == OPN_NN_DROPOUT) {
+            ((QDropout*)i->op)->input_node = input_node1->number - count1;
+        }
         // 将修改后的节点加入节点列表
         node_list.push_back(i);
     }
@@ -259,11 +265,6 @@ std::vector<void*> Graph::forward(void *input) {
     for(Node *node: node_list) {
         node->forward(intermediate_results, input);
     }
-
-    // if(node_list[0]->dtype == "uint8") {
-    //     (Tensor<uint8>*)intermediate_results[30])->reshape(std::vector<int>{-1, 1}).print();
-    //     exit(0);
-    // }
 
     // 将output节点的输出push到ret里
     std::vector<void*> ret;
@@ -422,6 +423,12 @@ Graph *Graph::quantization(Tensor<float32>* processed_calib_set) {
             scale[i] = scale[((Flatten*)node_list[i]->op)->input_node];
             zero[i] = zero[((Flatten*)node_list[i]->op)->input_node];
         }
+        else if(node_list[i]->name == OPN_NN_DROPOUT) {
+            // dropout应为输入层scale乘以1-p
+            scale[i] = scale[((Dropout*)node_list[i]->op)->input_node] * 
+                (1-((Dropout*)node_list[i]->op)->p);
+            zero[i] = zero[((Dropout*)node_list[i]->op)->input_node];
+        }
         else {
             scale[i] /= (float) img_number;
             zero[i] /= img_number;
@@ -508,6 +515,9 @@ Graph *Graph::quantization(Tensor<float32>* processed_calib_set) {
         }
         else if(node_list[i]->name == OPN_NN_AVGPOOL2D) {
             ((QAvgpool2d*)qgraph->node_list[i]->op)->zero = zero[i];
+        }
+        else if(node_list[i]->name == OPN_NN_DROPOUT) {
+            ((QDropout*)qgraph->node_list[i]->op)->zero = zero[i];
         }
         else if(node_list[i]->name == OPN_NN_DENSE) {
             calc_m0_n_input_weight(((QDense*)qgraph->node_list[i]->op)->coe,

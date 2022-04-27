@@ -37,5 +37,5 @@ add_executable(
         quant quant.cpp
 )
 target_link_libraries(
-        quant tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs openblas m 
+        quant tensor nn util opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs openblas m pthread
 )
