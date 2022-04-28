@@ -1,4 +1,4 @@
-参数说明:
+参数说明:</br>
 --model_dir ../mnist_conv3_output               模型文件路径</br>
 --calib_set ../mnist_calib_set.txt              calib_set路径</br>
 --method per_tensor                             量化方案per_tensor或者per_channel(暂不支持)</br>
