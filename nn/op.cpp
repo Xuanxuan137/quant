@@ -1709,7 +1709,7 @@ void QAdd::forward(Tensor<uint8> *input1, Tensor<uint8> *input2, Tensor<uint8> *
     /*
      * QAdd前向传播函数
      */
-    *output = F::qadd(input1, input2, zero_x1, zero_x2, zero_y, coe1, coe2, rshift1, rshift1, qmin, qmax);
+    *output = F::qadd(input1, input2, zero_x1, zero_x2, zero_y, coe1, coe2, rshift1, rshift2, qmin, qmax);
 }
 
 void QAdd::save(const std::string &path, int number) {

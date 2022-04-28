@@ -609,6 +609,3 @@ void Graph::save(std::string path) {
         node->save(path);
     }
 }
-
-
-

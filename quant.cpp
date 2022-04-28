@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
 
     // test fused accuracy
     if(val_set_path != "") {
-        // test_accuracy(val_set_path, graph, graph->input_shape);    
+        test_accuracy(val_set_path, graph, graph->input_shape);    
     }
 
     // quantization
@@ -145,7 +145,8 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, std::vector<in
         exit(-1);
     }
     // 遍历文件里的每一行
-    int correct = 0;
+    int top1_correct = 0;
+    int top5_correct = 0;
     int total = 0;
     std::string line;
     graph->alloc_intermediate_results();    // 为中间结果分配内存
@@ -201,14 +202,20 @@ void test_accuracy(const std::string &val_set_path, Graph *graph, std::vector<in
         }
         int result = ((Tensor<float32>*)(result_vector[0]))->argmax();
         if(result == answer) {
-            correct ++;
+            top1_correct ++;
+        }
+        Tensor<int> top5 = ((Tensor<float32>*)(result_vector[0]))->topK(5);
+        if(top5.has(answer)) {
+            top5_correct ++;
         }
         total ++;
-        printf("\rProcessing: %d. Correct: %d, accuracy: %f", total, correct, (float)correct/(float)total);
+        printf("\rImg: %d. Top1: %d, Top5: %d, Top1 acc: %0.4f, Top5 acc: %0.4f",
+                total, top1_correct, top5_correct, (float)top1_correct/(float)total, (float)top5_correct/(float)total);
         fflush(stdout);
     }
     printf("\n");
-    printf("Correct: %d, Total: %d, accuracy: %f\n", correct, total, (float)correct/(float)total);
+    printf("Top1: %d, Top5: %d, Total: %d, Top1 acc: %f, Top5 acc: %f\n", 
+        top1_correct, top5_correct, total, (float)top1_correct/(float)total, (float)top5_correct/(float)total);
     graph->free_intermediate_results();
 }
 
@@ -226,7 +233,8 @@ void test_quant_accuracy(const std::string &val_set_path, Graph *graph, std::vec
         exit(-1);
     }
     // 遍历文件里的每一行
-    int correct = 0;
+    int top1_correct = 0;
+    int top5_correct = 0;
     int total = 0;
     std::string line;
     graph->alloc_intermediate_results();    // 为中间结果分配内存
@@ -277,14 +285,20 @@ void test_quant_accuracy(const std::string &val_set_path, Graph *graph, std::vec
         std::vector<void*> result_vector = graph->forward(processed_input);
         int result = ((Tensor<uint8>*)(result_vector[0]))->argmax();
         if(result == answer) {
-            correct ++;
+            top1_correct ++;
+        }
+        Tensor<int> top5 = ((Tensor<uint8>*)(result_vector[0]))->topK(5);
+        if(top5.has(answer)) {
+            top5_correct ++;
         }
         total ++;
-        printf("\rResult: %d. Processing: %d. Correct: %d, accuracy: %f", result, total, correct, (float)correct/(float)total);
+        printf("\rImg: %d. Top1: %d, Top5: %d, Top1 acc: %0.4f, Top5 acc: %0.4f",
+                total, top1_correct, top5_correct, (float)top1_correct/(float)total, (float)top5_correct/(float)total);
         fflush(stdout);
     }
     printf("\n");
-    printf("Correct: %d, Total: %d, accuracy: %f\n", correct, total, (float)correct/(float)total);
+    printf("Top1: %d, Top5: %d, Total: %d, Top1 acc: %f, Top5 acc: %f\n", 
+        top1_correct, top5_correct, total, (float)top1_correct/(float)total, (float)top5_correct/(float)total);
     graph->free_intermediate_results();
 }
 

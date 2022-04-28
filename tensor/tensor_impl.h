@@ -5,6 +5,7 @@
 #ifndef QUANT_TENSOR_IMPL_H
 #define QUANT_TENSOR_IMPL_H
 
+#include "opencv2/imgcodecs.hpp"
 #include "tensor.h"
 
 template<typename T>
@@ -505,10 +506,7 @@ int Tensor<T>::argmax() {
     /*
      * argmax
      */
-    int len = 1;
-    for(const int &i: size) {
-        len *= i;
-    }
+    int len = this->len();
     T max = data[0];
     int index = 0;
     for(int i = 0; i<len; i++) {
@@ -1132,7 +1130,6 @@ Tensor<T> Tensor<T>::dot(Tensor<T> B_tensor) {
 
     return C_tensor;
 }
-
 
 template<typename T>
 Tensor<T> Tensor<T>::add(T adder) {
@@ -1770,6 +1767,100 @@ void Tensor<T>::clip(T min, T max) {
             this->data[i] = max;
         }
     }
+}
+
+template<typename T>
+void Tensor<T>::sort(int direction) {
+    /*
+     * sort. direction=0为升序，1为降序
+     * 选择排序
+     */
+    int len = this->len();
+    T temp;
+    T extre;
+    int index;
+    if(direction == 0) {
+        for(int i = 0; i<len; i++) {
+            extre = this->data[i];
+            index = i;
+            for(int j = i+1; j<len; j++) {
+                if(this->data[j] < extre) {
+                    extre = this->data[j];
+                    index = j;
+                }
+            }
+            temp = this->data[index];
+            this->data[index] = this->data[i];
+            this->data[i] = temp;
+        }
+    }
+    else {
+        for(int i = 0; i<len; i++) {
+            extre = this->data[i];
+            index = i;
+            for(int j = i+1; j<len; j++) {
+                if(this->data[j] > extre) {
+                    extre = this->data[j];
+                    index = j;
+                }
+            }
+            temp = this->data[index];
+            this->data[index] = this->data[i];
+            this->data[i] = temp;
+        }
+    }
+}
+
+template<typename T>
+Tensor<int> Tensor<T>::topK(int k)
+{
+    /*
+     * topK。选出最大的5个值的下标
+     */
+    Tensor<T> temp_tensor = this->deep_copy();
+    int len = temp_tensor.len();
+    Tensor<int> temp_tensor_index{std::vector<int>{len}};
+    for(int i = 0; i<len; i++) {
+        temp_tensor_index.data[i] = i;
+    }
+    
+    T extre;
+    int index;
+    T temp;
+    int index_temp;
+    for(int i = 0; i<len; i++) {
+        extre = temp_tensor.data[i];
+        index = i;
+        for(int j = i+1; j<len; j++) {
+            if(temp_tensor.data[j] > extre) {
+                extre = temp_tensor.data[j];
+                index = j;
+            }
+        }
+        temp = temp_tensor.data[index];
+        temp_tensor.data[index] = temp_tensor.data[i];
+        temp_tensor.data[i] = temp;
+        index_temp = temp_tensor_index.data[index];
+        temp_tensor_index.data[index] = temp_tensor_index.data[i];
+        temp_tensor_index.data[i] = index_temp;
+    }
+    Tensor<int> ret{std::vector<int>{k}};
+    for(int i = 0; i<k; i++) {
+        ret.data[i] = temp_tensor_index.data[i];
+    }
+    return ret;
+}
+
+template<typename T>
+int Tensor<T>::has(T value)
+{
+    int len = this->len();
+    for(int i = 0; i<len; i++) {
+        if(this->data[i] == value) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 

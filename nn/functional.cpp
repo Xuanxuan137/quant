@@ -1089,6 +1089,38 @@ functional::qdense(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int
     return ret;
 }
 
+// Tensor<uint8>
+// functional::qadd(Tensor<uint8> *input1, Tensor<uint8> *input2, int zero_x1, int zero_x2, int zero_y,
+//                  Fixed_point coe1, Fixed_point coe2, int rshift1, int rshift2, int qmin, int qmax) {
+//     /*
+//      * qadd
+//      */
+//     Tensor<int32> temp_x1 = input1->astype_int32();
+//     Tensor<int32> temp_x2 = input2->astype_int32();
+//     Fixed_point fp_temp1{0};
+//     Fixed_point fp_temp2{0};
+//     int len1 = input1->len();
+//     for(int i = 0; i<len1; i++) {
+//         int temp1 = temp_x1.data[i] - zero_x1;
+//         fp_temp1.assign(temp1);
+//         fp_temp1 *= coe1;
+//         int t1 = fp_temp1.to_int();
+//         temp_x1.data[i] = t1 >> rshift1;
+//     }
+//     int len2 = input2->len();
+//     for(int i = 0; i<len2; i++) {
+//         int temp2 = temp_x2.data[i] - zero_x2;
+//         fp_temp2.assign(temp2);
+//         fp_temp2 *= coe2;
+//         int t2 = fp_temp2.to_int();
+//         temp_x2.data[i] = t2 >> rshift2;
+//     }
+//     Tensor<int32> result = temp_x1 + temp_x2 + zero_y;
+//     result.clip(qmin, qmax);
+//     Tensor<uint8> ret = result.astype_uint8();
+//     return ret;
+// }
+
 Tensor<uint8>
 functional::qadd(Tensor<uint8> *input1, Tensor<uint8> *input2, int zero_x1, int zero_x2, int zero_y,
                  Fixed_point coe1, Fixed_point coe2, int rshift1, int rshift2, int qmin, int qmax) {
@@ -1105,7 +1137,12 @@ functional::qadd(Tensor<uint8> *input1, Tensor<uint8> *input2, int zero_x1, int 
         fp_temp1.assign(temp1);
         fp_temp1 *= coe1;
         int t1 = fp_temp1.to_int();
-        temp_x1.data[i] = t1 >> rshift1;
+        if(rshift1 < 0) {
+            temp_x1.data[i] = t1 << (-rshift1);
+        }
+        else {
+            temp_x1.data[i] = t1 >> rshift1;
+        }
     }
     int len2 = input2->len();
     for(int i = 0; i<len2; i++) {
@@ -1113,7 +1150,12 @@ functional::qadd(Tensor<uint8> *input1, Tensor<uint8> *input2, int zero_x1, int 
         fp_temp2.assign(temp2);
         fp_temp2 *= coe2;
         int t2 = fp_temp2.to_int();
-        temp_x2.data[i] = t2 >> rshift2;
+        if(rshift2 < 0) {
+            temp_x2.data[i] = t2 << (-rshift2);
+        }
+        else {
+            temp_x2.data[i] = t2 >> rshift2;
+        }
     }
     Tensor<int32> result = temp_x1 + temp_x2 + zero_y;
     result.clip(qmin, qmax);

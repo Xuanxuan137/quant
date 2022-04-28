@@ -61,6 +61,8 @@
  * 6. astype_uint8(): 创建新张量，使其值为原张量转为uint8后的值
  * 7. astype_int32(): 创建新张量，使其值为原张量转为int32后的值
  * 8. astype_float32(): 创建新张量，使其值为原张量转为float32后的值
+ * 9. clip(min, max): 不创建新张量，使数据截断到[min, max]之间
+ * 10. sort(direction): 不创建新张量，对数据排序
  *
  * 五. 数学运算:
  * 1. add(): 创建新张量。计算加法
@@ -152,6 +154,9 @@ public:
     T max();                                                // max
     T min();                                                // min
     void clip(T min, T max);                                // clip
+    void sort(int direction);                               // sort
+    Tensor<int> topK(int k);                                // topK
+    int has(T value);                                       // value is in this
 
     // 数学运算
     Tensor<T> add(T adder);                                 // 加法
