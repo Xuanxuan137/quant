@@ -10,6 +10,7 @@
 #include "arg_handle.h"
 #include "tensor.h"
 #include "preprocess.h"
+#include "util.h"
 
 void test_accuracy(const std::string &val_set_path, Graph *graph, std::vector<int> infer_shape);
 void test_quant_accuracy(const std::string &val_set_path, Graph *graph, std::vector<int> infer_shape);
@@ -100,7 +101,11 @@ int main(int argc, char *argv[]) {
 
     // test original accuracy
     if(val_set_path != "") {
+        // unsigned long long start_time, end_time;
+        // start_time = get_micro_sec_time();
         // test_accuracy(val_set_path, graph, graph->input_shape);
+        // end_time = get_micro_sec_time();
+        // printf("Test original accuracy cost: %llu us.\n", end_time - start_time);
     }
 
     // fuse operator
@@ -108,13 +113,21 @@ int main(int argc, char *argv[]) {
 
     // test fused accuracy
     if(val_set_path != "") {
-        test_accuracy(val_set_path, graph, graph->input_shape);    
+        // unsigned long long start_time, end_time;
+        // start_time = get_micro_sec_time();
+        // test_accuracy(val_set_path, graph, graph->input_shape);    
+        // end_time = get_micro_sec_time();
+        // printf("Test fused accuracy cost: %llu us.\n", end_time - start_time);
     }
 
     // quantization
     Graph * q_graph = graph->quantization(processed_calib_set);
     if(val_set_path != "") {
+        unsigned long long start_time, end_time;
+        start_time = get_micro_sec_time();
         test_quant_accuracy(val_set_path, q_graph, graph->input_shape);    
+        end_time = get_micro_sec_time();
+        printf("Test quantized accuracy cost: %llu us.\n", end_time - start_time);
     }
 
     // save quantized model

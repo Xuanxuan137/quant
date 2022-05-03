@@ -624,43 +624,43 @@ functional::dropout(Tensor<float32> *input, const float p)
 //                 int start_w = 0;
 //                 for(int w = 0; w<width; w++, start_w += stride[1]) {
 //                     int temp = 0;
-//                     temp += input_channel * kernel_height * kernel_width * zero_x * zero_w;
+//                     // temp += input_channel * kernel_height * kernel_width * zero_x * zero_w;
 //                     for(int i = 0; i<input_channel; i++) {
 //                         for(int kh = 0; kh < kernel_height; kh++) {
 //                             for(int kw = 0; kw < kernel_width; kw++) {
 // //                                temp += padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]] * weight[o][i][kh][kw];
-//                                 temp += padded.data[
+//                                 temp += (int)(padded.data[
 //                                         n * padded.size[1] * padded.size[2] * padded.size[3] +
 //                                         i * padded.size[2] * padded.size[3] +
 //                                         (start_h+kh*dilation[0]) * padded.size[3] +
-//                                         (start_w+kw*dilation[1])]
+//                                         (start_w+kw*dilation[1])] - zero_x)
 //                                                 *
-//                                         weight->data[
+//                                         (int)(weight->data[
 //                                         o * weight->size[1] * weight->size[2] * weight->size[3] +
 //                                         i * weight->size[2] * weight->size[3] +
 //                                         kh * weight->size[3] +
-//                                         kw];
+//                                         kw] - zero_w);
 //                             }
 //                         }
 //                     }
-//                     for(int i = 0; i<input_channel; i++) {
-//                         for(int kh = 0; kh < kernel_height; kh++) {
-//                             for(int kw = 0; kw < kernel_width; kw++) {
-// //                                temp -= zero_x * weight[o][i][kh][kw];
-// //                                temp -= zero_w * padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]];
-//                                 temp -= zero_x * weight->data[
-//                                         o * weight->size[1] * weight->size[2] * weight->size[3] +
-//                                         i * weight->size[2] * weight->size[3] +
-//                                         kh * weight->size[3] +
-//                                         kw];
-//                                 temp -= zero_w * padded.data[
-//                                         n * padded.size[1] * padded.size[2] * padded.size[3] +
-//                                         i * padded.size[2] * padded.size[3] +
-//                                         (start_h+kh*dilation[0]) * padded.size[3] +
-//                                         (start_w+kw*dilation[1])];
-//                             }
-//                         }
-//                     }
+// //                     for(int i = 0; i<input_channel; i++) {
+// //                         for(int kh = 0; kh < kernel_height; kh++) {
+// //                             for(int kw = 0; kw < kernel_width; kw++) {
+// // //                                temp -= zero_x * weight[o][i][kh][kw];
+// // //                                temp -= zero_w * padded[n][i][h+kh*dilation[0]][w+kw*dilation[1]];
+// //                                 temp -= zero_x * weight->data[
+// //                                         o * weight->size[1] * weight->size[2] * weight->size[3] +
+// //                                         i * weight->size[2] * weight->size[3] +
+// //                                         kh * weight->size[3] +
+// //                                         kw];
+// //                                 temp -= zero_w * padded.data[
+// //                                         n * padded.size[1] * padded.size[2] * padded.size[3] +
+// //                                         i * padded.size[2] * padded.size[3] +
+// //                                         (start_h+kh*dilation[0]) * padded.size[3] +
+// //                                         (start_w+kw*dilation[1])];
+// //                             }
+// //                         }
+// //                     }
 //                     temp += bias->data[o] - zero_b;
 //                     fp_temp.assign(temp);
 //                     fp_temp *= coe;
