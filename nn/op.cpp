@@ -592,8 +592,8 @@ void Dense::save(const std::string &path, int number) {
     char temp[500];
     char save_weight_path[200];
     char save_bias_path[200];
-    sprintf(save_weight_path, "%sdense_%d_weight.bin", path.c_str(), number);
-    sprintf(save_bias_path, "%sdense_%d_bias.bin", path.c_str(), number);
+    sprintf(save_weight_path, "dense_%d_weight.bin", number);
+    sprintf(save_bias_path, "dense_%d_bias.bin", number);
     sprintf(temp, "%%%d=nn.dense(input=%%%d, weight=%s, bias=%s, output_channel=%d, input_channel=%d, "
                   "output_shape=(%d,%d));\n",
             number, input_node, save_weight_path, save_bias_path, output_channel, input_channel,
@@ -1009,8 +1009,8 @@ void Conv2d::save(const std::string &path, int number) {
     char temp[1000];
     char save_weight_path[200];
     char save_bias_path[200];
-    sprintf(save_weight_path, "%sconv2d_%d_weight.bin", path.c_str(), number);
-    sprintf(save_bias_path, "%sconv2d_%d_bias.bin", path.c_str(), number);
+    sprintf(save_weight_path, "conv2d_%d_weight.bin", number);
+    sprintf(save_bias_path, "conv2d_%d_bias.bin", number);
     sprintf(temp, "%%%d=nn.conv2d(input=%%%d, weight=%s, bias=%s, output_channel=%d, input_channel=%d,"
                   "kernel_size=(%d,%d), stride=(%d,%d), padding=(%d,%d), dilation=(%d,%d), "
                   "output_shape=(%d,%d,%d,%d));\n",
@@ -1252,8 +1252,8 @@ void QConv2d::save(const std::string &path, int number) {
     char temp[2000];
     char save_weight_path[200];
     char save_bias_path[200];
-    sprintf(save_weight_path, "%sqconv2d_%d_weight.bin", path.c_str(), number);
-    sprintf(save_bias_path, "%sqconv2d_%d_bias.bin", path.c_str(), number);
+    sprintf(save_weight_path, "qconv2d_%d_weight.bin", number);
+    sprintf(save_bias_path, "qconv2d_%d_bias.bin", number);
     sprintf(temp, "%%%d=nn.qconv2d(input=%%%d, weight=%s, bias=%s, output_channel=%d, input_channel=%d,"
                   "kernel_size=(%d,%d), stride=(%d,%d), padding=(%d,%d), dilation=(%d,%d), "
                   "output_shape=(%d,%d,%d,%d), zero_x=%d, zero_w=%d, zero_b=%d, zero_y=%d, "
@@ -1535,8 +1535,8 @@ void QDense::save(const std::string &path, int number) {
     char temp[1000];
     char save_weight_path[200];
     char save_bias_path[200];
-    sprintf(save_weight_path, "%sqdense_%d_weight.bin", path.c_str(), number);
-    sprintf(save_bias_path, "%sqdense_%d_bias.bin", path.c_str(), number);
+    sprintf(save_weight_path, "qdense_%d_weight.bin", number);
+    sprintf(save_bias_path, "qdense_%d_bias.bin", number);
     sprintf(temp, "%%%d=nn.qdense(input=%%%d, weight=%s, bias=%s, output_channel=%d, input_channel=%d, "
                   "output_shape=(%d,%d), zero_x=%d, zero_w=%d, zero_b=%d, zero_y=%d, "
                   "coe=%f, rshift=%d, qmin=%d, qmax=%d);\n",

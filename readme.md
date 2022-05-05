@@ -12,3 +12,4 @@
 
 <!-- bias=None时，将bias设为全为0</br> -->
 <!-- --calc_running_img_list     突然发现running mean和running var是能够直接从模型中提取出来的，所以不需要计算了</br> -->
+graph.txt中的权重路径均使用相对于graph.txt的相对路径
