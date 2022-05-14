@@ -604,6 +604,8 @@ void Dense::save(const std::string &path, int number) {
     fclose(file);
 
     // 存储weight bias
+    sprintf(save_weight_path, "%sdense_%d_weight.bin", path.c_str(), number);
+    sprintf(save_bias_path, "%sdense_%d_bias.bin", path.c_str(), number);
     FILE * wf = fopen(save_weight_path, "wb");
     fwrite(weight.data, sizeof(float32), weight.len(), wf);
     fclose(wf);
@@ -1023,6 +1025,8 @@ void Conv2d::save(const std::string &path, int number) {
     fclose(file);
 
     // 存储weight bias
+    sprintf(save_weight_path, "%sconv2d_%d_weight.bin", path.c_str(), number);
+    sprintf(save_bias_path, "%sconv2d_%d_bias.bin", path.c_str(), number);
     FILE * wf = fopen(save_weight_path, "wb");
     fwrite(weight.data, sizeof(float32), weight.len(), wf);
     fclose(wf);
@@ -1268,6 +1272,8 @@ void QConv2d::save(const std::string &path, int number) {
     fclose(file);
 
     // 存储weight bias
+    sprintf(save_weight_path, "%sqconv2d_%d_weight.bin", path.c_str(), number);
+    sprintf(save_bias_path, "%sqconv2d_%d_bias.bin", path.c_str(), number);
     FILE * wf = fopen(save_weight_path, "wb");
     fwrite(weight.data, sizeof(uint8), weight.len(), wf);
     fclose(wf);
@@ -1549,6 +1555,8 @@ void QDense::save(const std::string &path, int number) {
     fclose(file);
 
     // 存储weight bias
+    sprintf(save_weight_path, "%sqdense_%d_weight.bin", path.c_str(), number);
+    sprintf(save_bias_path, "%sqdense_%d_bias.bin", path.c_str(), number);
     FILE * wf = fopen(save_weight_path, "wb");
     fwrite(weight.data, sizeof(uint8), weight.len(), wf);
     fclose(wf);
@@ -1602,7 +1610,7 @@ void QDropout::save(const std::string &path, int number)
      */
     std::string str;
     char temp[500];
-    sprintf(temp, "%%%d=qdropout(input=%%%d, p=%f, output_shape=(", number, input_node, p);
+    sprintf(temp, "%%%d=nn.qdropout(input=%%%d, p=%f, output_shape=(", number, input_node, p);
     str += temp;
     for(int i: output_shape) {
         sprintf(temp, "%d,", i);

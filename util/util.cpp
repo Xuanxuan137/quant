@@ -96,3 +96,34 @@ std::string delete_annotation(const std::string &s, const std::string &annotatio
 System_info::System_info() {
     n_proc = sysconf(_SC_NPROCESSORS_ONLN);
 }
+
+void clear_log()
+{
+    int ret = system("rm logs/*");
+    if(ret == -2147483647) {
+        fprintf(stderr, "file util.cpp line %d: Error return value %d\n", __LINE__, ret);
+    }
+}
+
+void xxlog(const std::string &msg, const std::string &type)
+{
+    if(access("logs", 0) < 0) {
+        std::string cmd = "mkdir logs";
+        int ret = system(cmd.c_str());
+        if(ret != 0) {
+            fprintf(stderr, "file util.cpp line %d: Error return value %d\n", __LINE__, ret);
+        }
+    }
+
+    time_t t;
+    struct tm * lt;
+    //获取Unix时间戳。
+    time (&t);
+    //转为时间结构。
+    lt = localtime (&t);
+
+    FILE * file = fopen("logs/quant_log.log", "a");
+    fprintf(file, "[%d-%d-%d %d:%d:%d] %s: %s\n", 
+        lt->tm_year+1990, lt->tm_mon, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec, type.c_str(), msg.c_str());
+    fclose(file);
+}

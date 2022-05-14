@@ -4,7 +4,7 @@
 --model_dir ../files/mnist_conv3_output \
 --calib_set ../files/mnist_calib_set.txt \
 --method per_tensor \
---output_dir ../files/mnist_quanted_output \
+--output_dir ../files/mnist_conv3_quanted_output \
 --val_set ../files/mnist_val_set.txt
 
 # mnist_bn
@@ -12,7 +12,7 @@
 --model_dir ../files/mnist_bn_output \
 --calib_set ../files/mnist_calib_set.txt \
 --method per_tensor \
---output_dir ../files/mnist_quanted_output \
+--output_dir ../files/mnist_bn_quanted_output \
 --val_set ../files/mnist_val_set.txt
 
 # mnist_conv_deep
@@ -20,7 +20,7 @@
 --model_dir ../files/mnist_conv_deep_output \
 --calib_set ../files/mnist_calib_set.txt \
 --method per_tensor \
---output_dir ../files/mnist_quanted_output \
+--output_dir ../files/mnist_conv_deep_quanted_output \
 --val_set ../files/mnist_val_set.txt
 
 # mnist_conv_add
@@ -28,7 +28,7 @@
 --model_dir ../files/mnist_conv_add_output \
 --calib_set ../files/mnist_calib_set.txt \
 --method per_tensor \
---output_dir ../files/mnist_quanted_output \
+--output_dir ../files/mnist_conv_add_quanted_output \
 --val_set ../files/mnist_val_set.txt
 
 # cifar10
@@ -44,7 +44,7 @@
 --model_dir ../files/vgg11_output \
 --calib_set ../files/imgnet_calib_set.txt \
 --method per_tensor \
---output_dir ../files/imgnet_quanted_output \
+--output_dir ../files/vgg11_quanted_output \
 --val_set ../files/imgnet_val_set.txt
 
 # resnet18
@@ -52,5 +52,13 @@
 --model_dir ../files/resnet18_output \
 --calib_set ../files/imgnet_calib_set.txt \
 --method per_tensor \
---output_dir ../files/imgnet_quanted_output \
+--output_dir ../files/resnet18_quanted_output \
+--val_set ../files/imgnet_val_set.txt
+
+# resnet50
+./quant \
+--model_dir ../files/resnet50_output \
+--calib_set ../files/imgnet_calib_set.txt \
+--method per_tensor \
+--output_dir ../files/resnet50_quanted_output \
 --val_set ../files/imgnet_val_set.txt

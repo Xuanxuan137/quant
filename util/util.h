@@ -12,6 +12,12 @@
 #include <cstddef>
 #include <sys/time.h>
 #include <unistd.h>
+#include <cstring>
+#include <ctime>
+
+#define XXERROR "Error"
+#define XXWARNING "Warning"
+#define XXINFO "Info"
 
 
 class System_info {
@@ -28,4 +34,8 @@ std::string replace(const std::string &s, const std::string &origin, const std::
 bool is_digit(char c);
 unsigned long long get_micro_sec_time();
 std::string delete_annotation(const std::string &s, const std::string &annotation);
+void clear_log();
+void xxlog(const std::string &msg, const std::string &type=XXINFO);
+
+
 #endif //QUANT_UTIL_H
