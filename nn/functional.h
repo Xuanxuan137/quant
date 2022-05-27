@@ -38,6 +38,9 @@ namespace functional {
                               std::vector<int> stride=std::vector<int>{-1,-1},
                               const std::vector<int>& padding_size=std::vector<int>{0,0});
     Tensor<float32> dropout(Tensor<float32> *input, const float p);
+    void im2col(float32 * data_col, float32 * data_im, int height, int width, int channels_col, 
+                int height_col, int width_col, int kernel_h, int kernel_w, int stride_h, int stride_w, 
+                int pad_h, int pad_w, int dilation_h, int dilation_w);
 
     // uint8算子
     Tensor<uint8> qconv2d(Tensor<uint8> *input,
@@ -66,6 +69,9 @@ namespace functional {
     Tensor<uint8> qavgpool2d(Tensor<uint8> *input, int zero, const std::vector<int>& kernel_size,
                              std::vector<int> stride=std::vector<int>{-1,-1},
                              const std::vector<int>& padding_size=std::vector<int>{0,0});
+    void im2col(uint8 * data_col, uint8 * data_im, int height, int width, int channels_col, 
+                int height_col, int width_col, int kernel_h, int kernel_w, int stride_h, int stride_w, 
+                int pad_h, int pad_w, int dilation_h, int dilation_w, int zero);
 }
 
 

@@ -31,3 +31,4 @@ mnist_conv_deep_output/
 vgg11_output/
 mnist_conv_add_output/
 files/
+line_count.py

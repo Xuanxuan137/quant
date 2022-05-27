@@ -11,6 +11,76 @@
 extern System_info * sys_info;
 
 
+void im2col(float32 * data_col, float32 * data_im, int height, int width, int channels_col, 
+            int height_col, int width_col, int kernel_h, int kernel_w, int stride_h, int stride_w, 
+            int pad_h, int pad_w, int dilation_h, int dilation_w)
+{
+    /*
+     * im2col float32
+     */
+    #ifdef _OPENMP
+    #pragma omp parallel for
+    #endif
+    for (int c = 0; c < channels_col; ++c) {
+        int w_offset = c % kernel_w;
+        int h_offset = (c / kernel_w) % kernel_h;
+        int c_im = c / kernel_h / kernel_w;
+
+        const int hc0 = h_offset * dilation_h - pad_h;
+        const int wc0 = w_offset * dilation_w - pad_w;
+        for (int h = 0; h < height_col; ++h) {
+            int h_pad = h * stride_h + hc0;
+
+            const int row_offset = (c * height_col + h) * width_col;
+            const int srow_offset = (c_im * height + h_pad) * width;
+            for (int w = 0; w < width_col; ++w) {
+                int w_pad = w * stride_w + wc0;
+                if ((((unsigned)h_pad) < ((unsigned)height)) && (((unsigned)w_pad) < ((unsigned)width)))
+                    data_col[row_offset + w] = data_im[srow_offset + w_pad];
+                else {
+                    data_col[row_offset + w] = 0;
+                }
+            }
+        }
+    }
+}
+
+
+void im2col(uint8 * data_col, uint8 * data_im, int height, int width, int channels_col, 
+            int height_col, int width_col, int kernel_h, int kernel_w, int stride_h, int stride_w, 
+            int pad_h, int pad_w, int dilation_h, int dilation_w, int zero)
+{
+    /*
+     * im2col uint8
+     */
+    #ifdef _OPENMP
+    #pragma omp parallel for
+    #endif
+    for (int c = 0; c < channels_col; ++c) {
+        int w_offset = c % kernel_w;
+        int h_offset = (c / kernel_w) % kernel_h;
+        int c_im = c / kernel_h / kernel_w;
+
+        const int hc0 = h_offset * dilation_h - pad_h;
+        const int wc0 = w_offset * dilation_w - pad_w;
+        for (int h = 0; h < height_col; ++h) {
+            int h_pad = h * stride_h + hc0;
+
+            const int row_offset = (c * height_col + h) * width_col;
+            const int srow_offset = (c_im * height + h_pad) * width;
+            for (int w = 0; w < width_col; ++w) {
+                int w_pad = w * stride_w + wc0;
+                if ((((unsigned)h_pad) < ((unsigned)height)) && (((unsigned)w_pad) < ((unsigned)width)))
+                    data_col[row_offset + w] = data_im[srow_offset + w_pad];
+                else {
+                    data_col[row_offset + w] = zero;
+                }
+            }
+        }
+    }
+}
+
+
 Tensor<float32>
 functional::conv2d(Tensor<float32> *input, Tensor<float32> *weight, Tensor<float32> *bias, const std::vector<int>& stride,
                    const std::vector<int>& padding_size, const std::vector<int>& dilation)
@@ -56,8 +126,8 @@ functional::conv2d(Tensor<float32> *input, Tensor<float32> *weight, Tensor<float
     std::vector<int> kernel_size{weight->size[2], weight->size[3]};
     int batch_size = padded.size[0];
     int channel = weight->size[0];
-    int height = (padded.size[2] - (dilation[0] * (kernel_size[0]-1) + 1)) / stride[0] + 1;
-    int width = (padded.size[3] - (dilation[1] * (kernel_size[1]-1) + 1)) / stride[1] + 1;
+    int height = (padded.size[2] - (dilation[0] * (kernel_size[0]- 1) + 1)) / stride[0] + 1;
+    int width = (padded.size[3] - (dilation[1] * (kernel_size[1]-1) + 1)) / stride[1] + 1;    
     // 创建返回对象
     Tensor<float32> result{std::vector<int>{batch_size, channel, height, width}};
     // 计算conv2d
@@ -466,7 +536,8 @@ functional::batch_norm2d(Tensor<float32> *input, Tensor<float32> *running_mean, 
     }
     Var_x += eps;
     Var_x = Var_x.elewise_sqrt();
-    Tensor<float32> y = (x / Var_x.reshape(std::vector<int>{1,-1,1,1}))
+    Tensor<float32> y = 
+            (x / Var_x.reshape(std::vector<int>{1,-1,1,1}))
             * (weight->reshape(std::vector<int>{1,-1,1,1}))
             + (bias->reshape(std::vector<int>{1,-1,1,1}));
     return y;

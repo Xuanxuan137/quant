@@ -265,7 +265,7 @@ std::vector<void*> Graph::forward(void *input) {
     for(Node *node: node_list) {
         node->forward(intermediate_results, input);
     }
-
+    
     // 将output节点的输出push到ret里
     std::vector<void*> ret;
     for(Node *node: node_list) {
