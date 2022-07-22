@@ -113,15 +113,16 @@ int main(int argc, char *argv[]) {
 
     // test fused accuracy
     if(val_set_path != "") {
-        unsigned long long start_time, end_time;
-        start_time = get_micro_sec_time();
-        test_accuracy(val_set_path, graph, graph->input_shape);    
-        end_time = get_micro_sec_time();
-        printf("Test fused accuracy cost: %llu us.\n", end_time - start_time);
+        // unsigned long long start_time, end_time;
+        // start_time = get_micro_sec_time();
+        // test_accuracy(val_set_path, graph, graph->input_shape);    
+        // end_time = get_micro_sec_time();
+        // printf("Test fused accuracy cost: %llu us.\n", end_time - start_time);
     }
 
     // quantization
     Graph * q_graph = graph->quantization(processed_calib_set);
+    // test quantized accuracy
     if(val_set_path != "") {
         unsigned long long start_time, end_time;
         start_time = get_micro_sec_time();

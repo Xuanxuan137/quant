@@ -142,7 +142,7 @@ public:
 class QConv2d {
 public:
     int input_node;
-    Tensor<uint8> weight;
+    Tensor<int8> weight;
     Tensor<int32> bias;
     int output_channel;
     int input_channel;
@@ -268,7 +268,7 @@ public:
 class QDense {
 public:
     int input_node;
-    Tensor<uint8> weight;
+    Tensor<int8> weight;
     Tensor<int32> bias;
     int output_channel;
     int input_channel;

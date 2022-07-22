@@ -392,6 +392,9 @@ Graph *Graph::quantization(Tensor<float32>* processed_calib_set) {
             // 2.1 计算各层的r, q
             rmax[j] = ((Tensor<float32>*)intermediate_results[j])->max();
             rmin[j] = ((Tensor<float32>*)intermediate_results[j])->min();
+            // float temp_rmax = (fabs(rmax[j]) > fabs(rmin[j])) ? fabs(rmax[j]) : fabs(rmin[j]);
+            // rmax[j] = temp_rmax;
+            // rmin[j] = -temp_rmax;
             qmax[j] = 255;
             qmin[j] = 0;
             float temp_scale = (rmax[j] - rmin[j]) / (float)(qmax[j] - qmin[j]);
@@ -466,8 +469,11 @@ Graph *Graph::quantization(Tensor<float32>* processed_calib_set) {
         if(node_list[i]->name == OPN_NN_CONV2D) {
             rmax_weight[i] = ((Conv2d*)node_list[i]->op)->weight.max();
             rmin_weight[i] = ((Conv2d*)node_list[i]->op)->weight.min();
-            qmax_weight[i] = 255;
-            qmin_weight[i] = 0;
+            float temp_rmax = (fabs(rmax_weight[i]) > fabs(rmin_weight[i])) ? fabs(rmax_weight[i]) : fabs(rmin_weight[i]);
+            rmax_weight[i] = temp_rmax;
+            rmin_weight[i] = -temp_rmax;
+            qmax_weight[i] = 127;
+            qmin_weight[i] = -127;
             // qmax_bias[i] = 65535;
             // qmin_bias[i] = -65535;
             qmax_bias[i] = 2147483647;
@@ -480,8 +486,11 @@ Graph *Graph::quantization(Tensor<float32>* processed_calib_set) {
         else if(node_list[i]->name == OPN_NN_DENSE) {
             rmax_weight[i] = ((Dense*)node_list[i]->op)->weight.max();
             rmin_weight[i] = ((Dense*)node_list[i]->op)->weight.min();
-            qmax_weight[i] = 255;
-            qmin_weight[i] = 0;
+            float temp_rmax = (fabs(rmax_weight[i]) > fabs(rmin_weight[i])) ? fabs(rmax_weight[i]) : fabs(rmin_weight[i]);
+            rmax_weight[i] = temp_rmax;
+            rmin_weight[i] = -temp_rmax;
+            qmax_weight[i] = 127;
+            qmin_weight[i] = -127;
             // qmax_bias[i] = 65535;
             // qmin_bias[i] = -65535;
             qmax_bias[i] = 2147483647;

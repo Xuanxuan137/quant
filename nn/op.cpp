@@ -1208,7 +1208,7 @@ QConv2d::QConv2d(Conv2d *op) {
      * 因此使用conv2d算子进行构建。其他量化算子与此类似
      */
     input_node = op->input_node;
-    weight = Tensor<uint8>{op->weight.size};
+    weight = Tensor<int8>{op->weight.size};
     bias = Tensor<int32>{op->bias.size};
     output_channel = op->output_channel;
     input_channel = op->input_channel;
@@ -1275,7 +1275,7 @@ void QConv2d::save(const std::string &path, int number) {
     sprintf(save_weight_path, "%sqconv2d_%d_weight.bin", path.c_str(), number);
     sprintf(save_bias_path, "%sqconv2d_%d_bias.bin", path.c_str(), number);
     FILE * wf = fopen(save_weight_path, "wb");
-    fwrite(weight.data, sizeof(uint8), weight.len(), wf);
+    fwrite(weight.data, sizeof(int8), weight.len(), wf);
     fclose(wf);
     FILE * bf = fopen(save_bias_path, "wb");
     fwrite(bias.data, sizeof(int32), bias.len(), bf);
@@ -1500,7 +1500,7 @@ QDense::QDense(Dense *op) {
      * 创建QDense算子
      */
     input_node = op->input_node;
-    weight = Tensor<uint8>{op->weight.size};
+    weight = Tensor<int8>{op->weight.size};
     bias = Tensor<int32>{op->bias.size};
     output_channel = op->output_channel;
     input_channel = op->input_channel;
@@ -1558,7 +1558,7 @@ void QDense::save(const std::string &path, int number) {
     sprintf(save_weight_path, "%sqdense_%d_weight.bin", path.c_str(), number);
     sprintf(save_bias_path, "%sqdense_%d_bias.bin", path.c_str(), number);
     FILE * wf = fopen(save_weight_path, "wb");
-    fwrite(weight.data, sizeof(uint8), weight.len(), wf);
+    fwrite(weight.data, sizeof(int8), weight.len(), wf);
     fclose(wf);
     FILE * bf = fopen(save_bias_path, "wb");
     fwrite(bias.data, sizeof(int32), bias.len(), bf);

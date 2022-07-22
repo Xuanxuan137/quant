@@ -70,7 +70,7 @@ void calc_m0_n_input_input(Fixed_point &coe1, Fixed_point &coe2, int &rshift1, i
     coe2 = fm02;
 }
 
-void quant(Tensor<uint8> &dst, Tensor<float32> &src, float scale, int zero, int qmin, int qmax) {
+void quant(Tensor<int8> &dst, Tensor<float32> &src, float scale, int zero, int qmin, int qmax) {
     /*
      * 对输入的src进行量化，量化后的数据存入dst中
      */

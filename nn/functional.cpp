@@ -757,7 +757,7 @@ void qconv2d_thread(int n, int start_o, int end_o, int height, int width,
                     int zero_x, int zero_w, int zero_b, int zero_y,
                     uint8 * padded_data, std::vector<int> padded_size, 
                     int32 * result_data, std::vector<int> result_size,
-                    uint8 * weight_data, std::vector<int> weight_size,
+                    int8 * weight_data, std::vector<int> weight_size,
                     int32 * bias_data,  
                     Fixed_point coe, int rshift
                     )
@@ -823,8 +823,8 @@ void qconv2d_thread(int n, int start_o, int end_o, int height, int width,
 Tensor<uint8>
 functional::qconv2d(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y,
                     Fixed_point coe, int rshift, int qmin, int qmax,
-                    Tensor<uint8> *weight, Tensor<int32> *bias, const std::vector<int> &stride,
-                    const std::vector<int> &padding_size, const std::vector<int> &dilation) {
+                    Tensor<int8> *weight, Tensor<int32> *bias, const std::vector<int> &stride,
+                    const std::vector<int> &padding_size, const std::vector<int> &dilation) {printf("%d\n", zero_w);
     /*
      * qconv2d
      */
@@ -1114,7 +1114,7 @@ Tensor<uint8> functional::qflatten(Tensor<uint8> *input) {
 
 Tensor<uint8>
 functional::qdense(Tensor<uint8> *input, int zero_x, int zero_w, int zero_b, int zero_y, Fixed_point coe, int rshift,
-                   int qmin, int qmax, Tensor<uint8> *weight, Tensor<int32> *bias) {
+                   int qmin, int qmax, Tensor<int8> *weight, Tensor<int32> *bias) {
     /*
      * qdense
      */
